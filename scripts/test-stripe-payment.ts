@@ -25,13 +25,17 @@ async function createTestPayment() {
   console.log('🔧 Creating test payment intent...\n');
 
   try {
-    // Create a payment intent
+    // Get app URL from environment
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+    // Create a payment intent with return_url
     const paymentIntent = await stripe.paymentIntents.create({
       amount: 8500, // $85.00 for a day camp
       currency: 'aud',
       automatic_payment_methods: {
         enabled: true,
       },
+      return_url: `${appUrl}/checkout/success`,
       metadata: {
         test: 'true',
         product: 'Day Camp',
@@ -46,14 +50,19 @@ async function createTestPayment() {
     console.log(`Amount: $${(paymentIntent.amount / 100).toFixed(2)} ${paymentIntent.currency.toUpperCase()}`);
     console.log(`Status: ${paymentIntent.status}`);
     console.log(`Client Secret: ${paymentIntent.client_secret}`);
+    console.log(`Return URL: ${appUrl}/checkout/success`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     // You can view this in your Stripe Dashboard
     console.log('🔗 View in Stripe Dashboard:');
     console.log(`https://dashboard.stripe.com/test/payments/${paymentIntent.id}\n`);
 
-    // Test card numbers
-    console.log('💳 Test Card Numbers:');
+    // Important note about using Stripe Elements
+    console.log('⚠️  IMPORTANT: Use Stripe Elements for Payment');
+    console.log('To complete this payment, use the checkout page in your app:');
+    console.log(`${appUrl}/checkout`);
+    console.log('\nNever send raw card numbers to the API. Use Stripe.js/Elements.');
+    console.log('\n💳 Test with these cards in Stripe Elements:');
     console.log('Success: 4242 4242 4242 4242');
     console.log('Declined: 4000 0000 0000 0002');
     console.log('Requires Authentication: 4000 0025 0000 3155\n');

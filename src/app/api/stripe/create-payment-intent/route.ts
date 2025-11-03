@@ -101,6 +101,10 @@ export async function POST(request: NextRequest) {
     const tax = subtotal * 0.1;
     const total = subtotal + tax;
 
+    // Get the app URL from environment or construct from request
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                   `${request.headers.get('x-forwarded-proto') || 'http'}://${request.headers.get('host')}`;
+
     // Create Stripe Payment Intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(total * 100), // Convert to cents
@@ -129,6 +133,7 @@ export async function POST(request: NextRequest) {
       automatic_payment_methods: {
         enabled: true,
       },
+      return_url: `${appUrl}/checkout/success`,
     });
 
     // Create pending order in database
