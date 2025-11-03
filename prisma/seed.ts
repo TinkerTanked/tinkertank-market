@@ -1,5 +1,6 @@
 import { PrismaClient, ProductType, BookingStatus, OrderStatus, EventType, EventStatus } from '@prisma/client'
 import { addDays, addWeeks, setHours, setMinutes } from 'date-fns'
+import { isClosureDate } from '../src/data/closureDates'
 
 const prisma = new PrismaClient()
 
@@ -28,6 +29,17 @@ async function main() {
     },
   })
   console.log('📍 Created location: Neutral Bay')
+
+  // Create Manly Library location
+  const manlyLibrary = await prisma.location.create({
+    data: {
+      name: 'Manly Library',
+      address: 'Manly Library, Manly NSW 2095',
+      capacity: 16,
+      timezone: 'Australia/Sydney',
+    },
+  })
+  console.log('📍 Created location: Manly Library')
 
   // Create comprehensive product catalog
   const products = [
@@ -335,8 +347,8 @@ async function main() {
     const eventDate = addDays(now, day)
     const dayOfWeek = eventDate.getDay()
     
-    // Only weekdays (Monday-Friday)
-    if (dayOfWeek >= 1 && dayOfWeek <= 5 && campEventCount < 20) {
+    // Only weekdays (Monday-Friday) and not on closure dates
+    if (dayOfWeek >= 1 && dayOfWeek <= 5 && !isClosureDate(eventDate) && campEventCount < 20) {
       // Create 2 Day Camps per day (morning slots)
       for (let i = 0; i < 2 && campEventCount < 20; i++) {
         const product = dayCamps[i % dayCamps.length] || campProducts[0]
@@ -390,6 +402,44 @@ async function main() {
   }
   
   console.log(`🏕️  Created ${campEventCount} camp events for next week at Neutral Bay`)
+
+  // Create Manly Library camp events for January 2026
+  const manlyDates = [
+    new Date('2026-01-13'),
+    new Date('2026-01-14'),
+    new Date('2026-01-15'),
+    new Date('2026-01-20'),
+    new Date('2026-01-21'),
+    new Date('2026-01-22'),
+  ]
+
+  const dayCampProduct = dayCamps[0] || campProducts[0] // Use first day camp product
+  let manlyCampCount = 0
+
+  for (const eventDate of manlyDates) {
+    const startDateTime = setHours(setMinutes(eventDate, 0), 9) // 9am start
+    const endDateTime = setHours(setMinutes(eventDate, 0), 15) // 3pm end (6 hours)
+
+    const event = await prisma.event.create({
+      data: {
+        title: `${dayCampProduct.name} - Day Camp`,
+        description: `${dayCampProduct.description} - Day camp at Manly Library`,
+        type: EventType.CAMP,
+        status: EventStatus.SCHEDULED,
+        startDateTime,
+        endDateTime,
+        maxCapacity: 16,
+        currentCount: 0,
+        locationId: manlyLibrary.id,
+        ageMin: dayCampProduct.ageMin,
+        ageMax: dayCampProduct.ageMax,
+      },
+    })
+    events.push(event)
+    manlyCampCount++
+  }
+
+  console.log(`🏕️  Created ${manlyCampCount} camp events for January 2026 at Manly Library`)
 
   console.log(`📅 Created ${events.length} events`)
 

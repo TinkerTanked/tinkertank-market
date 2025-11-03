@@ -11,9 +11,9 @@ import {
 } from '@/types/enhancedCart';
 import { generateId } from '@/utils/generateId';
 
-const calculateItemPrice = (product: Product, quantity: number, addOns?: { addOn: AddOn; quantity: number }[]) => {
-  const basePrice = product.price * quantity;
-  const addOnPrice = addOns?.reduce((sum, { addOn, quantity }) => sum + (addOn.price * quantity), 0) || 0;
+const calculateItemPrice = (product: Product, quantity: number, addOns?: { addOn: AddOn; quantity: number }[], dateCount: number = 1) => {
+  const basePrice = product.price * quantity * dateCount;
+  const addOnPrice = addOns?.reduce((sum, { addOn, quantity }) => sum + (addOn.price * quantity * dateCount), 0) || 0;
   return basePrice + addOnPrice;
 };
 
@@ -50,11 +50,13 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
 
       addItem: (product: Product, options = {}) => {
         set((state) => {
+          const dateCount = options.selectedDates?.length || 1;
           const existingItemIndex = state.items.findIndex(
             (item) => 
               item.product.id === product.id && 
               item.selectedDate?.getTime() === options.selectedDate?.getTime() &&
-              JSON.stringify(item.selectedTimeSlot) === JSON.stringify(options.selectedTimeSlot)
+              JSON.stringify(item.selectedTimeSlot) === JSON.stringify(options.selectedTimeSlot) &&
+              JSON.stringify(item.selectedDates?.map(d => d.getTime())) === JSON.stringify(options.selectedDates?.map(d => d.getTime()))
           );
 
           if (existingItemIndex >= 0) {
@@ -62,11 +64,12 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
             const items = [...state.items];
             const existingItem = items[existingItemIndex];
             const newQuantity = existingItem.quantity + (options.quantity || 1);
+            const existingDateCount = existingItem.selectedDates?.length || 1;
             
             items[existingItemIndex] = {
               ...existingItem,
               quantity: newQuantity,
-              totalPrice: calculateItemPrice(product, newQuantity, existingItem.selectedAddOns),
+              totalPrice: calculateItemPrice(product, newQuantity, existingItem.selectedAddOns, existingDateCount),
             };
             
             return { items };
@@ -80,9 +83,10 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
               students: [],
               selectedAddOns: options.selectedAddOns,
               selectedDate: options.selectedDate,
+              selectedDates: options.selectedDates,
               selectedTimeSlot: options.selectedTimeSlot,
-              pricePerItem: calculateItemPrice(product, 1, options.selectedAddOns),
-              totalPrice: calculateItemPrice(product, quantity, options.selectedAddOns),
+              pricePerItem: calculateItemPrice(product, 1, options.selectedAddOns, dateCount),
+              totalPrice: calculateItemPrice(product, quantity, options.selectedAddOns, dateCount),
               createdAt: new Date(),
               notes: options.notes,
             };
@@ -110,7 +114,7 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
               ? {
                   ...item,
                   quantity,
-                  totalPrice: calculateItemPrice(item.product, quantity, item.selectedAddOns),
+                  totalPrice: calculateItemPrice(item.product, quantity, item.selectedAddOns, item.selectedDates?.length || 1),
                 }
               : item
           )
@@ -165,12 +169,13 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
           items: state.items.map(item => {
             if (item.id === itemId) {
               const updatedItem = { ...item, ...details };
-              // Recalculate total price if quantity or addOns changed
-              if (details.quantity !== undefined || details.selectedAddOns !== undefined) {
+              // Recalculate total price if quantity, addOns, or dates changed
+              if (details.quantity !== undefined || details.selectedAddOns !== undefined || details.selectedDates !== undefined) {
                 updatedItem.totalPrice = calculateItemPrice(
                   updatedItem.product,
                   updatedItem.quantity,
-                  updatedItem.selectedAddOns
+                  updatedItem.selectedAddOns,
+                  updatedItem.selectedDates?.length || 1
                 );
               }
               return updatedItem;

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { MapPinIcon, CheckIcon } from '@heroicons/react/24/outline'
 
 interface Location {
@@ -13,16 +14,41 @@ interface LocationStepProps {
   onLocationSelect: (location: Location) => void
 }
 
-const LOCATIONS: Location[] = [
-  {
-    id: 'neutral-bay',
-    name: 'Neutral Bay',
-    address: '123 Miller Street, Neutral Bay NSW 2089'
-  }
-  // Future locations can be added here
-]
-
 export default function LocationStep({ selectedLocation, onLocationSelect }: LocationStepProps) {
+  const [locations, setLocations] = useState<Location[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const response = await fetch('/api/admin/locations')
+        const data = await response.json()
+        if (data.success) {
+          setLocations(data.locations.map((loc: any) => ({
+            id: loc.id,
+            name: loc.name,
+            address: loc.address
+          })))
+        }
+      } catch (error) {
+        console.error('Failed to fetch locations:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchLocations()
+  }, [])
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <p className="mt-4 text-gray-600">Loading locations...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -31,7 +57,7 @@ export default function LocationStep({ selectedLocation, onLocationSelect }: Loc
       </div>
 
       <div className="grid gap-4">
-        {LOCATIONS.map((location) => (
+        {locations.map((location) => (
           <div
             key={location.id}
             className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 ${

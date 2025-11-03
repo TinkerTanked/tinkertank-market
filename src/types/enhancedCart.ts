@@ -21,7 +21,7 @@ export interface StudentDetails {
   parentPhone: string;
 }
 
-// Enhanced cart item that supports multiple students
+// Enhanced cart item that supports multiple students and dates
 export interface EnhancedCartItem {
   id: string;
   product: Product;
@@ -29,6 +29,7 @@ export interface EnhancedCartItem {
   students: StudentDetails[];
   selectedAddOns?: { addOn: AddOn; quantity: number }[];
   selectedDate?: Date;
+  selectedDates?: Date[];
   selectedTimeSlot?: TimeSlot;
   pricePerItem: number;
   totalPrice: number;

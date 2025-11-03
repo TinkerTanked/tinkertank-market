@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { addDays, addWeeks, format, isBefore, setHours, setMinutes } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
+import { isClosureDate, getClosureInfo } from '@/types'
 
 export interface CreateEventParams {
   title: string
@@ -52,6 +53,20 @@ export class EventCreationService {
    * Creates a single calendar event
    */
   async createEvent(params: CreateEventParams) {
+    // Validate that the date is not a closure date
+    if (isClosureDate(params.startDateTime)) {
+      const closureInfo = getClosureInfo(params.startDateTime)
+      throw new Error(`Cannot create event on ${closureInfo?.name || 'a business closure date'}`)
+    }
+    
+    // Validate not a weekend for camps
+    if (params.type === 'CAMP') {
+      const dayOfWeek = params.startDateTime.getDay()
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        throw new Error('Cannot create camp events on weekends')
+      }
+    }
+    
     return await prisma.event.create({
       data: {
         title: params.title,

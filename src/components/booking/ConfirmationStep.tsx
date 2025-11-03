@@ -20,6 +20,7 @@ interface CampType {
 interface BookingData {
   location: Location | null
   date: Date | null
+  dates: Date[]
   campType: CampType | null
 }
 
@@ -29,7 +30,7 @@ interface ConfirmationStepProps {
 }
 
 export default function ConfirmationStep({ bookingData, onAddToCart }: ConfirmationStepProps) {
-  const { location, date, campType } = bookingData
+  const { location, dates, campType } = bookingData
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-AU', {
@@ -40,13 +41,23 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
     })
   }
 
-  if (!location || !date || !campType) {
+  const formatShortDate = (date: Date) => {
+    return date.toLocaleDateString('en-AU', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  if (!location || dates.length === 0 || !campType) {
     return (
       <div className="text-center py-8">
         <p className="text-red-500">Missing booking information. Please go back and complete all steps.</p>
       </div>
     )
   }
+
+  const totalPrice = campType.price * dates.length
 
   return (
     <div className="space-y-6">
@@ -66,8 +77,10 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
             </div>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold text-primary-600">${campType.price}</div>
-            <div className="text-sm text-gray-500">per child</div>
+            <div className="text-3xl font-bold text-primary-600">${totalPrice}</div>
+            <div className="text-sm text-gray-500">
+              {dates.length > 1 ? `${dates.length} days × $${campType.price}` : 'per child'}
+            </div>
           </div>
         </div>
 
@@ -84,14 +97,31 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
             </div>
           </div>
 
-          {/* Date */}
+          {/* Dates */}
           <div className="flex items-start space-x-3">
             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
               <CalendarIcon className="w-5 h-5 text-gray-600" />
             </div>
-            <div>
-              <div className="font-medium text-gray-900">Date</div>
-              <div className="text-gray-600">{formatDate(date)}</div>
+            <div className="flex-1">
+              <div className="font-medium text-gray-900">
+                {dates.length === 1 ? 'Date' : `Dates (${dates.length} days)`}
+              </div>
+              {dates.length === 1 ? (
+                <div className="text-gray-600">{formatDate(dates[0])}</div>
+              ) : (
+                <div className="space-y-1">
+                  {dates.slice(0, 3).map((date, index) => (
+                    <div key={index} className="text-gray-600 text-sm">
+                      {formatShortDate(date)}
+                    </div>
+                  ))}
+                  {dates.length > 3 && (
+                    <div className="text-gray-500 text-sm italic">
+                      +{dates.length - 3} more {dates.length - 3 === 1 ? 'day' : 'days'}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -114,8 +144,10 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
             </div>
             <div>
               <div className="font-medium text-gray-900">Total Cost</div>
-              <div className="text-gray-600">${campType.price}</div>
-              <div className="text-sm text-gray-500">Includes all materials</div>
+              <div className="text-gray-600">${totalPrice}</div>
+              <div className="text-sm text-gray-500">
+                {dates.length > 1 ? `$${campType.price} per day × ${dates.length} days` : 'Includes all materials'}
+              </div>
             </div>
           </div>
         </div>
@@ -200,7 +232,7 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
           onClick={onAddToCart}
           className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-4 px-8 rounded-xl font-bold text-lg hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
-          Add ${campType.price} Camp to Cart 🚀
+          Add ${totalPrice} {dates.length > 1 ? `(${dates.length}-Day) ` : ''}Camp to Cart 🚀
         </button>
         <p className="text-sm text-gray-500 mt-2">
           You'll be able to add student details and complete payment in the next step

@@ -153,6 +153,19 @@ export const isBusinessDay = (date: Date): boolean => {
   return day >= 1 && day <= 5 // Monday to Friday
 }
 
+// Re-export closure date utilities
+export {
+  isClosureDate,
+  getClosureInfo,
+  getClosureDatesForYear,
+  getClosureDatesInRange,
+  isDateAvailableForBooking,
+  getNextAvailableDate,
+  RECURRING_CLOSURE_DATES,
+  SPECIFIC_CLOSURE_DATES,
+  type ClosureDate,
+} from '@/data/closureDates'
+
 export const addBusinessDays = (date: Date, days: number): Date => {
   const result = new Date(date)
   let addedDays = 0

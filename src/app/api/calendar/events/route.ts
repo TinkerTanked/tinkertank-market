@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { CalendarEvent, AdminCalendarEvent } from '@/types/booking'
 import { prismaBookingToCalendarEvent } from '@/lib/calendar-utils'
 import { startOfMonth, endOfMonth, parseISO } from 'date-fns'
+import { isClosureDate, getClosureInfo } from '@/types'
 
 export async function GET(request: NextRequest) {
   try {
@@ -109,13 +110,36 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
     
+    const startDate = new Date(data.startDateTime)
+    
+    // Validate that the date is not a closure date
+    if (isClosureDate(startDate)) {
+      const closureInfo = getClosureInfo(startDate)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Cannot create booking on ${closureInfo?.name || 'a business closure date'}. Please select a different date.` 
+        },
+        { status: 400 }
+      )
+    }
+    
+    // Validate not a weekend
+    const dayOfWeek = startDate.getDay()
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return NextResponse.json(
+        { success: false, error: 'Cannot create bookings on weekends' },
+        { status: 400 }
+      )
+    }
+    
     // Create new booking/event
     const booking = await prisma.booking.create({
       data: {
         studentId: data.studentId,
         productId: data.productId,
         locationId: data.locationId,
-        startDate: new Date(data.startDateTime),
+        startDate,
         endDate: new Date(data.endDateTime),
         status: data.status || 'PENDING',
         totalPrice: data.totalAmount,

@@ -15,6 +15,7 @@ interface BookingData {
     address: string
   } | null
   date: Date | null
+  dates: Date[]
   campType: {
     id: string
     type: 'day' | 'allday'
@@ -42,6 +43,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
   const [bookingData, setBookingData] = useState<BookingData>({
     location: null,
     date: null,
+    dates: [],
     campType: null
   })
   const { addItem } = useEnhancedCartStore()
@@ -53,7 +55,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
       case 1:
         return bookingData.location !== null
       case 2:
-        return bookingData.date !== null
+        return bookingData.dates.length > 0
       case 3:
         return bookingData.campType !== null
       default:
@@ -74,10 +76,10 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
   }
 
   const handleAddToCart = () => {
-    if (bookingData.location && bookingData.date && bookingData.campType) {
-      // Create cart item from booking data
+    if (bookingData.location && bookingData.dates.length > 0 && bookingData.campType) {
+      const firstDate = bookingData.dates[0]
       const cartItem = {
-        id: `camp-${bookingData.campType.type}-${bookingData.date.toISOString().split('T')[0]}`,
+        id: `camp-${bookingData.campType.type}-${firstDate.toISOString().split('T')[0]}`,
         name: `${bookingData.campType.name} - ${bookingData.location.name}`,
         shortDescription: `${bookingData.campType.name} camp`,
         price: bookingData.campType.price,
@@ -86,7 +88,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         ageRange: '5-12',
         features: ['Educational activities', 'Supervised learning'],
         images: ['/camp-placeholder.jpg'],
-        date: bookingData.date,
+        date: firstDate,
         location: bookingData.location.name,
         duration: bookingData.campType.duration,
         time: bookingData.campType.time,
@@ -96,7 +98,10 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         availableCapacity: 20
       } as any
 
-      addItem(cartItem)
+      addItem(cartItem, { 
+        selectedDate: firstDate,
+        selectedDates: bookingData.dates 
+      })
       onClose()
     }
   }
@@ -118,8 +123,11 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         return (
           <DateStep 
             selectedDate={bookingData.date}
+            selectedDates={bookingData.dates}
             onDateSelect={(date) => updateBookingData('date', date)}
+            onDatesSelect={(dates) => updateBookingData('dates', dates)}
             location={bookingData.location}
+            enableMultiSelect={true}
           />
         )
       case 3:

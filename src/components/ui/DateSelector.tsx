@@ -22,6 +22,7 @@ import {
 } from 'date-fns'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { clsx } from 'clsx'
+import { isClosureDate, getClosureInfo } from '@/types'
 
 interface DateSelectorProps {
   selectedDate?: Date
@@ -71,6 +72,7 @@ export default function DateSelector({
   // Check if date is selectable
   const isDateSelectable = useCallback((date: Date) => {
     if (isWeekend(date)) return false
+    if (isClosureDate(date)) return false
     if (isBefore(startOfDay(date), startOfDay(minDate))) return false
     if (maxDate && isBefore(startOfDay(maxDate), startOfDay(date))) return false
     return true
