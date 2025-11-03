@@ -42,6 +42,10 @@ vi.mock('@/lib/prisma', () => ({
     location: {
       findFirst: vi.fn()
     },
+    recurringTemplate: {
+      create: vi.fn(),
+      findFirst: vi.fn()
+    },
     $transaction: vi.fn()
   }
 }));
