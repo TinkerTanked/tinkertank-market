@@ -1,0 +1,12 @@
+# Performance test results
+results/
+*.log
+*.html
+
+# Temporary files
+temp/
+.cache/
+
+# OS generated files
+.DS_Store
+Thumbs.db

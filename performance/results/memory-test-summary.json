@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-08-30T05:14:31.345Z",
+  "tests": {
+    "cart": {
+      "duration": 1504,
+      "snapshots": 4,
+      "memory": {
+        "initial": "4.62 MB",
+        "final": "5.11 MB",
+        "peak": "5.69 MB",
+        "change": "503.7 KB"
+      },
+      "leakDetection": null,
+      "recommendations": []
+    },
+    "calendar": {
+      "duration": 1000,
+      "snapshots": 3,
+      "memory": {
+        "initial": "5.43 MB",
+        "final": "6 MB",
+        "peak": "6 MB",
+        "change": "586.3 KB"
+      },
+      "leakDetection": null,
+      "recommendations": []
+    }
+  },
+  "overallRecommendations": []
+}

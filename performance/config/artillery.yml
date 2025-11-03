@@ -1,0 +1,101 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Warm up
+    - duration: 30
+      arrivalRate: 5
+      name: 'Warmup phase'
+    # Load test
+    - duration: 120
+      arrivalRate: 20
+      name: 'Load test'
+    # Spike test
+    - duration: 60
+      arrivalRate: 50
+      name: 'Spike test'
+  defaults:
+    headers:
+      'User-Agent': 'Artillery Load Test'
+      'Accept': 'application/json, text/html'
+
+scenarios:
+  - name: 'Browse catalog and book camp'
+    weight: 40
+    flow:
+      - get:
+          url: '/'
+      - think: 2
+      - get:
+          url: '/camps'
+      - think: 3
+      - get:
+          url: '/api/products'
+      - think: 5
+      - post:
+          url: '/api/bookings'
+          json:
+            productId: '{{ $randomString() }}'
+            date: '2024-12-01'
+            participants: 1
+
+  - name: 'Birthday booking flow'
+    weight: 30
+    flow:
+      - get:
+          url: '/'
+      - think: 2
+      - get:
+          url: '/birthdays'
+      - think: 4
+      - get:
+          url: '/api/availability'
+          qs:
+            type: 'birthday'
+            date: '2024-12-15'
+      - think: 3
+      - post:
+          url: '/api/bookings'
+          json:
+            type: 'birthday'
+            date: '2024-12-15'
+            participants: 8
+
+  - name: 'Cart operations'
+    weight: 20
+    flow:
+      - get:
+          url: '/'
+      - get:
+          url: '/api/products'
+      - post:
+          url: '/api/cart'
+          json:
+            productId: 'test-product-1'
+            quantity: 1
+      - put:
+          url: '/api/cart'
+          json:
+            productId: 'test-product-1'
+            quantity: 2
+      - delete:
+          url: '/api/cart/test-product-1'
+
+  - name: 'Calendar heavy usage'
+    weight: 10
+    flow:
+      - get:
+          url: '/admin'
+      - get:
+          url: '/api/calendar/events'
+          qs:
+            start: '2024-11-01'
+            end: '2024-12-31'
+      - think: 2
+      - get:
+          url: '/api/bookings'
+          qs:
+            month: '2024-12'
+
+plugins:
+  metrics-by-endpoint:
+    useOnlyRequestNames: true

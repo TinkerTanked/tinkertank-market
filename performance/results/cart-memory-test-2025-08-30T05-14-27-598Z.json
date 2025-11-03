@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-08-30T05:14:27.600Z",
+  "duration": 1504,
+  "snapshots": [
+    {
+      "timestamp": 1756530866084,
+      "heapUsed": 4843376,
+      "heapTotal": 6914048,
+      "external": 1615272,
+      "arrayBuffers": 10515,
+      "rss": 44728320
+    },
+    {
+      "timestamp": 1756530866586,
+      "heapUsed": 5964832,
+      "heapTotal": 9797632,
+      "external": 1615312,
+      "arrayBuffers": 10515,
+      "rss": 45793280
+    },
+    {
+      "timestamp": 1756530867087,
+      "heapUsed": 5358320,
+      "heapTotal": 9797632,
+      "external": 1615312,
+      "arrayBuffers": 10515,
+      "rss": 46137344
+    },
+    {
+      "timestamp": 1756530867588,
+      "heapUsed": 5359160,
+      "heapTotal": 9797632,
+      "external": 1615312,
+      "arrayBuffers": 10515,
+      "rss": 46137344
+    }
+  ],
+  "memory": {
+    "initial": "4.62 MB",
+    "final": "5.11 MB",
+    "peak": "5.69 MB",
+    "change": "503.7 KB"
+  },
+  "leakDetection": null,
+  "recommendations": []
+}
