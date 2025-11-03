@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { NotificationProvider } from '@/components/NotificationProvider'
 import Header from '@/components/layout/Header'
@@ -28,7 +28,11 @@ export const metadata: Metadata = {
     title: 'TinkerTank - STEM Learning Adventures for Kids',
     description: 'Exciting STEM camps, birthday parties, and educational programs for children.',
   },
-  viewport: 'width=device-width, initial-scale=1',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
   themeColor: '#0066cc',
 }
 

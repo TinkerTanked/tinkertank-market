@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useCalendar, useCalendarDateRange } from '@/hooks/useCalendar'
 import AdminCalendar from '@/components/calendar/AdminCalendar'
 import { AdminCalendarEvent, BookingEvent } from '@/types/booking'
@@ -19,7 +19,7 @@ export default function AdminCalendarPage() {
   })
 
   const { currentDate, getDateRange } = useCalendarDateRange()
-  const { start, end } = getDateRange()
+  const dateRange = useMemo(() => getDateRange(), [getDateRange])
   
   const { 
     events, 
@@ -29,11 +29,11 @@ export default function AdminCalendarPage() {
     createEvent, 
     deleteEvent,
     refreshEvents 
-  } = useCalendar(start, end, {
+  } = useCalendar(dateRange.start, dateRange.end, {
     view: 'admin',
     productType: selectedFilters.productType,
     locationId: selectedFilters.locationId,
-    autoRefresh: true,
+    autoRefresh: false,
   })
 
   const adminEvents = events as AdminCalendarEvent[]

@@ -45,7 +45,8 @@ export default function AdminCalendar({
     const stats: Record<string, any> = {}
     
     events.forEach(event => {
-      const dateKey = event.start.toISOString().split('T')[0]
+      const startDate = typeof event.start === 'string' ? new Date(event.start) : event.start
+      const dateKey = startDate.toISOString().split('T')[0]
       
       if (!stats[dateKey]) {
         stats[dateKey] = {

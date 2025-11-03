@@ -324,38 +324,72 @@ async function main() {
     events.push(event)
   }
 
-  // Create upcoming camp events
+  // Create 20 camp bookings for next week (both Day and All-Day camps in Neutral Bay)
   const campProducts = createdProducts.filter(p => p.type === ProductType.CAMP)
+  const dayCamps = campProducts.filter(p => p.duration === 480) // Full day (8 hours)
+  const halfDayCamps = campProducts.filter(p => p.duration === 240) // Half day (4 hours)
   
-  for (let day = 1; day <= 14; day++) {
+  // Create 20 camp events for next week (Monday-Friday)
+  let campEventCount = 0
+  for (let day = 7; day <= 13; day++) { // Next week (days 7-13 from now)
     const eventDate = addDays(now, day)
-    if (eventDate.getDay() === 0 || eventDate.getDay() === 6) { // Weekends only for camps
-      const product = campProducts[Math.floor(Math.random() * campProducts.length)]
-      const duration = product.duration || 360 // Default 6 hours
-      const startTime = duration === 480 ? 9 : duration === 240 ? 13 : 10
-      const endTime = startTime + (duration / 60)
-      
-      const startDateTime = setHours(setMinutes(eventDate, 0), startTime)
-      const endDateTime = setHours(setMinutes(eventDate, 0), endTime)
+    const dayOfWeek = eventDate.getDay()
+    
+    // Only weekdays (Monday-Friday)
+    if (dayOfWeek >= 1 && dayOfWeek <= 5 && campEventCount < 20) {
+      // Create 2 Day Camps per day (morning slots)
+      for (let i = 0; i < 2 && campEventCount < 20; i++) {
+        const product = dayCamps[i % dayCamps.length] || campProducts[0]
+        const startDateTime = setHours(setMinutes(eventDate, 0), 9) // 9am start
+        const endDateTime = setHours(setMinutes(eventDate, 0), 17) // 5pm end (8 hours)
 
-      const event = await prisma.event.create({
-        data: {
-          title: product.name,
-          description: product.description,
-          type: EventType.CAMP,
-          status: EventStatus.SCHEDULED,
-          startDateTime,
-          endDateTime,
-          maxCapacity: product.duration === 480 ? 16 : 12,
-          currentCount: Math.floor(Math.random() * 8) + 3,
-          locationId: neutralBay.id,
-          ageMin: product.ageMin,
-          ageMax: product.ageMax,
-        },
-      })
-      events.push(event)
+        const event = await prisma.event.create({
+          data: {
+            title: `${product.name} - Day Camp`,
+            description: `${product.description} - All day camp at Neutral Bay`,
+            type: EventType.CAMP,
+            status: EventStatus.SCHEDULED,
+            startDateTime,
+            endDateTime,
+            maxCapacity: 16,
+            currentCount: 0,
+            locationId: neutralBay.id,
+            ageMin: product.ageMin,
+            ageMax: product.ageMax,
+          },
+        })
+        events.push(event)
+        campEventCount++
+      }
+      
+      // Create 2 Half-Day Camps per day (afternoon slots)
+      for (let i = 0; i < 2 && campEventCount < 20; i++) {
+        const product = halfDayCamps[i % halfDayCamps.length] || campProducts[1]
+        const startDateTime = setHours(setMinutes(eventDate, 0), 13) // 1pm start
+        const endDateTime = setHours(setMinutes(eventDate, 0), 17) // 5pm end (4 hours)
+
+        const event = await prisma.event.create({
+          data: {
+            title: `${product.name} - Half-Day Camp`,
+            description: `${product.description} - Afternoon session at Neutral Bay`,
+            type: EventType.CAMP,
+            status: EventStatus.SCHEDULED,
+            startDateTime,
+            endDateTime,
+            maxCapacity: 12,
+            currentCount: 0,
+            locationId: neutralBay.id,
+            ageMin: product.ageMin,
+            ageMax: product.ageMax,
+          },
+        })
+        events.push(event)
+        campEventCount++
+      }
     }
   }
+  
+  console.log(`🏕️  Created ${campEventCount} camp events for next week at Neutral Bay`)
 
   console.log(`📅 Created ${events.length} events`)
 

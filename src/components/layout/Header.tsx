@@ -1,14 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Bars3Icon, XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { items, getSummary } = useEnhancedCartStore()
   const { itemCount } = getSummary()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -51,7 +56,7 @@ export default function Header() {
               className='relative p-2 text-gray-700 hover:text-primary-600 transition-colors duration-200'
             >
               <ShoppingCartIcon className='w-6 h-6' />
-              {itemCount > 0 && (
+              {mounted && itemCount > 0 && (
                 <span className='absolute -top-1 -right-1 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium'>
                   {itemCount}
                 </span>
@@ -69,7 +74,7 @@ export default function Header() {
               className='relative p-2 text-gray-700 hover:text-primary-600 transition-colors duration-200'
             >
               <ShoppingCartIcon className='w-6 h-6' />
-              {itemCount > 0 && (
+              {mounted && itemCount > 0 && (
                 <span className='absolute -top-1 -right-1 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium'>
                   {itemCount}
                 </span>
