@@ -10,15 +10,17 @@ export async function GET() {
       select: {
         id: true,
         name: true,
+        address: true,
+        capacity: true,
       },
       orderBy: {
         name: 'asc',
       },
     });
 
-    return NextResponse.json(locations);
+    return NextResponse.json({ success: true, locations });
   } catch (error) {
     console.error('Locations API error:', error);
-    return NextResponse.json({ error: 'Failed to fetch locations' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to fetch locations' }, { status: 500 });
   }
 }
