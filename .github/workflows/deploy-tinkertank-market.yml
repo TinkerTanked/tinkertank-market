@@ -93,7 +93,7 @@ jobs:
           echo "🧹 Starting fresh dependency installation with npm..."
           npm cache clean --force
           rm -rf node_modules
-          NODE_ENV=development npm install
+          NODE_ENV=development npm install --legacy-peer-deps
           echo "✅ All dependencies (including dev) installed successfully with npm"
 
       - name: Run linting (separate from build)
