@@ -96,24 +96,6 @@ jobs:
           NODE_ENV=development npm install --legacy-peer-deps
           echo "✅ All dependencies (including dev) installed successfully with npm"
 
-      - name: Run linting (separate from build)
-        run: |
-          echo "Running ESLint separately to manage memory usage..."
-          npm run lint || echo "⚠️ Lint warnings found but continuing build"
-        continue-on-error: true
-
-      - name: Build application
-        env:
-          CI: true
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NODE_OPTIONS: "--max-old-space-size=4096"
-          NEXT_TELEMETRY_DISABLED: 1
-        run: |
-          echo "Building TinkerTank Market for ${{ github.event.inputs.environment }}..."
-          npx prisma generate
-          NEXT_CONFIG_FILE=next.config.prod.ts npm run build
-        timeout-minutes: 15
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         with:
