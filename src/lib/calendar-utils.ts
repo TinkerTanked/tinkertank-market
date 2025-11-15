@@ -34,7 +34,7 @@ export function prismaBookingToBookingEvent(
 // Convert Prisma Booking to CalendarEvent
 export function prismaBookingToCalendarEvent(
   booking: Booking & {
-    product?: Product | null
+    product?: PrismaProduct | null
     student?: Student | null 
     location?: Location | null
   }
