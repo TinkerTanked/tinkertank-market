@@ -48,6 +48,13 @@ jobs:
           curl -L "https://github.com/a8m/envsubst/releases/download/v1.4.2/envsubst-Linux-arm64" -o "envsubst"
           chmod +x envsubst
 
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+          unzip -q awscliv2.zip
+          sudo ./aws/install --update
+          aws --version
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -128,7 +135,7 @@ jobs:
           NEXT_PUBLIC_APP_URL: https://${{ env.DOMAIN }}
           GITHUB_SHA: ${{ github.sha }}
         run: |
-          ./envsubst < .github/workflows/tinkertank-market-template.yml > ${REPO_NAME}.yml
+          ./envsubst < .github/k8s/deployment-template.yml > ${REPO_NAME}.yml
           echo "=== TinkerTank Market Deployment ==="
           cat ${REPO_NAME}.yml
 
