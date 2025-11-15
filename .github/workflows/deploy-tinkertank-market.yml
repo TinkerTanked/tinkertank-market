@@ -106,10 +106,13 @@ jobs:
         env:
           CI: true
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NODE_OPTIONS: "--max-old-space-size=4096"
+          NEXT_TELEMETRY_DISABLED: 1
         run: |
           echo "Building TinkerTank Market for ${{ github.event.inputs.environment }}..."
           npx prisma generate
           NEXT_CONFIG_FILE=next.config.prod.ts npm run build
+        timeout-minutes: 15
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
