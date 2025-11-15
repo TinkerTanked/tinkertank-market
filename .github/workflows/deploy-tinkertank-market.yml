@@ -88,14 +88,6 @@ jobs:
         run: |
           kops export kubecfg --name ${KOPS_CLUSTER_NAME} --state ${KOPS_STATE_STORE} --admin --kubeconfig ./platform
 
-      - name: Install Project Dependencies
-        run: |
-          echo "🧹 Starting fresh dependency installation with npm..."
-          npm cache clean --force
-          rm -rf node_modules
-          NODE_ENV=development npm install --legacy-peer-deps
-          echo "✅ All dependencies (including dev) installed successfully with npm"
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         with:
