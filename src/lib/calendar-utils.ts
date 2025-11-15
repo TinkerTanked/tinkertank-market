@@ -19,7 +19,7 @@ export function prismaBookingToBookingEvent(
     location: booking.location as any || undefined,
     startDateTime: booking.startDate,
     endDateTime: booking.endDate,
-    status: booking.status,
+    status: booking.status as any,
     paymentStatus: PaymentStatus.PENDING, // Default since not in Booking model
     totalAmount: Number(booking.totalPrice),
     amountPaid: 0, // Default since not in Booking model
