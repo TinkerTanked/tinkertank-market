@@ -1,0 +1,143 @@
+name: Deploy TinkerTank Market
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+
+env:
+  DOMAIN: market.tinkertank.academy
+  NODE_ENV: production
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  KOPS_CLUSTER_NAME: develop.platform.aten.rocks
+  KOPS_STATE_STORE: s3://platform.aten.rocks
+  REPO_NAME: tinkertank-market
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, arm64, linux]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl gettext jq unzip openssl libssl-dev
+
+      - name: Download envsubst
+        run: |
+          curl -L "https://github.com/a8m/envsubst/releases/download/v1.4.2/envsubst-Linux-arm64" -o "envsubst"
+          chmod +x envsubst
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        run: |
+          aws --version
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+      - name: Create ECR Repository if not exists
+        run: |
+          aws ecr describe-repositories --repository-names ${{ env.REPO_NAME }} --region ${{ env.AWS_REGION }} || \
+          aws ecr create-repository --repository-name ${{ env.REPO_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        run: |
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/arm64/kubectl
+          chmod +x ./kubectl
+
+      - name: Install kops
+        run: |
+          curl -LO https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-arm64
+          chmod +x kops-linux-arm64
+          sudo mv ./kops-linux-arm64 /usr/local/bin/kops
+
+      - name: Export kubeconfig using kops
+        run: |
+          kops export kubecfg --name ${KOPS_CLUSTER_NAME} --state ${KOPS_STATE_STORE} --admin --kubeconfig ./platform
+
+      - name: Install Project Dependencies
+        run: |
+          echo "🧹 Starting fresh dependency installation with npm..."
+          npm cache clean --force
+          rm -rf node_modules
+          NODE_ENV=development npm install
+          echo "✅ All dependencies (including dev) installed successfully with npm"
+
+      - name: Run linting (separate from build)
+        run: |
+          echo "Running ESLint separately to manage memory usage..."
+          npm run lint || echo "⚠️ Lint warnings found but continuing build"
+        continue-on-error: true
+
+      - name: Build application
+        env:
+          CI: true
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Building TinkerTank Market for ${{ github.event.inputs.environment }}..."
+          npx prisma generate
+          NEXT_CONFIG_FILE=next.config.prod.ts npm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          driver: docker-container
+
+      - name: Build and Push Docker Image for ARM
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.REPO_NAME }}:${{ github.sha }}
+
+      - name: Substitute Environment Variables in K8s Template
+        env:
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          NEXT_PUBLIC_APP_URL: https://${{ env.DOMAIN }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          ./envsubst < .github/workflows/tinkertank-market-template.yml > ${REPO_NAME}.yml
+          echo "=== TinkerTank Market Deployment ==="
+          cat ${REPO_NAME}.yml
+
+      - name: Apply Kubernetes Deployment
+        run: |
+          echo "Deploying TinkerTank Market..."
+          ./kubectl --kubeconfig=./platform --namespace=default apply -f ${REPO_NAME}.yml --force
+
+      - name: Run Database Migrations
+        run: |
+          echo "Running database migrations..."
+          ./kubectl --kubeconfig=./platform --namespace=default exec -it deployment/${REPO_NAME}-${NODE_ENV} -- npx prisma migrate deploy

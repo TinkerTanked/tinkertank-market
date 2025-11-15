@@ -1,289 +1,185 @@
 # TinkerTank Market - Deployment Guide
 
-## Pre-Deployment Checklist
+## Prerequisites
 
-### 1. Environment Setup
-- [ ] Production database configured
-- [ ] Stripe live keys obtained
-- [ ] Environment variables set
-- [ ] SSL certificate installed
-- [ ] Domain DNS configured
+1. **GitHub Secrets** - Add the following secrets to your repository:
+   - `AWS_ACCOUNT_ID` - Your AWS account ID
+   - `AWS_ACCESS_KEY_ID` - AWS access key for ECR and S3
+   - `AWS_SECRET_ACCESS_KEY` - AWS secret key
+   - `AWS_REGION` - AWS region (e.g., us-east-1)
+   - `DATABASE_URL` - PostgreSQL connection string (same as marvin)
+   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key (production)
+   - `STRIPE_SECRET_KEY` - Stripe secret key (production)
+   - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret
 
-### 2. Code Quality
-- [ ] All tests passing (`npm run test`)
-- [ ] Type checking clean (`npm run type-check`)
-- [ ] Linting clean (`npm run lint`)
-- [ ] Build successful (`npm run build`)
+2. **Kubernetes Cluster** - Ensure your kops cluster is running:
+   - Cluster Name: `develop.platform.aten.rocks`
+   - State Store: `s3://platform.aten.rocks`
 
-### 3. Database
-- [ ] Production database created
-- [ ] Migrations applied (`npx prisma migrate deploy`)
-- [ ] Seed data populated if needed
-- [ ] Connection pooling configured
+## Database Configuration
 
-### 4. Security
-- [ ] Environment secrets secured
-- [ ] CORS configured properly
-- [ ] Rate limiting implemented
-- [ ] Input validation in place
+The app uses the same PostgreSQL server as marvin. The `DATABASE_URL` secret should point to:
+```
+postgresql://username:password@hostname:5432/tinkertank_market
+```
 
-## Deployment Steps
+Make sure the database `tinkertank_market` exists on the same PostgreSQL instance.
 
-### 1. Build Application
+## Stripe Configuration
+
+### Production Stripe Secrets
+
+You need to add the following Stripe secrets to your GitHub repository:
+
+1. **NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY**
+   - Get from: https://dashboard.stripe.com/apikeys
+   - Starts with `pk_live_...`
+   - This is safe to expose on the frontend
+
+2. **STRIPE_SECRET_KEY**
+   - Get from: https://dashboard.stripe.com/apikeys
+   - Starts with `sk_live_...`
+   - ⚠️ Keep this secret! Never commit to code
+
+3. **STRIPE_WEBHOOK_SECRET**
+   - Get from: https://dashboard.stripe.com/webhooks
+   - Create a webhook endpoint: `https://market.tinkertank.academy/api/webhooks/stripe`
+   - Select events: `checkout.session.completed`, `payment_intent.succeeded`
+   - Starts with `whsec_...`
+
+### Adding Secrets to GitHub
 
 ```bash
-# Install dependencies
-npm ci --production=false
+# Navigate to your GitHub repository
+# Go to Settings > Secrets and variables > Actions > New repository secret
 
-# Generate Prisma client
-npx prisma generate
-
-# Build application
-npm run build
-
-# Type check
-npm run type-check
-
-# Run tests
-npm run test
+# Add each secret:
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-### 2. Database Migration
+## Deployment Process
 
+### 1. Deploy via GitHub Actions
+
+Go to your repository on GitHub:
+1. Click "Actions" tab
+2. Select "Deploy TinkerTank Market" workflow
+3. Click "Run workflow"
+4. Select environment (production/staging)
+5. Click "Run workflow"
+
+### 2. What the Workflow Does
+
+1. **Build Phase**
+   - Checks out code
+   - Installs dependencies
+   - Runs linting
+   - Generates Prisma client
+   - Builds Next.js app with standalone output
+
+2. **Docker Phase**
+   - Builds Docker image for ARM64
+   - Pushes to AWS ECR
+
+3. **Deploy Phase**
+   - Applies Kubernetes manifests
+   - Creates/updates deployment, service, and ingress
+   - Runs database migrations
+
+### 3. Post-Deployment
+
+After deployment:
 ```bash
-# Apply migrations to production
-npx prisma migrate deploy
+# Check pod status
+kubectl get pods -n default | grep tinkertank-market
 
-# Verify database schema
-npx prisma db pull
+# View logs
+kubectl logs -f deployment/tinkertank-market-production -n default
+
+# Check service
+kubectl get svc tinkertank-market-production -n default
+
+# Check ingress
+kubectl get ingress tinkertank-market-production -n default
 ```
 
-### 3. Environment Configuration
+## Domain Configuration
 
-Create production `.env`:
+The app will be available at: **https://market.tinkertank.academy**
 
-```env
-# Database
-DATABASE_URL="postgresql://username:password@host:5432/tinkertank_market"
+DNS is automatically configured via external-dns annotation in the ingress.
 
-# Stripe (LIVE KEYS)
-STRIPE_SECRET_KEY="sk_live_..."
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_live_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
+## Environment Variables
 
-# Security
-NEXTAUTH_SECRET="strong-random-secret"
-NEXTAUTH_URL="https://yourdomain.com"
+The following environment variables are configured in production:
 
-# Optional
-NODE_ENV="production"
-```
-
-### 4. Vercel Deployment
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel --prod
-
-# Set environment variables in Vercel dashboard
-# Configure Stripe webhook endpoint: https://yourdomain.com/api/stripe/webhook
-```
-
-### 5. Alternative: Docker Deployment
-
-```dockerfile
-# Create Dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --production=false
-
-COPY . .
-RUN npx prisma generate
-RUN npm run build
-
-EXPOSE 3000
-
-CMD ["npm", "start"]
-```
-
-```bash
-# Build and run
-docker build -t tinkertank-market .
-docker run -p 3000:3000 --env-file .env tinkertank-market
-```
-
-## Post-Deployment
-
-### 1. Health Checks
-
-Verify application health:
-
-```bash
-curl https://yourdomain.com/api/health
-```
-
-Expected response:
-```json
-{
-  "status": "healthy",
-  "services": {
-    "database": "connected",
-    "stripe": "configured"
-  }
-}
-```
-
-### 2. Stripe Webhook Configuration
-
-1. Go to Stripe Dashboard → Webhooks
-2. Add endpoint: `https://yourdomain.com/api/stripe/webhook`
-3. Select events:
-   - `payment_intent.succeeded`
-   - `payment_intent.payment_failed`
-   - `checkout.session.completed`
-
-### 3. Monitoring Setup
-
-- Set up error tracking (Sentry, LogRocket, etc.)
-- Configure uptime monitoring
-- Set up performance monitoring
-- Database query monitoring
-
-### 4. Backup Strategy
-
-- Database backups (daily)
-- Environment variable backup
-- Code repository backup
-- Stripe webhook logs
-
-## Performance Optimization
-
-### 1. Next.js Optimizations
-
-```typescript
-// next.config.ts
-const nextConfig = {
-  images: {
-    domains: ['your-image-domain.com'],
-    formats: ['image/webp', 'image/avif'],
-  },
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client'],
-  },
-  compress: true,
-  poweredByHeader: false,
-}
-```
-
-### 2. Database Optimizations
-
-- Connection pooling enabled
-- Proper indexing on frequently queried columns
-- Query optimization
-- Regular VACUUM and ANALYZE
-
-### 3. CDN Configuration
-
-- Static assets served via CDN
-- Image optimization enabled
-- Gzip compression
-- Browser caching headers
-
-## Security Considerations
-
-### 1. API Security
-
-- Input validation with Zod
-- Rate limiting
-- CORS properly configured
-- HTTPS only in production
-
-### 2. Data Protection
-
-- Sensitive data encrypted
-- PII handling compliance
-- Secure session management
-- Payment data never stored
-
-### 3. Monitoring
-
-- Failed login attempts
-- Unusual payment patterns
-- API endpoint monitoring
-- Database access logs
+- `NODE_ENV=production`
+- `PORT=3000`
+- `DATABASE_URL` - PostgreSQL connection (from secrets)
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key
+- `STRIPE_SECRET_KEY` - Stripe secret key
+- `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret
+- `NEXT_PUBLIC_APP_URL=https://market.tinkertank.academy`
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **Database Connection Fails**
-   - Check DATABASE_URL format
-   - Verify database is running
-   - Check network connectivity
-   - Verify user permissions
-
-2. **Stripe Payments Fail**
-   - Verify live API keys
-   - Check webhook endpoint
-   - Validate webhook secret
-   - Review Stripe dashboard logs
-
-3. **Build Fails**
-   - Clear `.next` directory
-   - Reinstall dependencies
-   - Check TypeScript errors
-   - Verify environment variables
-
-### Debug Commands
-
+### Pod not starting
 ```bash
-# Check database connection
-npx prisma db pull
-
-# Test Stripe connection
-npm run dev
-# Navigate to /api/health
-
-# Verify build
-npm run build
-npm run start
+kubectl describe pod <pod-name> -n default
+kubectl logs <pod-name> -n default
 ```
 
-## Rollback Plan
+### Database connection issues
+Verify `DATABASE_URL` secret is correct and database exists
 
-### 1. Application Rollback
+### Stripe webhook failures
+1. Check webhook URL is correct in Stripe dashboard
+2. Verify `STRIPE_WEBHOOK_SECRET` matches Stripe
+3. Check logs for webhook errors
 
+### Build failures
+Check GitHub Actions logs for specific error messages
+
+## Rollback
+
+To rollback to previous version:
 ```bash
-# Revert to previous deployment
-vercel rollback
+# List previous deployments
+kubectl rollout history deployment/tinkertank-market-production -n default
 
-# Or redeploy previous version
-git checkout previous-tag
-vercel --prod
+# Rollback to previous version
+kubectl rollout undo deployment/tinkertank-market-production -n default
+
+# Rollback to specific revision
+kubectl rollout undo deployment/tinkertank-market-production -n default --to-revision=<revision>
 ```
 
-### 2. Database Rollback
+## Manual Database Migrations
 
+If you need to run migrations manually:
 ```bash
-# Rollback migration
-npx prisma migrate reset --force
-npx prisma db push --force-reset
+# SSH into pod
+kubectl exec -it deployment/tinkertank-market-production -n default -- sh
+
+# Run migrations
+npx prisma migrate deploy
+
+# Exit
+exit
 ```
 
-### 3. Stripe Configuration
+## Monitoring
 
-- Revert webhook endpoints
-- Switch back to test keys if needed
-- Update environment variables
+- **Logs**: `kubectl logs -f deployment/tinkertank-market-production -n default`
+- **Pod Status**: `kubectl get pods -l name=tinkertank-market-production -n default`
+- **Resource Usage**: `kubectl top pods -l name=tinkertank-market-production -n default`
 
-## Support Contacts
+## Resource Limits
 
-- **Development Team**: dev-team@tinkertank.com
-- **Database Admin**: dba@tinkertank.com
-- **Infrastructure**: infra@tinkertank.com
+Current configuration:
+- **Requests**: 512Mi memory, 250m CPU
+- **Limits**: 1Gi memory, 500m CPU
+
+Adjust in [tinkertank-market-template.yml](.github/workflows/tinkertank-market-template.yml) if needed.

@@ -1,0 +1,109 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${REPO_NAME}-${NODE_ENV}
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: ${DOMAIN}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 443
+      name: https
+      targetPort: next-http
+    - port: 80
+      name: http
+      targetPort: next-http
+  selector:
+    name: ${REPO_NAME}-${NODE_ENV}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${REPO_NAME}-${NODE_ENV}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    external-dns.alpha.kubernetes.io/hostname: ${DOMAIN}
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - ${DOMAIN}
+    secretName: ${REPO_NAME}-tls
+  rules:
+  - host: ${DOMAIN}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ${REPO_NAME}-${NODE_ENV}
+            port:
+              number: 80
+    
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${REPO_NAME}-${NODE_ENV}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: ${REPO_NAME}-${NODE_ENV}
+  template:
+    metadata:
+      labels:
+        name: ${REPO_NAME}-${NODE_ENV}
+        service: ${REPO_NAME}-${NODE_ENV}
+    spec:
+      hostname: ${REPO_NAME}-${NODE_ENV}
+      subdomain: ${REPO_NAME}-${NODE_ENV}
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      containers:
+        - name: ${REPO_NAME}-${NODE_ENV}
+          image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${REPO_NAME}:${GITHUB_SHA}
+          ports:
+            - name: next-http
+              containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: HOSTNAME
+              value: "0.0.0.0"
+            - name: DATABASE_URL
+              value: "${DATABASE_URL}"
+            - name: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+              value: "${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}"
+            - name: STRIPE_SECRET_KEY
+              value: "${STRIPE_SECRET_KEY}"
+            - name: STRIPE_WEBHOOK_SECRET
+              value: "${STRIPE_WEBHOOK_SECRET}"
+            - name: NEXT_PUBLIC_APP_URL
+              value: "${NEXT_PUBLIC_APP_URL}"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
