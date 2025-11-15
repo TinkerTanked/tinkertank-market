@@ -1,10 +1,10 @@
 import { BookingEvent, CalendarEvent, PaymentStatus } from '@/types/booking'
-import { Booking, Product, Student, Location } from '@prisma/client'
+import { Booking, Product as PrismaProduct, Student, Location } from '@prisma/client'
 
 // Convert Prisma Booking to BookingEvent interface
 export function prismaBookingToBookingEvent(
   booking: Booking & {
-    product?: Product | null
+    product?: PrismaProduct | null
     student?: Student | null 
     location?: Location | null
   }
@@ -12,7 +12,7 @@ export function prismaBookingToBookingEvent(
   return {
     id: booking.id,
     productId: booking.productId,
-    product: booking.product || undefined,
+    product: booking.product as any || undefined,
     studentId: booking.studentId,
     student: booking.student || undefined,
     locationId: booking.locationId,
