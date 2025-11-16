@@ -21,6 +21,10 @@ RUN npx prisma generate
 
 # Build the application
 ENV NEXT_CONFIG_FILE=next.config.prod.ts
+ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
+ENV STRIPE_SECRET_KEY=sk_test_dummy_key_for_build
+ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_dummy_key_for_build
+ENV STRIPE_WEBHOOK_SECRET=whsec_dummy_secret_for_build
 RUN npm run build
 
 # Production image, copy all the files and run next
