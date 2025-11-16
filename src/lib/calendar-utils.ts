@@ -24,8 +24,8 @@ export function prismaBookingToBookingEvent(
     totalAmount: Number(booking.totalPrice),
     amountPaid: 0, // Default since not in Booking model
     discountsApplied: [], // Default since not in Booking model
-    specialRequests: booking.notes,
-    notes: booking.notes,
+    specialRequests: booking.notes || undefined,
+    notes: booking.notes || undefined,
     createdAt: booking.createdAt,
     updatedAt: booking.updatedAt,
   }
