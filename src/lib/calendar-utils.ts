@@ -53,7 +53,7 @@ export function prismaBookingToCalendarEvent(
       productType: booking.product?.type || 'UNKNOWN',
       studentName: booking.student?.name,
       location: booking.location?.name || 'Unknown Location',
-      status: booking.status,
+      status: booking.status as any,
       paymentStatus: PaymentStatus.PENDING,
       capacity: 20, // Default capacity since Prisma Product model doesn't have this field yet
       currentBookings: 1,
