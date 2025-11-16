@@ -210,7 +210,7 @@ export class ErrorHandler {
         category: ErrorCategory.SYSTEM,
         severity: ErrorSeverity.CRITICAL,
         message: 'Database health check failed',
-        details: { error: error.toString() }
+        details: { error: String(error) }
       });
     }
 
