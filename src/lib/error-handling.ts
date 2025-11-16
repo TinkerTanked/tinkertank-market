@@ -234,8 +234,8 @@ export async function withErrorHandling<T>(
   } catch (error) {
     await ErrorHandler.logError({
       ...context,
-      message: error.message,
-      details: { error: error.toString(), stack: error.stack }
+      message: error instanceof Error ? error.message : String(error),
+      details: { error: String(error), stack: error instanceof Error ? error.stack : undefined }
     });
     return null;
   }
