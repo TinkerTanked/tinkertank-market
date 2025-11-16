@@ -87,7 +87,7 @@ export class ErrorHandler {
           category: ErrorCategory.SYSTEM,
           severity: ErrorSeverity.MEDIUM,
           message: 'Failed to cleanup failed order',
-          details: { cleanupError: cleanupError.toString() },
+          details: { cleanupError: String(cleanupError) },
           orderId
         });
       }
