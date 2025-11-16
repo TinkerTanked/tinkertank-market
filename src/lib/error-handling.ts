@@ -150,7 +150,7 @@ export class ErrorHandler {
         return await operation();
       } catch (error) {
         lastError = error;
-        console.warn(`Operation failed on attempt ${attempt}/${maxRetries}:`, error.message);
+        console.warn(`Operation failed on attempt ${attempt}/${maxRetries}:`, error instanceof Error ? error.message : String(error));
         
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, delay * attempt));
