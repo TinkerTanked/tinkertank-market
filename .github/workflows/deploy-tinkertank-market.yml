@@ -122,7 +122,13 @@ jobs:
           echo "Deploying TinkerTank Market..."
           ./kubectl --kubeconfig=./platform --namespace=default apply -f ${REPO_NAME}.yml --force
 
+      - name: Wait for Deployment to be Ready
+        run: |
+          echo "Waiting for deployment to be ready..."
+          ./kubectl --kubeconfig=./platform --namespace=default rollout status deployment/${REPO_NAME}-${NODE_ENV} --timeout=5m
+
       - name: Run Database Migrations
         run: |
           echo "Running database migrations..."
-          ./kubectl --kubeconfig=./platform --namespace=default exec -it deployment/${REPO_NAME}-${NODE_ENV} -- npx prisma migrate deploy
+          POD_NAME=$(./kubectl --kubeconfig=./platform --namespace=default get pods -l name=${REPO_NAME}-${NODE_ENV} -o jsonpath='{.items[0].metadata.name}')
+          ./kubectl --kubeconfig=./platform --namespace=default exec $POD_NAME -- npx prisma migrate deploy
