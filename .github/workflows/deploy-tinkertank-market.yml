@@ -130,5 +130,7 @@ jobs:
       - name: Run Database Migrations
         run: |
           echo "Running database migrations..."
+          sleep 10
           POD_NAME=$(./kubectl --kubeconfig=./platform --namespace=default get pods -l name=${REPO_NAME}-${NODE_ENV} -o jsonpath='{.items[0].metadata.name}')
-          ./kubectl --kubeconfig=./platform --namespace=default exec $POD_NAME -- npx prisma migrate deploy
+          echo "Running migrations in pod: $POD_NAME"
+          ./kubectl --kubeconfig=./platform --namespace=default exec $POD_NAME -c ${REPO_NAME}-${NODE_ENV} -- npx prisma migrate deploy
