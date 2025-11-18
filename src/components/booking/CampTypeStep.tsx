@@ -1,6 +1,7 @@
 'use client'
 
 import { ClockIcon, CheckIcon, SparklesIcon } from '@heroicons/react/24/outline'
+import { getAvailableCampTypes } from '@/data/locationAvailability'
 
 interface CampType {
   id: string
@@ -178,8 +179,8 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date 
           <div className="text-center text-gray-900">Lunch + snacks</div>
           
           <div className="text-gray-600">Price</div>
-          <div className="text-center text-green-600 font-bold">$89</div>
-          <div className="text-center text-green-600 font-bold">$119</div>
+          <div className="text-center text-green-600 font-bold">$109.99</div>
+          <div className="text-center text-green-600 font-bold">$149.99</div>
         </div>
       </div>
 

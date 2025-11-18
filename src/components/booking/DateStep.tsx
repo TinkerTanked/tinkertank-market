@@ -18,6 +18,7 @@ import {
   startOfDay
 } from 'date-fns'
 import { isClosureDate, getClosureInfo } from '@/types'
+import { isDateAvailableForLocation } from '@/data/locationAvailability'
 
 interface Location {
   id: string
@@ -63,7 +64,8 @@ export default function DateStep({
   }
 
   const handleDateClick = (date: Date) => {
-    if (!isWeekend(date) && !isBefore(date, today) && !isClosureDate(date)) {
+    const isAvailable = location ? isDateAvailableForLocation(date, location.name) : true
+    if (!isWeekend(date) && !isBefore(date, today) && !isClosureDate(date) && isAvailable) {
       if (enableMultiSelect) {
         let newSelectedDates: Date[]
         
@@ -108,6 +110,10 @@ export default function DateStep({
     
     if (isClosureDate(date)) {
       return `${baseClasses} bg-red-50 text-red-500 cursor-not-allowed`
+    }
+    
+    if (location && !isDateAvailableForLocation(date, location.name)) {
+      return `${baseClasses} bg-gray-50 text-gray-400 cursor-not-allowed`
     }
     
     if (isDateSelected(date)) {
