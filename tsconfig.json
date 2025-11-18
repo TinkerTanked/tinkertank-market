@@ -43,6 +43,7 @@
     "**/*.spec.ts",
     "**/*.spec.tsx",
     "src/test/**/*",
-    "src/__tests__/**/*"
+    "src/__tests__/**/*",
+    "scripts/**/*"
   ]
 }
