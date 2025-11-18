@@ -264,8 +264,8 @@ export default function ContactPage() {
               <p className='text-gray-600 mb-4'>
                 Speak directly with our team for immediate assistance
               </p>
-              <a href='tel:+61404123456' className='btn-primary'>
-                0404 123 456
+              <a href='tel:1300670104' className='btn-primary'>
+                1300 670 104
               </a>
             </div>
 
