@@ -24,7 +24,7 @@ const sampleProducts: Product[] = [
       ]
     },
     features: ['Hands-on experiments', 'Science projects', 'Educational games'],
-    images: ['/images/science-camp.jpg'],
+    images: ['/images/camps1.jpeg'],
     maxCapacity: 20,
     tags: ['science', 'education', 'hands-on']
   },
@@ -46,7 +46,7 @@ const sampleProducts: Product[] = [
       ]
     },
     features: ['Robot building', 'Programming basics', 'Take home robot'],
-    images: ['/images/robot-party.jpg'],
+    images: ['/images/birthday-parties-1.jpg'],
     maxCapacity: 12,
     addOns: [
       {
@@ -78,7 +78,7 @@ const sampleProducts: Product[] = [
       ]
     },
     features: ['STEM projects', 'Creative problem solving', 'Peer collaboration'],
-    images: ['/images/ignite-classes.jpg'],
+    images: ['/images/memberships.jpg'],
     maxCapacity: 15,
     tags: ['subscription', 'weekly', 'stem']
   }

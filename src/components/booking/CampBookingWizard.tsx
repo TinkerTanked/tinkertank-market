@@ -87,13 +87,13 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         type: 'CAMP' as const,
         ageRange: '5-12',
         features: ['Educational activities', 'Supervised learning'],
-        images: ['/camp-placeholder.jpg'],
+        images: ['/images/camps2.jpeg'],
         date: firstDate,
         location: bookingData.location.name,
         duration: bookingData.campType.duration,
         time: bookingData.campType.time,
         description: `${bookingData.campType.name} at ${bookingData.location.name}`,
-        image: '/camp-placeholder.jpg',
+        image: '/images/camps2.jpeg',
         isActive: true,
         availableCapacity: 20
       } as any

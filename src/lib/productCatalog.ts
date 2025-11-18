@@ -56,7 +56,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Take-home projects',
       'Healthy snacks included'
     ],
-    images: ['/images/day-camp-1.jpg', '/images/day-camp-2.jpg'],
+    images: ['/images/camps1.jpeg', '/images/camps2.jpeg'],
     maxCapacity: 20,
     tags: ['coding', 'robotics', '3d-design', 'beginner-friendly']
   },
@@ -86,7 +86,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Flexible pickup times',
       'Portfolio building'
     ],
-    images: ['/images/all-day-camp-1.jpg', '/images/all-day-camp-2.jpg'],
+    images: ['/images/camps3.jpeg', '/images/camps4.jpeg'],
     maxCapacity: 16,
     tags: ['coding', 'robotics', '3d-design', 'advanced', 'extended-care']
   },
@@ -119,7 +119,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Up to 12 kids included',
       'Party host provided'
     ],
-    images: ['/images/battle-bots-1.jpg', '/images/battle-bots-2.jpg'],
+    images: ['/images/battle.jpg', '/images/workshop.jpg'],
     maxCapacity: 12,
     addOns: [
       {
@@ -167,7 +167,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Up to 12 kids included',
       'Digital game files to keep'
     ],
-    images: ['/images/gamer-party-1.jpg', '/images/gamer-party-2.jpg'],
+    images: ['/images/dropin.jpg', '/images/code-1.jpg'],
     maxCapacity: 12,
     addOns: [
       {
@@ -215,7 +215,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Up to 12 kids included',
       'Printed models to take home'
     ],
-    images: ['/images/3d-design-1.jpg', '/images/3d-design-2.jpg'],
+    images: ['/images/3d-1.jpg', '/images/workshop.jpg'],
     maxCapacity: 12,
     addOns: [
       {
@@ -260,7 +260,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Flexible scheduling',
       'Term-based programs'
     ],
-    images: ['/images/in-school-1.jpg', '/images/in-school-2.jpg'],
+    images: ['/images/memberships.jpg', '/images/after-schoolers-3.png'],
     maxCapacity: 30,
     tags: ['weekly', 'in-school', 'curriculum', 'beginner-friendly']
   },
@@ -292,7 +292,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Portfolio development',
       'Showcase opportunities'
     ],
-    images: ['/images/drop-off-1.jpg', '/images/drop-off-2.jpg'],
+    images: ['/images/dropin.jpg', '/images/tinkerers1.jpg'],
     maxCapacity: 8,
     tags: ['weekly', 'studio', 'advanced', 'small-groups']
   },
@@ -321,7 +321,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Progress reports for parents',
       'Holiday program access'
     ],
-    images: ['/images/pickup-1.jpg', '/images/pickup-2.jpg'],
+    images: ['/images/after-schoolers-3.png', '/images/tinkerers2.jpg'],
     maxCapacity: 12,
     tags: ['weekly', 'pickup', 'after-school', 'extended-care']
   }
