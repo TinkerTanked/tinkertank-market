@@ -107,7 +107,7 @@ export default function CartPage() {
                           {/* Date and Time */}
                           {item.selectedDate && (
                             <div className='flex items-center space-x-4 mt-2 text-sm text-gray-500'>
-                              <span>📅 {item.selectedDate.toLocaleDateString()}</span>
+                              <span>📅 {item.selectedDate instanceof Date ? item.selectedDate.toLocaleDateString() : new Date(item.selectedDate).toLocaleDateString()}</span>
                               {item.selectedTimeSlot && <span>🕒 {typeof item.selectedTimeSlot === 'string' ? item.selectedTimeSlot : `${item.selectedTimeSlot.start} - ${item.selectedTimeSlot.end}`}</span>}
                             </div>
                           )}
