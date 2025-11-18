@@ -23,7 +23,7 @@ async function main() {
   const neutralBay = await prisma.location.create({
     data: {
       name: 'TinkerTank Neutral Bay',
-      address: '123 Military Road, Neutral Bay NSW 2089',
+      address: '50 Yeo St, Neutral Bay, NSW, 2089',
       capacity: 20,
       timezone: 'Australia/Sydney',
     },
