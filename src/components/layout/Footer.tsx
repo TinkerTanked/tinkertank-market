@@ -20,7 +20,7 @@ export default function Footer() {
               <span className='font-display font-bold text-xl'>TinkerTank</span>
             </Link>
             <p className='text-gray-300 leading-relaxed'>
-              Inspiring the next generation of innovators through hands-on STEM learning experiences.
+              Inspiring the next generation of innovators through hands-on STEAM learning experiences.
             </p>
             <div className='flex space-x-4'>
               <a href='https://www.facebook.com/tinkertankau' target='_blank' rel='noopener noreferrer' className='text-gray-400 hover:text-white transition-colors duration-200'>
@@ -49,7 +49,7 @@ export default function Footer() {
             <h3 className='font-display font-semibold text-lg'>Programs</h3>
             <div className='space-y-2'>
               <Link href='/camps' className='block text-gray-300 hover:text-white transition-colors duration-200'>
-                STEM Camps
+                STEAM Camps
               </Link>
               <Link href='/birthdays' className='block text-gray-300 hover:text-white transition-colors duration-200'>
                 Birthday Parties

@@ -36,7 +36,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
   {
     id: 'day-camp',
     name: 'Day Camp',
-    description: 'Join us for an exciting day of coding, robotics, and tech adventures! Our day camps provide the perfect introduction to STEM learning in a fun, engaging environment.',
+    description: 'Join us for an exciting day of coding, robotics, and tech adventures! Our day camps provide the perfect introduction to STEAM learning in a fun, engaging environment.',
     shortDescription: 'Daily tech adventures for young innovators',
     price: 109,
     category: 'camps',
@@ -240,7 +240,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
   {
     id: 'in-school-ignite',
     name: 'In-School Ignite Program',
-    description: 'Weekly tech education delivered directly at your school! Our certified instructors bring engaging STEM activities right to the classroom.',
+    description: 'Weekly tech education delivered directly at your school! Our certified instructors bring engaging STEAM activities right to the classroom.',
     shortDescription: 'Weekly tech education at your school',
     price: 25,
     category: 'subscriptions',

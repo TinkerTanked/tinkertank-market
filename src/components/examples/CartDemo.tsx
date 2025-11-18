@@ -62,8 +62,8 @@ const sampleProducts: Product[] = [
   {
     id: 'subscription-1',
     name: 'Ignite Weekly Classes',
-    description: 'Weekly after-school STEM classes to ignite creativity',
-    shortDescription: 'Weekly STEM classes',
+    description: 'Weekly after-school STEAM classes to ignite creativity',
+shortDescription: 'Weekly STEAM classes',
     price: 120,
     category: 'subscriptions',
     ageRange: '7-16',
@@ -77,10 +77,10 @@ const sampleProducts: Product[] = [
         { start: '17:45', end: '19:15' }
       ]
     },
-    features: ['STEM projects', 'Creative problem solving', 'Peer collaboration'],
+    features: ['STEAM projects', 'Creative problem solving', 'Peer collaboration'],
     images: ['/images/memberships.jpg'],
     maxCapacity: 15,
-    tags: ['subscription', 'weekly', 'stem']
+    tags: ['subscription', 'weekly', 'steam']
   }
 ];
 
