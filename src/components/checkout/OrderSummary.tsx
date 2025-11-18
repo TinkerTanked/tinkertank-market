@@ -29,7 +29,7 @@ export default function OrderSummary() {
               <p className='text-sm text-gray-600'>Qty: {item.quantity}</p>
               {item.selectedDate && (
                 <p className='text-xs text-gray-500'>
-                  {item.selectedDate.toLocaleDateString()} • {item.selectedTimeSlot ? (typeof item.selectedTimeSlot === 'string' ? item.selectedTimeSlot : `${item.selectedTimeSlot.start} - ${item.selectedTimeSlot.end}`) : ''}
+                  {item.selectedDate instanceof Date ? item.selectedDate.toLocaleDateString() : new Date(item.selectedDate).toLocaleDateString()} • {item.selectedTimeSlot ? (typeof item.selectedTimeSlot === 'string' ? item.selectedTimeSlot : `${item.selectedTimeSlot.start} - ${item.selectedTimeSlot.end}`) : ''}
                 </p>
               )}
             </div>
