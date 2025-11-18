@@ -21,7 +21,7 @@ const CreatePaymentIntentSchema = z.object({
       parentName: z.string().min(1),
       parentEmail: z.string().email(),
       parentPhone: z.string().min(1),
-      allergies: z.string().optional(),
+      allergies: z.union([z.string(), z.array(z.string())]).optional(),
       medicalInfo: z.string().optional(),
     })),
     selectedDate: z.string().optional(),
