@@ -5,39 +5,41 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('📍 Seeding locations...')
 
-  const neutralBay = await prisma.location.upsert({
-    where: { name: 'TinkerTank Neutral Bay' },
-    update: {
-      address: '50 Yeo St, Neutral Bay, NSW, 2089',
-      capacity: 20,
-      timezone: 'Australia/Sydney',
-    },
-    create: {
-      name: 'TinkerTank Neutral Bay',
-      address: '50 Yeo St, Neutral Bay, NSW, 2089',
-      capacity: 20,
-      timezone: 'Australia/Sydney',
-    },
+  const existingNeutralBay = await prisma.location.findFirst({
+    where: { name: 'TinkerTank Neutral Bay' }
   })
 
-  const manlyLibrary = await prisma.location.upsert({
-    where: { name: 'Manly Library' },
-    update: {
-      address: 'Manly Library, Manly NSW 2095',
-      capacity: 16,
-      timezone: 'Australia/Sydney',
-    },
-    create: {
-      name: 'Manly Library',
-      address: 'Manly Library, Manly NSW 2095',
-      capacity: 16,
-      timezone: 'Australia/Sydney',
-    },
+  if (!existingNeutralBay) {
+    await prisma.location.create({
+      data: {
+        name: 'TinkerTank Neutral Bay',
+        address: '50 Yeo St, Neutral Bay, NSW, 2089',
+        capacity: 20,
+        timezone: 'Australia/Sydney',
+      }
+    })
+    console.log('✅ Created: Neutral Bay')
+  } else {
+    console.log('✅ Location already exists: Neutral Bay')
+  }
+
+  const existingManly = await prisma.location.findFirst({
+    where: { name: 'Manly Library' }
   })
 
-  console.log('✅ Locations created/updated:')
-  console.log('  - Neutral Bay')
-  console.log('  - Manly Library')
+  if (!existingManly) {
+    await prisma.location.create({
+      data: {
+        name: 'Manly Library',
+        address: 'Manly Library, Manly NSW 2095',
+        capacity: 16,
+        timezone: 'Australia/Sydney',
+      }
+    })
+    console.log('✅ Created: Manly Library')
+  } else {
+    console.log('✅ Location already exists: Manly Library')
+  }
 }
 
 main()
