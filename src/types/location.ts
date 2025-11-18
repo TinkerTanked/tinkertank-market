@@ -135,7 +135,7 @@ export const NEUTRAL_BAY_LOCATION: Omit<Location, 'id' | 'createdAt' | 'updatedA
     email: 'neutralbay@tinkertank.com.au', // Placeholder
   },
   facilities: [
-    'STEM Learning Lab',
+    'STEAM Learning Lab',
     'Robotics Workshop Area',
     'Arts & Crafts Station',
     'Birthday Party Room',

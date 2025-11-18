@@ -18,7 +18,7 @@ export default function BirthdaysPage() {
               Unforgettable <span className='text-yellow-300'>Birthday</span> Parties
             </h1>
             <p className='text-xl md:text-2xl font-light text-purple-100 max-w-3xl mx-auto'>
-              Turn your child's special day into an epic STEM adventure they'll remember forever
+              Turn your child's special day into an epic STEAM adventure they'll remember forever
             </p>
             <div className='flex flex-col sm:flex-row gap-4 justify-center items-center pt-4'>
               <div className='flex items-center space-x-2 text-purple-100'>
@@ -71,7 +71,7 @@ export default function BirthdaysPage() {
                 Themed Activities
               </h3>
               <p className='text-gray-600 text-sm'>
-                Age-appropriate STEM activities tailored to your theme
+                Age-appropriate STEAM activities tailored to your theme
               </p>
             </div>
 

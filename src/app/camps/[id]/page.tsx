@@ -51,7 +51,7 @@ export default function CampDetailPage() {
             <div className='space-y-6'>
               <div className='space-y-2'>
                 <div className='flex items-center space-x-2 text-primary-600 font-medium'>
-                  <span className='bg-primary-100 px-3 py-1 rounded-full text-sm'>STEM Camp</span>
+                  <span className='bg-primary-100 px-3 py-1 rounded-full text-sm'>STEAM Camp</span>
                   <span>•</span>
                   <span>{product.ageRange}</span>
                 </div>

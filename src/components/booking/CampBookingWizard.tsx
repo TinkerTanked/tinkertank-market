@@ -166,7 +166,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
           {/* Header */}
           <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Book Your STEM Camp</h2>
+              <h2 className="text-2xl font-bold text-white">Book Your STEAM Camp</h2>
               <button 
                 onClick={onClose}
                 className="text-white hover:text-primary-100 transition-colors"

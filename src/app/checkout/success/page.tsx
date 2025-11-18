@@ -101,7 +101,7 @@ function CheckoutSuccessContent() {
               Booking Confirmed!
             </h1>
             <p className='text-xl text-gray-600'>
-              Your STEM adventure is all set. We can't wait to see you there!
+              Your STEAM adventure is all set. We can't wait to see you there!
             </p>
           </div>
         </div>

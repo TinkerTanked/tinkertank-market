@@ -107,7 +107,7 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-gray-700">Hands-on STEM experiments</span>
+                    <span className="text-sm text-gray-700">Hands-on STEAM experiments</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>

@@ -37,7 +37,7 @@ export default function CartPage() {
                 Your Cart is Empty
               </h1>
               <p className='text-lg text-gray-600 max-w-md mx-auto'>
-                Discover our amazing STEM programs and start building your child's future
+                Discover our amazing STEAM programs and start building your child's future
               </p>
             </div>
             <div className='flex flex-col sm:flex-row gap-4 justify-center'>

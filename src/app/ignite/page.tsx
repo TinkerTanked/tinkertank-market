@@ -28,10 +28,10 @@ export default function IgnitePage() {
               </span>
             </div>
             <h1 className='text-4xl md:text-5xl font-display font-bold leading-tight text-shadow-sm'>
-              Ignite <span className='text-yellow-300'>STEM</span> Program
+              Ignite <span className='text-yellow-300'>STEAM</span> Program
             </h1>
             <p className='text-xl md:text-2xl font-light text-blue-100 max-w-3xl mx-auto'>
-              Weekly STEM sessions that build confidence, creativity, and problem-solving skills throughout the school term
+              Weekly STEAM sessions that build confidence, creativity, and problem-solving skills throughout the school term
             </p>
             <div className='flex flex-col sm:flex-row gap-4 justify-center items-center pt-4'>
               <div className='flex items-center space-x-2 text-blue-100'>
@@ -84,7 +84,7 @@ export default function IgnitePage() {
                 Make Friends
               </h3>
               <p className='text-gray-600'>
-                Regular sessions create lasting friendships with like-minded peers who share STEM interests
+                Regular sessions create lasting friendships with like-minded peers who share STEAM interests
               </p>
             </div>
 
@@ -96,7 +96,7 @@ export default function IgnitePage() {
                 Discover Passions
               </h3>
               <p className='text-gray-600'>
-                Exposure to diverse STEM fields helps kids identify their natural interests and talents
+                Exposure to diverse STEAM fields helps kids identify their natural interests and talents
               </p>
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function IgnitePage() {
               The Learning Journey
             </h2>
             <p className='text-lg text-gray-600'>
-              Progressive skill building across multiple STEM disciplines
+              Progressive skill building across multiple STEAM disciplines
             </p>
           </div>
 
@@ -142,7 +142,7 @@ export default function IgnitePage() {
               </div>
               <h3 className='font-display font-semibold text-lg'>Foundation</h3>
               <p className='text-gray-600 text-sm'>
-                Introduction to STEM concepts through fun, hands-on activities
+                Introduction to STEAM concepts through fun, hands-on activities
               </p>
             </div>
 
@@ -152,7 +152,7 @@ export default function IgnitePage() {
               </div>
               <h3 className='font-display font-semibold text-lg'>Exploration</h3>
               <p className='text-gray-600 text-sm'>
-                Deeper dive into different STEM fields to discover interests
+                Deeper dive into different STEAM fields to discover interests
               </p>
             </div>
 

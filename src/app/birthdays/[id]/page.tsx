@@ -222,7 +222,7 @@ export default function BirthdayDetailPage() {
                   </div>
                   <div>
                     <h3 className='font-medium text-gray-900'>Main Activities (60 mins)</h3>
-                    <p className='text-gray-600 text-sm'>Hands-on STEM activities, building projects, and themed experiments</p>
+                    <p className='text-gray-600 text-sm'>Hands-on STEAM activities, building projects, and themed experiments</p>
                   </div>
                 </div>
 

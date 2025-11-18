@@ -41,7 +41,7 @@ export default function ContactPage() {
             Get in Touch
           </h1>
           <p className='text-xl text-gray-600 max-w-2xl mx-auto'>
-            Have questions about our programs? We'd love to hear from you and help find the perfect STEM experience for your child.
+            Have questions about our programs? We'd love to hear from you and help find the perfect STEAM experience for your child.
           </p>
         </div>
       </section>

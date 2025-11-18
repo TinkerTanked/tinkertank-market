@@ -24,7 +24,7 @@ export default function CampsPage() {
         <div className='container-custom'>
           <div className='text-center space-y-6'>
             <h1 className='text-4xl md:text-5xl font-display font-bold leading-tight text-shadow-sm'>
-              STEM <span className='text-yellow-300'>Adventure</span> Camps
+              STEAM <span className='text-yellow-300'>Adventure</span> Camps
             </h1>
             <p className='text-xl md:text-2xl font-light text-blue-100 max-w-3xl mx-auto'>
               Hands-on learning experiences where kids explore science, technology, engineering, and math through exciting projects and experiments
@@ -188,7 +188,7 @@ export default function CampsPage() {
               </div>
               <h3 className='font-display font-semibold text-lg'>Expert Instructors</h3>
               <p className='text-gray-600 text-sm'>
-                STEM professionals who love teaching and inspiring young minds
+                STEAM professionals who love teaching and inspiring young minds
               </p>
             </div>
 

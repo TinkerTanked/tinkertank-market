@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
               maxAge: 12
             },
             description: 'Learn robotics and programming',
-            features: ['Robotics', 'Programming', 'STEM Learning'],
+            features: ['Robotics', 'Programming', 'STEAM Learning'],
             isActive: true
           } as any,
           bookings: [

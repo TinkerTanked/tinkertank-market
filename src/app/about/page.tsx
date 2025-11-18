@@ -20,7 +20,7 @@ export default function AboutPage() {
                 Inspiring the Next Generation of <span className='text-primary-600'>Innovators</span>
               </h1>
               <p className='text-xl text-gray-600 leading-relaxed'>
-                TinkerTank was founded with a simple belief: every child has the potential to be a creator, problem-solver, and innovator. We make STEM learning accessible, engaging, and fun.
+                TinkerTank was founded with a simple belief: every child has the potential to be a creator, problem-solver, and innovator. We make STEAM learning accessible, engaging, and fun.
               </p>
               <Link href='/camps' className='btn-primary text-lg px-8 py-4 inline-flex items-center'>
                 <RocketLaunchIcon className='w-5 h-5 mr-2' />
@@ -57,7 +57,7 @@ export default function AboutPage() {
               <p>
                 TinkerTank began when our founder, a passionate engineer and parent, noticed the gap between 
                 traditional education and the hands-on learning that truly sparks curiosity in children. 
-                Too many kids were losing interest in STEM subjects because they seemed abstract and disconnected 
+                Too many kids were losing interest in STEAM subjects because they seemed abstract and disconnected 
                 from real-world applications.
               </p>
               
@@ -68,7 +68,7 @@ export default function AboutPage() {
               </p>
               
               <p>
-                Today, TinkerTank has grown into Sydney's premier destination for hands-on STEM education. 
+                Today, TinkerTank has grown into Sydney's premier destination for hands-on STEAM education. 
                 We've helped over 500 children discover their passion for science, technology, engineering, 
                 and mathematics through engaging, age-appropriate experiences that feel more like play than learning.
               </p>
@@ -134,7 +134,7 @@ export default function AboutPage() {
                 Expert Instruction
               </h3>
               <p className='text-gray-600'>
-                Our instructors are passionate STEM professionals who know how to make complex concepts accessible.
+                Our instructors are passionate STEAM professionals who know how to make complex concepts accessible.
               </p>
             </div>
 
@@ -146,7 +146,7 @@ export default function AboutPage() {
                 Community Focused
               </h3>
               <p className='text-gray-600'>
-                We're part of the Neutral Bay community and committed to making STEM education accessible to all families.
+                We're part of the Neutral Bay community and committed to making STEAM education accessible to all families.
               </p>
             </div>
 
@@ -173,7 +173,7 @@ export default function AboutPage() {
               Meet Our Team
             </h2>
             <p className='text-xl text-gray-600'>
-              Passionate educators and STEM professionals who love inspiring young minds
+              Passionate educators and STEAM professionals who love inspiring young minds
             </p>
           </div>
 
@@ -186,7 +186,7 @@ export default function AboutPage() {
                 <h3 className='font-display font-semibold text-xl text-gray-900'>Dr. Alex Chen</h3>
                 <p className='text-primary-600 font-medium'>Founder & Lead Educator</p>
                 <p className='text-gray-600 text-sm mt-2'>
-                  PhD in Robotics Engineering with 10+ years of experience making STEM accessible to children
+                  PhD in Robotics Engineering with 10+ years of experience making STEAM accessible to children
                 </p>
               </div>
             </div>

@@ -16,7 +16,7 @@ export default function ProductCard({ product, featured = false, showCategory = 
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
-      case 'camps': return 'STEM Camp'
+      case 'camps': return 'STEAM Camp'
       case 'birthdays': return 'Birthday Party'
       case 'subscriptions': return 'Ignite Program'
       default: return category

@@ -36,7 +36,7 @@ export default function CalendarPage() {
         duration: 8, // 8 hours
         minAge: 5,
         maxAge: 12,
-        features: ['STEM activities', 'Lunch included'],
+        features: ['STEAM activities', 'Lunch included'],
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),

@@ -12,7 +12,7 @@ export default function CatalogPage() {
 
   const categories = [
     { id: 'all', name: 'All Programs', count: products.length },
-    { id: 'camps', name: 'STEM Camps', count: products.filter(p => p.category === 'camps').length },
+    { id: 'camps', name: 'STEAM Camps', count: products.filter(p => p.category === 'camps').length },
     { id: 'birthdays', name: 'Birthday Parties', count: products.filter(p => p.category === 'birthdays').length },
     { id: 'subscriptions', name: 'Ignite Programs', count: products.filter(p => p.category === 'subscriptions').length }
   ]
@@ -70,10 +70,10 @@ export default function CatalogPage() {
       <section className='py-16 bg-gradient-to-br from-primary-500 to-accent-500 text-white'>
         <div className='container-custom text-center'>
           <h1 className='text-4xl md:text-5xl font-display font-bold mb-4'>
-            All STEM Programs
+            All STEAM Programs
           </h1>
           <p className='text-xl text-blue-100 max-w-2xl mx-auto'>
-            Discover the perfect STEM experience for your child from our complete range of programs
+            Discover the perfect STEAM experience for your child from our complete range of programs
           </p>
         </div>
       </section>
@@ -201,7 +201,7 @@ export default function CatalogPage() {
                   <span className='text-4xl'>🔬</span>
                 </div>
                 <h3 className='font-display font-semibold text-xl text-gray-900 mb-3'>
-                  STEM Camps
+                  STEAM Camps
                 </h3>
                 <p className='text-gray-600 mb-6'>
                   Day and extended camps with hands-on experiments and projects
@@ -240,7 +240,7 @@ export default function CatalogPage() {
                   Ignite Programs
                 </h3>
                 <p className='text-gray-600 mb-6'>
-                  Weekly subscription programs for ongoing STEM learning
+                  Weekly subscription programs for ongoing STEAM learning
                 </p>
                 <button
                   onClick={() => setSelectedCategory('subscriptions')}

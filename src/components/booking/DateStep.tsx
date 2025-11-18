@@ -147,8 +147,8 @@ export default function DateStep({
         </h3>
         <p className="text-gray-600">
           {enableMultiSelect 
-            ? `Select one or more weekdays for your STEM camp at ${location?.name || 'your chosen location'}`
-            : `Select a weekday for your STEM camp at ${location?.name || 'your chosen location'}`
+            ? `Select one or more weekdays for your STEAM camp at ${location?.name || 'your chosen location'}`
+: `Select a weekday for your STEAM camp at ${location?.name || 'your chosen location'}`
           }
         </p>
       </div>

@@ -6,10 +6,10 @@ import Footer from '@/components/layout/Footer'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'TinkerTank - STEM Learning Adventures for Kids',
+  title: 'TinkerTank - STEAM Learning Adventures for Kids',
   description:
-    'Join TinkerTank for exciting STEM camps, birthday parties, and educational programs. Hands-on learning experiences that inspire creativity and innovation in children.',
-  keywords: 'STEM education, kids camps, birthday parties, science activities, technology learning, engineering for kids, math programs',
+    'Join TinkerTank for exciting STEAM camps, birthday parties, and educational programs. Hands-on learning experiences that inspire creativity and innovation in children.',
+  keywords: 'STEAM education, kids camps, birthday parties, science activities, technology learning, engineering for kids, math programs',
   authors: [{ name: 'TinkerTank' }],
   creator: 'TinkerTank',
   publisher: 'TinkerTank',
@@ -18,15 +18,15 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_AU',
     url: 'https://tinkertank.com.au',
-    title: 'TinkerTank - STEM Learning Adventures for Kids',
+    title: 'TinkerTank - STEAM Learning Adventures for Kids',
     description:
-      'Exciting STEM camps, birthday parties, and educational programs for children. Hands-on learning experiences that inspire creativity.',
+      'Exciting STEAM camps, birthday parties, and educational programs for children. Hands-on learning experiences that inspire creativity.',
     siteName: 'TinkerTank',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TinkerTank - STEM Learning Adventures for Kids',
-    description: 'Exciting STEM camps, birthday parties, and educational programs for children.',
+    title: 'TinkerTank - STEAM Learning Adventures for Kids',
+    description: 'Exciting STEAM camps, birthday parties, and educational programs for children.',
   },
 }
 

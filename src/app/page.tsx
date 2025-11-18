@@ -17,7 +17,7 @@ export default function HomePage() {
                   Where <span className='text-yellow-300'>Science</span> Meets <span className='text-yellow-300'>Adventure</span>
                 </h1>
                 <p className='text-xl md:text-2xl font-light text-blue-100 max-w-2xl'>
-                  Join TinkerTank for hands-on STEM learning experiences that spark creativity and inspire the next generation of innovators
+                  Join TinkerTank for hands-on STEAM learning experiences that spark creativity and inspire the next generation of innovators
                 </p>
               </div>
 
@@ -96,7 +96,7 @@ export default function HomePage() {
             </div>
             <div className='text-center'>
               <div className='text-4xl font-display font-bold text-primary-600 mb-2'>15+</div>
-              <div className='text-gray-600 font-medium'>STEM Topics</div>
+              <div className='text-gray-600 font-medium'>STEAM Topics</div>
             </div>
             <div className='text-center'>
               <div className='text-4xl font-display font-bold text-primary-600 mb-2'>98%</div>
@@ -114,7 +114,7 @@ export default function HomePage() {
               Popular Programs
             </h2>
             <p className='text-xl text-gray-600 max-w-3xl mx-auto'>
-              Discover our most loved STEM experiences that kids can't stop talking about
+              Discover our most loved STEAM experiences that kids can't stop talking about
             </p>
           </div>
 
@@ -217,7 +217,7 @@ export default function HomePage() {
                 Ready to Spark Your Child's Curiosity?
               </h2>
               <p className='text-xl text-blue-100 max-w-2xl mx-auto'>
-                Join hundreds of families who've discovered the joy of hands-on STEM learning
+                Join hundreds of families who've discovered the joy of hands-on STEAM learning
               </p>
               <div className='flex flex-col sm:flex-row gap-4 justify-center items-center'>
                 <Link href='/camps' className='btn-secondary text-lg px-8 py-4'>

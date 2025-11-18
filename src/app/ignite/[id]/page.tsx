@@ -164,7 +164,7 @@ export default function IgniteDetailPage() {
                     Weekly Sessions
                   </h3>
                   <p className='text-blue-800'>
-                    Consistent weekly learning builds momentum and deep understanding of STEM concepts.
+                    Consistent weekly learning builds momentum and deep understanding of STEAM concepts.
                   </p>
                 </div>
 

@@ -46,7 +46,7 @@ export default function CheckoutPage() {
             <ShoppingCartIcon className='w-12 h-12 text-gray-400' />
           </div>
           <h1 className='text-2xl font-bold text-gray-900 mb-4'>Your cart is empty</h1>
-          <p className='text-gray-600 mb-8'>Add some amazing STEM experiences to get started!</p>
+          <p className='text-gray-600 mb-8'>Add some amazing STEAM experiences to get started!</p>
           <Link href='/camps' className='btn-primary'>
             Browse Programs
           </Link>

@@ -70,7 +70,7 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
       <div className="bg-white border-2 border-primary-200 rounded-xl p-6 shadow-sm">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h4 className="text-xl font-bold text-gray-900 mb-2">STEM Adventure Camp</h4>
+            <h4 className="text-xl font-bold text-gray-900 mb-2">STEAM Adventure Camp</h4>
             <div className="flex items-center space-x-2 text-primary-600">
               <SparklesIcon className="w-5 h-5" />
               <span className="font-medium">Ready for an amazing learning adventure!</span>
@@ -162,7 +162,7 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
         <div className="grid gap-2 md:grid-cols-2 text-sm text-green-800">
           <div className="flex items-center space-x-2">
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-            <span>Hands-on STEM experiments</span>
+            <span>Hands-on STEAM experiments</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>

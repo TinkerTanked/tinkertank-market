@@ -8,7 +8,7 @@ export interface LocationAvailability {
 export const LOCATION_AVAILABILITY: LocationAvailability[] = [
   {
     locationId: 'neutral-bay',
-    locationName: 'TinkerTank Neutral Bay',
+    locationName: 'Neutral Bay',
     availableCampTypes: ['day', 'allday'],
   },
   {
@@ -29,7 +29,8 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
 export function getLocationAvailability(locationName: string): LocationAvailability | undefined {
   return LOCATION_AVAILABILITY.find(loc => 
     loc.locationName === locationName || 
-    locationName.includes(loc.locationName.split(' ').pop() || '')
+    locationName.includes(loc.locationName) ||
+    loc.locationName.includes(locationName)
   )
 }
 
