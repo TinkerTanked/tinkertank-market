@@ -8,7 +8,7 @@ export interface LocationAvailability {
 export const LOCATION_AVAILABILITY: LocationAvailability[] = [
   {
     locationId: 'neutral-bay',
-    locationName: 'Neutral Bay',
+    locationName: 'TinkerTank Neutral Bay',
     availableCampTypes: ['day', 'allday'],
   },
   {
