@@ -134,3 +134,11 @@ jobs:
           POD_NAME=$(./kubectl --kubeconfig=./platform --namespace=default get pods -l name=${REPO_NAME}-${NODE_ENV} -o jsonpath='{.items[0].metadata.name}')
           echo "Running migrations in pod: $POD_NAME"
           ./kubectl --kubeconfig=./platform --namespace=default exec $POD_NAME -c ${REPO_NAME}-${NODE_ENV} -- npx prisma migrate deploy
+
+      - name: Seed Database (First Deployment Only)
+        run: |
+          echo "Seeding database..."
+          POD_NAME=$(./kubectl --kubeconfig=./platform --namespace=default get pods -l name=${REPO_NAME}-${NODE_ENV} -o jsonpath='{.items[0].metadata.name}')
+          echo "Running seed in pod: $POD_NAME"
+          ./kubectl --kubeconfig=./platform --namespace=default exec $POD_NAME -c ${REPO_NAME}-${NODE_ENV} -- npx prisma db seed
+        continue-on-error: true
