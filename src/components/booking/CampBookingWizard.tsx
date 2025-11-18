@@ -136,6 +136,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
             selectedCampType={bookingData.campType}
             onCampTypeSelect={(campType) => updateBookingData('campType', campType)}
             date={bookingData.date}
+            location={bookingData.location}
           />
         )
       case 4:
