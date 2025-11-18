@@ -12,14 +12,10 @@ import {
   ShoppingCartIcon
 } from '@heroicons/react/24/outline'
 import { getProductById } from '@/data/products'
-import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
-import DateTimeSelector from '@/components/booking/DateTimeSelector'
+import CampBookingWizard from '@/components/booking/CampBookingWizard'
 
 export default function CampDetailPage() {
   const params = useParams()
-  const { addItem } = useEnhancedCartStore()
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
   const [isBookingOpen, setIsBookingOpen] = useState(false)
 
   const product = getProductById(params.id as string)
@@ -44,23 +40,6 @@ export default function CampDetailPage() {
       currency: 'AUD',
       minimumFractionDigits: 0,
     }).format(price)
-  }
-
-  const handleAddToCart = () => {
-    if (!selectedDate || !selectedTimeSlot) {
-      setIsBookingOpen(true)
-      return
-    }
-
-    addItem(product, {
-      selectedDate,
-      selectedTimeSlot: selectedTimeSlot as any, // TODO: Fix TimeSlot type mismatch
-      quantity: 1
-    })
-
-    setSelectedDate(null)
-    setSelectedTimeSlot(null)
-    setIsBookingOpen(false)
   }
 
   return (
@@ -194,69 +173,10 @@ export default function CampDetailPage() {
       </section>
 
       {/* Booking Modal */}
-      {isBookingOpen && (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
-          <div className='bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto'>
-            <div className='p-6 border-b border-gray-200'>
-              <div className='flex items-center justify-between'>
-                <h2 className='text-2xl font-display font-bold text-gray-900'>
-                  Select Date & Time for {product.name}
-                </h2>
-                <button
-                  onClick={() => setIsBookingOpen(false)}
-                  className='text-gray-400 hover:text-gray-600 text-2xl'
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-
-            <div className='p-6'>
-              <DateTimeSelector
-                productId={product.id}
-                onDateSelect={(date, timeSlot) => {
-                  setSelectedDate(date)
-                  setSelectedTimeSlot(timeSlot)
-                }}
-                selectedDate={selectedDate}
-                selectedTimeSlot={selectedTimeSlot}
-              />
-
-              {selectedDate && selectedTimeSlot && (
-                <div className='mt-8 p-6 bg-primary-50 rounded-xl'>
-                  <h3 className='font-medium text-gray-900 mb-4'>Booking Summary</h3>
-                  <div className='space-y-2 text-sm'>
-                    <div className='flex justify-between'>
-                      <span>Camp:</span>
-                      <span className='font-medium'>{product.name}</span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span>Date:</span>
-                      <span className='font-medium'>{selectedDate.toLocaleDateString()}</span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span>Time:</span>
-                      <span className='font-medium'>{selectedTimeSlot}</span>
-                    </div>
-                    <div className='flex justify-between font-bold text-lg pt-2 border-t'>
-                      <span>Total:</span>
-                      <span>{formatPrice(product.price)}</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleAddToCart}
-                    className='btn-primary w-full mt-6'
-                  >
-                    <ShoppingCartIcon className='w-5 h-5 mr-2' />
-                    Add to Cart
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <CampBookingWizard 
+        isOpen={isBookingOpen}
+        onClose={() => setIsBookingOpen(false)}
+      />
     </div>
   )
 }
