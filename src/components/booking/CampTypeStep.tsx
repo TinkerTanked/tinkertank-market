@@ -22,7 +22,7 @@ const CAMP_TYPES: CampType[] = [
     id: 'day-camp',
     type: 'day',
     name: 'Day Camp',
-    price: 89,
+    price: 109.99,
     duration: '6 hours',
     time: '9:00 AM - 3:00 PM'
   },
@@ -30,7 +30,7 @@ const CAMP_TYPES: CampType[] = [
     id: 'allday-camp', 
     type: 'allday',
     name: 'All Day Camp',
-    price: 119,
+    price: 149.99,
     duration: '8 hours',
     time: '9:00 AM - 5:00 PM'
   }
