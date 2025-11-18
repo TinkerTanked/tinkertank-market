@@ -70,10 +70,10 @@ export default function ContactPage() {
                     <h3 className='font-display font-semibold text-lg text-gray-900'>Phone</h3>
                     <p className='text-gray-600'>Give us a call for immediate assistance</p>
                     <a 
-                      href='tel:+61404123456' 
+                      href='tel:1300670104' 
                       className='text-primary-600 hover:text-primary-700 font-medium transition-colors duration-200'
                     >
-                      0404 123 456
+                      1300 670 104
                     </a>
                   </div>
                 </div>
