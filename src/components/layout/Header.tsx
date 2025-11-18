@@ -29,11 +29,8 @@ export default function Header() {
       <div className='container-custom'>
         <div className='flex items-center justify-between h-16'>
           {/* Logo */}
-          <Link href='/' className='flex items-center space-x-3'>
-            <div className='w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center'>
-              <span className='text-white font-bold text-xl'>T</span>
-            </div>
-            <span className='font-display font-bold text-xl text-gray-900'>TinkerTank</span>
+          <Link href='/' className='flex items-center'>
+            <span className='font-display font-bold text-xl text-gray-900'>TinkerTank®</span>
           </Link>
 
           {/* Desktop Navigation */}
