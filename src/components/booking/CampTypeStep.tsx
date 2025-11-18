@@ -16,6 +16,7 @@ interface CampTypeStepProps {
   selectedCampType: CampType | null
   onCampTypeSelect: (campType: CampType) => void
   date: Date | null
+  location?: { id: string; name: string; address: string } | null
 }
 
 const CAMP_TYPES: CampType[] = [
@@ -37,7 +38,10 @@ const CAMP_TYPES: CampType[] = [
   }
 ]
 
-export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date }: CampTypeStepProps) {
+export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date, location }: CampTypeStepProps) {
+  const availableTypes = location ? getAvailableCampTypes(location.name) : ['day', 'allday']
+  const filteredCampTypes = CAMP_TYPES.filter(camp => availableTypes.includes(camp.type))
+  
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-AU', {
       weekday: 'long',
@@ -57,7 +61,7 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date 
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {CAMP_TYPES.map((campType) => (
+        {filteredCampTypes.map((campType) => (
           <div
             key={campType.id}
             className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
