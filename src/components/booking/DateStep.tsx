@@ -318,7 +318,7 @@ export default function DateStep({
               {enableMultiSelect && <li>• Select multiple dates for multi-day bookings</li>}
               <li>• Book up to 3 months in advance</li>
               <li>• Each camp is limited to 12 participants</li>
-              <li>• Cancellation available up to 48 hours before</li>
+              
             </ul>
           </div>
         </div>

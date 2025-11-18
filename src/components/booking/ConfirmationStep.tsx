@@ -215,7 +215,7 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
             <ul className="text-blue-800 text-sm space-y-1">
               <li>• Suitable for ages 5-16 years</li>
               <li>• Maximum 12 children per camp</li>
-              <li>• Free cancellation up to 48 hours before</li>
+              
               <li>• Student details required at checkout</li>
               <li>• Photo permission forms included</li>
             </ul>

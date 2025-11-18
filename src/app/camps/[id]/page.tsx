@@ -160,12 +160,7 @@ export default function CampDetailPage() {
                     Just bring lunch, water bottle, and enthusiasm! All materials and equipment provided.
                   </p>
                 </div>
-                <div className='bg-yellow-50 rounded-lg p-4'>
-                  <h3 className='font-medium text-yellow-900 mb-2'>Cancellation Policy</h3>
-                  <p className='text-yellow-800'>
-                    Full refund available up to 48 hours before camp starts. See our policy for details.
-                  </p>
-                </div>
+
               </div>
             </div>
           </div>

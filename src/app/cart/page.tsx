@@ -223,7 +223,7 @@ export default function CartPage() {
                 </div>
                 <div className='flex items-center space-x-2 text-sm text-gray-600'>
                   <span className='text-green-500'>✓</span>
-                  <span>48-hour cancellation policy</span>
+  
                 </div>
                 <div className='flex items-center space-x-2 text-sm text-gray-600'>
                   <span className='text-green-500'>✓</span>

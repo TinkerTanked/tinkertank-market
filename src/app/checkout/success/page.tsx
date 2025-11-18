@@ -259,7 +259,7 @@ function CheckoutSuccessContent() {
             <li>• Please arrive 15 minutes before your scheduled time</li>
             <li>• Bring a water bottle and lunch (for full-day programs)</li>
             <li>• All materials and equipment will be provided</li>
-            <li>• Cancellations must be made at least 48 hours in advance for a full refund</li>
+
             <li>• Contact us immediately if you have any dietary restrictions or medical concerns</li>
           </ul>
         </div>
