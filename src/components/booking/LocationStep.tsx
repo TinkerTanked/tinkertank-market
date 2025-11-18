@@ -84,7 +84,7 @@ export default function LocationStep({ selectedLocation, onLocationSelect }: Loc
               {/* Location Details */}
               <div className="flex-1">
                 <h4 className="text-lg font-semibold text-gray-900 mb-1">
-                  TinkerTank {location.name}
+                  {location.name}
                 </h4>
                 <p className="text-gray-600 text-sm mb-3">
                   {location.address}
@@ -112,33 +112,12 @@ export default function LocationStep({ selectedLocation, onLocationSelect }: Loc
               )}
             </div>
 
-            {/* Coming Soon Badge for Future Locations */}
-            {location.id !== 'neutral-bay' && (
-              <div className="absolute top-4 right-4">
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  Coming Soon
-                </span>
-              </div>
-            )}
+
           </div>
         ))}
       </div>
 
-      {/* Info Section */}
-      <div className="bg-blue-50 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-blue-600 text-lg">ℹ️</span>
-          </div>
-          <div>
-            <h4 className="font-medium text-blue-900 mb-1">More Locations Coming Soon!</h4>
-            <p className="text-blue-800 text-sm">
-              We're expanding across Sydney to bring STEM learning closer to you. 
-              Follow us for updates on new locations opening in 2024.
-            </p>
-          </div>
-        </div>
-      </div>
+
     </div>
   )
 }
