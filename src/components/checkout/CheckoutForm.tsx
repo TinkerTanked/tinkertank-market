@@ -5,7 +5,6 @@ import {
   useStripe,
   useElements,
   PaymentElement,
-  AddressElement,
 } from '@stripe/react-stripe-js';
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore';
 import { useRouter } from 'next/navigation';
@@ -226,26 +225,6 @@ export default function CheckoutForm({ onBack, onClientSecretReady }: CheckoutFo
         </div>
       </div>
 
-      {/* Billing Address */}
-      {paymentIntent && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">Billing Address</h3>
-          <AddressElement 
-            options={{
-              mode: 'billing',
-              fields: {
-                phone: 'always',
-              },
-              validation: {
-                phone: {
-                  required: 'always',
-                },
-              },
-            }}
-          />
-        </div>
-      )}
-
       {/* Payment Element */}
       {paymentIntent && (
         <div className="space-y-4">
@@ -253,9 +232,6 @@ export default function CheckoutForm({ onBack, onClientSecretReady }: CheckoutFo
           <PaymentElement 
             options={{
               layout: 'tabs',
-              fields: {
-                billingDetails: 'never', // We collect this separately
-              },
             }}
           />
         </div>
