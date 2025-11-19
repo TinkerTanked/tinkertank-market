@@ -133,7 +133,7 @@ jobs:
           sleep 10
           POD_NAME=$(./kubectl --kubeconfig=./platform --namespace=default get pods -l name=${REPO_NAME}-${NODE_ENV} -o jsonpath='{.items[0].metadata.name}')
           echo "Running migrations in pod: $POD_NAME"
-          ./kubectl --kubeconfig=./platform --namespace=default exec $POD_NAME -c ${REPO_NAME}-${NODE_ENV} -- npx prisma migrate deploy
+          ./kubectl --kubeconfig=./platform --namespace=default exec $POD_NAME -c ${REPO_NAME}-${NODE_ENV} -- npx prisma@6.18.0 migrate deploy
 
       # Seed Locations - Only needed for first deployment (already seeded)
       # - name: Seed Locations
