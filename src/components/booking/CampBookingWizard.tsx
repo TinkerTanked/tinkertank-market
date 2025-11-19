@@ -79,14 +79,14 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
     if (bookingData.location && bookingData.dates.length > 0 && bookingData.campType) {
       const firstDate = bookingData.dates[0]
       const cartItem = {
-        id: `camp-${bookingData.campType.type}-${firstDate.toISOString().split('T')[0]}`,
-        name: `${bookingData.campType.name} - ${bookingData.location.name}`,
+        id: bookingData.campType.id,
+        name: bookingData.campType.name,
         shortDescription: `${bookingData.campType.name} camp`,
         price: bookingData.campType.price,
         category: 'camps' as const,
         type: 'CAMP' as const,
-        ageRange: '5-12',
-        features: ['Educational activities', 'Supervised learning'],
+        ageRange: '6-12 years',
+        features: ['Hands-on STEAM experiments', 'Take-home project', 'Small Groups', 'Expert instructor guidance'],
         images: ['/images/camps2.jpeg'],
         date: firstDate,
         location: bookingData.location.name,
@@ -95,7 +95,9 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         description: `${bookingData.campType.name} at ${bookingData.location.name}`,
         image: '/images/camps2.jpeg',
         isActive: true,
-        availableCapacity: 20
+        availableCapacity: 20,
+        maxCapacity: 20,
+        pricing: { basePrice: bookingData.campType.price }
       } as any
 
       addItem(cartItem, { 
