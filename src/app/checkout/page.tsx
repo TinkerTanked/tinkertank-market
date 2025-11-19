@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Elements } from '@stripe/react-stripe-js'
-import { loadStripe } from '@stripe/stripe-js'
+
 import { 
   ShoppingCartIcon,
   UserIcon,
@@ -13,11 +12,9 @@ import {
   ArrowLeftIcon
 } from '@heroicons/react/24/outline'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
-import CheckoutForm from '@/components/checkout/CheckoutForm'
 import StudentInfoForm from '@/components/checkout/StudentInfoForm'
 import OrderSummary from '@/components/checkout/OrderSummary'
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+import StripeCheckoutButton from '@/components/checkout/StripeCheckoutButton'
 
 enum CheckoutStep {
   REVIEW = 'review',
@@ -29,7 +26,7 @@ export default function CheckoutPage() {
   const { items, getSummary, getValidation } = useEnhancedCartStore()
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(CheckoutStep.REVIEW)
-  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '' })
   const summary = getSummary()
   const validation = getValidation()
 
@@ -195,11 +192,56 @@ export default function CheckoutPage() {
             {currentStep === CheckoutStep.PAYMENT && (
               <div className='bg-white rounded-xl shadow-lg p-8'>
                 <h2 className='text-2xl font-display font-bold text-gray-900 mb-6'>
-                  Payment Details
+                  Secure Payment
                 </h2>
-                <Elements stripe={stripePromise} options={clientSecret ? { clientSecret } : { mode: 'payment', amount: Math.round(summary.total * 100), currency: 'aud' }}>
-                  <CheckoutForm onBack={() => setCurrentStep(CheckoutStep.STUDENTS)} onClientSecretReady={setClientSecret} />
-                </Elements>
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-900">Contact Information</h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                      <input
+                        type="text"
+                        value={customerInfo.name}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                      <input
+                        type="email"
+                        value={customerInfo.email}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                      <input
+                        type="tel"
+                        value={customerInfo.phone}
+                        onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <StripeCheckoutButton customerInfo={customerInfo} />
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(CheckoutStep.STUDENTS)}
+                    className="w-full text-center text-gray-600 hover:text-gray-900"
+                  >
+                    ← Back to Student Info
+                  </button>
+                </div>
               </div>
             )}
           </div>
