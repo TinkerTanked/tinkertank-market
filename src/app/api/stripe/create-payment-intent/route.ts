@@ -135,22 +135,37 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Create students first, then create order
+    const createdStudents = [];
+    for (const item of orderItems) {
+      const student = await prisma.student.create({
+        data: {
+          name: `${item.studentData.firstName} ${item.studentData.lastName}`,
+          birthdate: new Date(new Date().getFullYear() - item.studentData.age, 0, 1),
+          parentName: item.studentData.parentName,
+          parentEmail: item.studentData.parentEmail,
+          parentPhone: item.studentData.parentPhone,
+          allergies: Array.isArray(item.studentData.allergies) ? item.studentData.allergies.join(', ') : item.studentData.allergies || null,
+        }
+      });
+      createdStudents.push({ ...item, actualStudentId: student.id });
+    }
+
     // Create pending order in database
     const order = await prisma.order.create({
       data: {
         customerEmail: validatedData.customerInfo.email,
         customerName: validatedData.customerInfo.name,
+        customerPhone: validatedData.customerInfo.phone,
         stripePaymentIntentId: paymentIntent.id,
         status: 'PENDING',
         totalAmount: total,
         orderItems: {
-          create: orderItems.map((item, index) => ({
+          create: createdStudents.map((item) => ({
             productId: item.productId,
-            studentId: item.studentId,
+            studentId: item.actualStudentId,
             bookingDate: item.bookingDate || new Date(),
             price: item.price,
-            // Store student and booking data as JSON in notes for now
-            // In a production app, you'd normalize this into separate tables
           })),
         },
       },
