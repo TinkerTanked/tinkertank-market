@@ -133,7 +133,6 @@ export async function POST(request: NextRequest) {
       automatic_payment_methods: {
         enabled: true,
       },
-      return_url: `${appUrl}/checkout/success`,
     });
 
     // Create pending order in database
