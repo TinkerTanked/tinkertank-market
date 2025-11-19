@@ -197,13 +197,9 @@ export default function CheckoutPage() {
                 <h2 className='text-2xl font-display font-bold text-gray-900 mb-6'>
                   Payment Details
                 </h2>
-                {clientSecret ? (
-                  <Elements stripe={stripePromise} options={{ clientSecret }}>
-                    <CheckoutForm onBack={() => setCurrentStep(CheckoutStep.STUDENTS)} />
-                  </Elements>
-                ) : (
+                <Elements stripe={stripePromise} options={clientSecret ? { clientSecret } : undefined}>
                   <CheckoutForm onBack={() => setCurrentStep(CheckoutStep.STUDENTS)} onClientSecretReady={setClientSecret} />
-                )}
+                </Elements>
               </div>
             )}
           </div>
