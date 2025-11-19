@@ -153,7 +153,6 @@ export async function POST(request: NextRequest) {
       data: {
         customerEmail: validatedData.customerInfo.email,
         customerName: validatedData.customerInfo.name,
-        customerPhone: validatedData.customerInfo.phone,
         stripePaymentIntentId: paymentIntent.id,
         status: 'PENDING',
         totalAmount: total,
