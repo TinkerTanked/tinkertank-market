@@ -50,14 +50,24 @@ export async function GET(
       .map(booking => booking.event);
 
     return NextResponse.json({
-      order: {
-        ...order,
-        totalAmount: Number(order.totalAmount),
-        orderItems: order.orderItems.map(item => ({
-          ...item,
-          price: Number(item.price)
-        }))
+      orderId: order.id,
+      paymentIntentId: order.stripePaymentIntentId,
+      total: Number(order.totalAmount),
+      status: order.status,
+      customerInfo: {
+        name: order.customerName,
+        email: order.customerEmail,
       },
+      items: order.orderItems.map(item => ({
+        product: {
+          name: item.product.name,
+          shortDescription: item.product.description,
+          category: item.product.type === 'CAMP' ? 'camps' : item.product.type === 'BIRTHDAY' ? 'birthdays' : 'subscriptions'
+        },
+        selectedDate: item.bookingDate,
+        quantity: 1,
+        totalPrice: Number(item.price)
+      })),
       events
     });
 
