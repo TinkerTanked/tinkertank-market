@@ -21,6 +21,7 @@ type CustomerInfo = z.infer<typeof CustomerInfoSchema>;
 
 interface CheckoutFormProps {
   onBack?: () => void
+  onClientSecretReady?: (clientSecret: string) => void
 }
 
 export default function CheckoutForm({ onBack, onClientSecretReady }: CheckoutFormProps) {
