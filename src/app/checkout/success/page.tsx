@@ -27,18 +27,18 @@ function CheckoutSuccessContent() {
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const paymentIntentId = searchParams.get('payment_intent')
+  const sessionId = searchParams.get('session_id')
   const orderId = searchParams.get('order_id')
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
-      if (!paymentIntentId || !orderId) {
+      if (!orderId) {
         setIsLoading(false)
         return
       }
 
       try {
-        const response = await fetch(`/api/orders/${orderId}?payment_intent=${paymentIntentId}`)
+        const response = await fetch(`/api/orders/${orderId}`)
         if (response.ok) {
           const data = await response.json()
           setOrderDetails(data)
@@ -53,7 +53,7 @@ function CheckoutSuccessContent() {
     }
 
     fetchOrderDetails()
-  }, [paymentIntentId, orderId, clearCart])
+  }, [orderId, clearCart])
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-AU', {
