@@ -142,9 +142,6 @@ export async function POST(request: NextRequest) {
         data: {
           name: `${item.studentData.firstName} ${item.studentData.lastName}`,
           birthdate: new Date(new Date().getFullYear() - item.studentData.age, 0, 1),
-          parentName: item.studentData.parentName,
-          parentEmail: item.studentData.parentEmail,
-          parentPhone: item.studentData.parentPhone,
           allergies: Array.isArray(item.studentData.allergies) ? item.studentData.allergies.join(', ') : item.studentData.allergies || null,
         }
       });
