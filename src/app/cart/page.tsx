@@ -13,7 +13,7 @@ import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getSummary, clearCart } = useEnhancedCartStore()
-  const { subtotal, tax, total, itemCount } = getSummary()
+  const { subtotal, total, itemCount } = getSummary()
   const [isClearing, setIsClearing] = useState(false)
 
   const formatPrice = (price: number) => {
@@ -181,11 +181,6 @@ export default function CartPage() {
                 <div className='flex justify-between text-gray-700'>
                   <span>Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
-                </div>
-                
-                <div className='flex justify-between text-gray-700'>
-                  <span>GST (10%)</span>
-                  <span>{formatPrice(tax)}</span>
                 </div>
                 
                 <div className='border-t border-gray-200 pt-4'>

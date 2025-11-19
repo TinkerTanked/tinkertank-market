@@ -22,11 +22,6 @@ export const CartSummary = ({ summary, showDetails = true }: CartSummaryProps) =
             <span className="text-gray-900">{formatPrice(summary.subtotal)}</span>
           </div>
           
-          <div className="flex justify-between">
-            <span className="text-gray-600">GST (10%)</span>
-            <span className="text-gray-900">{formatPrice(summary.tax)}</span>
-          </div>
-          
           <div className="border-t pt-2">
             <div className="flex justify-between font-medium">
               <span className="text-gray-900">Total</span>

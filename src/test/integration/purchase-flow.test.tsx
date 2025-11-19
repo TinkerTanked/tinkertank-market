@@ -16,7 +16,7 @@ describe('Purchase Flow Integration', () => {
       clearCart: vi.fn(),
       isLoading: false,
       error: null,
-      getSummary: vi.fn(() => ({ subtotal: 0, gst: 0, total: 0 })),
+      getSummary: vi.fn(() => ({ subtotal: 0, tax: 0, total: 0, itemCount: 0, studentCount: 0 })),
       getValidation: vi.fn(() => ({ isValid: true, errors: [] })),
     })
   })
@@ -31,7 +31,7 @@ describe('Purchase Flow Integration', () => {
       clearCart: vi.fn(),
       isLoading: false,
       error: null,
-      getSummary: vi.fn(() => ({ subtotal: 0, gst: 0, total: 0 })),
+      getSummary: vi.fn(() => ({ subtotal: 0, tax: 0, total: 0, itemCount: 0, studentCount: 0 })),
       getValidation: vi.fn(() => ({ isValid: true, errors: [] })),
     })
 
@@ -70,7 +70,7 @@ describe('Purchase Flow Integration', () => {
       clearCart: vi.fn(),
       isLoading: false,
       error: null,
-      getSummary: vi.fn(() => ({ subtotal: 85, gst: 7.73, total: 92.73 })),
+      getSummary: vi.fn(() => ({ subtotal: 85, tax: 0, total: 85, itemCount: 1, studentCount: 0 })),
       getValidation: vi.fn(() => ({ isValid: true, errors: [] })),
     })
 

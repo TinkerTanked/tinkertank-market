@@ -6,8 +6,7 @@ import {
   EnhancedCartItem, 
   StudentDetails, 
   CartSummary, 
-  CartValidation, 
-  GST_RATE 
+  CartValidation
 } from '@/types/enhancedCart';
 import { generateId } from '@/utils/generateId';
 
@@ -209,8 +208,8 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
       getSummary: (): CartSummary => {
         const items = get().items;
         const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-        const tax = subtotal * GST_RATE;
-        const total = subtotal + tax;
+        const tax = 0;
+        const total = subtotal;
         const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
         const studentCount = items.reduce((sum, item) => sum + item.students.length, 0);
 

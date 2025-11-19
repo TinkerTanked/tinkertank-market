@@ -84,5 +84,3 @@ export interface EnhancedCartState {
   loadFromStorage: () => void;
   saveToStorage: () => void;
 }
-
-export const GST_RATE = 0.1; // 10% GST for Australia

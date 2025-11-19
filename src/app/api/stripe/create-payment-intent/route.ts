@@ -96,10 +96,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Add GST (10% in Australia)
+    // No tax calculation - prices are final
     const subtotal = serverTotal;
-    const tax = subtotal * 0.1;
-    const total = subtotal + tax;
+    const tax = 0;
+    const total = subtotal;
 
     // Get the app URL from environment or construct from request
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 

@@ -175,10 +175,6 @@ export default function CartReview() {
             <span>Subtotal</span>
             <span>${summary.subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-gray-600">
-            <span>GST (10%)</span>
-            <span>${summary.tax.toFixed(2)}</span>
-          </div>
           <div className="border-t pt-3">
             <div className="flex justify-between text-lg font-semibold text-gray-900">
               <span>Total</span>

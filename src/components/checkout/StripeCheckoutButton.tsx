@@ -69,9 +69,6 @@ export default function StripeCheckoutButton({ customerInfo }: StripeCheckoutBut
           <span>Total:</span>
           <span>${summary.total.toFixed(2)} AUD</span>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
-          Includes ${summary.tax.toFixed(2)} GST
-        </p>
       </div>
 
       <button
