@@ -29,6 +29,7 @@ export default function CheckoutPage() {
   const { items, getSummary, getValidation } = useEnhancedCartStore()
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(CheckoutStep.REVIEW)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
   const summary = getSummary()
   const validation = getValidation()
 
@@ -196,9 +197,13 @@ export default function CheckoutPage() {
                 <h2 className='text-2xl font-display font-bold text-gray-900 mb-6'>
                   Payment Details
                 </h2>
-                <Elements stripe={stripePromise}>
-                  <CheckoutForm onBack={() => setCurrentStep(CheckoutStep.STUDENTS)} />
-                </Elements>
+                {clientSecret ? (
+                  <Elements stripe={stripePromise} options={{ clientSecret }}>
+                    <CheckoutForm onBack={() => setCurrentStep(CheckoutStep.STUDENTS)} />
+                  </Elements>
+                ) : (
+                  <CheckoutForm onBack={() => setCurrentStep(CheckoutStep.STUDENTS)} onClientSecretReady={setClientSecret} />
+                )}
               </div>
             )}
           </div>

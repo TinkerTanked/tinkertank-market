@@ -23,7 +23,7 @@ interface CheckoutFormProps {
   onBack?: () => void
 }
 
-export default function CheckoutForm({ onBack }: CheckoutFormProps) {
+export default function CheckoutForm({ onBack, onClientSecretReady }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { items, getSummary, clearCartAfterSuccess } = useEnhancedCartStore();
@@ -102,6 +102,9 @@ export default function CheckoutForm({ onBack }: CheckoutFormProps) {
       }
 
       setPaymentIntent(data);
+      if (onClientSecretReady && data.clientSecret) {
+        onClientSecretReady(data.clientSecret);
+      }
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
