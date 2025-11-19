@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   useStripe,
   useElements,
@@ -44,6 +44,12 @@ export default function CheckoutForm({ onBack, onClientSecretReady }: CheckoutFo
   } | null>(null);
 
   const summary = getSummary();
+
+  useEffect(() => {
+    if (!paymentIntent && stripe) {
+      createPaymentIntent();
+    }
+  }, [stripe]);
 
   const validateCustomerInfo = () => {
     try {
@@ -123,10 +129,11 @@ export default function CheckoutForm({ onBack, onClientSecretReady }: CheckoutFo
     }
 
     if (!paymentIntent) {
-      const created = await createPaymentIntent();
-      if (!created) return;
-      // Payment intent creation was successful, but we need to wait for the next render
-      // to have access to the PaymentElement
+      setError('Payment information is being prepared. Please wait a moment and try again.');
+      return;
+    }
+
+    if (!validateCustomerInfo()) {
       return;
     }
 
