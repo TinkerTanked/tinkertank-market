@@ -29,7 +29,7 @@ const CAMP_TYPES: CampType[] = [
     time: '9:00 AM - 3:00 PM'
   },
   {
-    id: 'allday-camp', 
+    id: 'all-day-camp', 
     type: 'allday',
     name: 'All Day Camp',
     price: 149.99,
