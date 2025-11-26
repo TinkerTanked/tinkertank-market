@@ -21,6 +21,7 @@ const CreateCheckoutSessionSchema = z.object({
       allergies: z.union([z.string(), z.array(z.string())]).optional(),
     })),
     selectedDate: z.string().optional(),
+    selectedDates: z.array(z.string()).optional(),
   })),
   customerInfo: z.object({
     name: z.string().min(1),

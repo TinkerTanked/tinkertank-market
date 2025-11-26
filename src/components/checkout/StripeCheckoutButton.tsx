@@ -38,6 +38,7 @@ export default function StripeCheckoutButton({ customerInfo }: StripeCheckoutBut
             quantity: item.quantity,
             students: item.students || [],
             selectedDate: item.selectedDate?.toISOString(),
+            selectedDates: item.selectedDates?.map(d => d.toISOString()),
           })),
           customerInfo,
         }),
