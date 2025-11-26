@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
     console.log(`Processing webhook event: ${event.type}`);
 
     switch (event.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+
       case 'payment_intent.succeeded':
         await handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent);
         break;
@@ -69,6 +73,139 @@ export async function POST(request: NextRequest) {
       { error: 'Webhook processing failed' },
       { status: 500 }
     );
+  }
+}
+
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  console.log('Checkout session completed:', session.id);
+
+  try {
+    const orderId = session.metadata?.orderId;
+    
+    if (!orderId) {
+      console.error('No orderId found in session metadata:', session.id);
+      return;
+    }
+
+    // Find the order with all related data
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        orderItems: {
+          include: {
+            product: true,
+            student: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      console.error('Order not found for session:', session.id, 'orderId:', orderId);
+      return;
+    }
+
+    // Only process if payment was successful and order is still pending
+    if (session.payment_status === 'paid' && order.status === 'PENDING') {
+      await prisma.$transaction(async (tx) => {
+        // Update order status to PAID
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: 'PAID' },
+        });
+
+        // Create bookings for each order item (camps and birthdays)
+        for (const orderItem of order.orderItems) {
+          if (orderItem.product.type === 'CAMP' || orderItem.product.type === 'BIRTHDAY') {
+            const defaultLocation = await tx.location.findFirst({
+              where: { isActive: true },
+            });
+
+            if (!defaultLocation) {
+              console.error('No active location found for booking');
+              continue;
+            }
+
+            await tx.booking.create({
+              data: {
+                studentId: orderItem.studentId,
+                productId: orderItem.productId,
+                locationId: defaultLocation.id,
+                startDate: orderItem.bookingDate,
+                endDate: new Date(orderItem.bookingDate.getTime() + (orderItem.product.duration || 60) * 60 * 1000),
+                status: 'CONFIRMED',
+                totalPrice: orderItem.price,
+                notes: `Checkout session completed - Order: ${order.id}`,
+              },
+            });
+          }
+        }
+      });
+
+      // Create calendar events with retry logic
+      const calendarEvents = await withErrorHandling(
+        () => ErrorHandler.retryOperation(
+          () => eventService.createEventsFromOrder(order.id),
+          3,
+          2000
+        ),
+        {
+          category: ErrorCategory.CALENDAR,
+          severity: ErrorSeverity.MEDIUM,
+          orderId: order.id
+        }
+      );
+
+      if (calendarEvents) {
+        console.log(`Created ${calendarEvents.length} calendar events for order ${order.id}`);
+      } else {
+        await ErrorHandler.logError({
+          category: ErrorCategory.CALENDAR,
+          severity: ErrorSeverity.HIGH,
+          message: 'Failed to create calendar events after retries',
+          orderId: order.id
+        });
+      }
+
+      // Send confirmation email
+      await withErrorHandling(
+        () => sendBookingConfirmationEmail({
+          ...order,
+          totalAmount: Number(order.totalAmount),
+          orderItems: order.orderItems.map(item => ({
+            id: item.id,
+            product: {
+              name: item.product.name,
+              type: item.product.type
+            },
+            student: {
+              name: item.student.name,
+              allergies: item.student.allergies || undefined
+            },
+            bookingDate: item.bookingDate,
+            price: Number(item.price)
+          }))
+        }),
+        {
+          category: ErrorCategory.EMAIL,
+          severity: ErrorSeverity.LOW,
+          orderId: order.id
+        }
+      );
+      
+      // Send notification to staff
+      await notificationService.notifyBookingConfirmed(
+        order.id, 
+        order.customerName, 
+        Number(order.totalAmount)
+      );
+      
+      console.log('Order confirmed via checkout session:', order.id);
+    } else {
+      console.log(`Skipping order processing - payment_status: ${session.payment_status}, order status: ${order.status}`);
+    }
+  } catch (error) {
+    await ErrorHandler.handlePaymentError(error, session.id);
   }
 }
 
