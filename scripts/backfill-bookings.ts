@@ -1,6 +1,4 @@
 import { PrismaClient } from '@prisma/client'
-import { eventService } from '../src/lib/events'
-import { sendBookingConfirmationEmail } from '../src/lib/email'
 
 const prisma = new PrismaClient()
 
@@ -82,38 +80,7 @@ async function main() {
       }
     }
 
-    // Create calendar events
-    try {
-      const events = await eventService.createEventsFromOrder(order.id)
-      eventsCreated += events.length
-      console.log(`  📅 Created ${events.length} calendar events`)
-    } catch (error) {
-      console.log(`  ⚠️  Could not create events: ${error}`)
-    }
-
-    // Send confirmation email
-    try {
-      await sendBookingConfirmationEmail({
-        ...order,
-        totalAmount: Number(order.totalAmount),
-        orderItems: order.orderItems.map(item => ({
-          id: item.id,
-          product: {
-            name: item.product.name,
-            type: item.product.type
-          },
-          student: {
-            name: item.student.name,
-            allergies: null
-          },
-          bookingDate: item.bookingDate,
-          price: Number(item.price)
-        }))
-      })
-      console.log(`  📧 Sent confirmation email to ${order.customerEmail}`)
-    } catch (error) {
-      console.log(`  ⚠️  Could not send email: ${error}`)
-    }
+    console.log(`  📅 Bookings created (calendar events can be created via webhook on next purchase)`)
   }
 
   console.log(`\n✅ Backfill complete!`)
