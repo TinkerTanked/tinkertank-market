@@ -111,6 +111,8 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           NEXT_PUBLIC_APP_URL: https://${{ env.DOMAIN }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           GITHUB_SHA: ${{ github.sha }}
         run: |
           ./envsubst < .github/k8s/deployment-template.yml > ${REPO_NAME}.yml
