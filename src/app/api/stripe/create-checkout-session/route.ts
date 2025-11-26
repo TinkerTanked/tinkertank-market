@@ -54,7 +54,9 @@ export async function POST(request: NextRequest) {
     for (const item of validatedData.items) {
       const product = products.find(p => p.id === item.productId)!
       const unitPrice = Number(product.price)
-      const quantity = item.students.length
+      const numberOfDays = item.selectedDates?.length || 1
+      const numberOfStudents = item.students.length
+      const quantity = numberOfDays * numberOfStudents
       
       subtotal += unitPrice * quantity
 
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
         price_data: {
           currency: 'aud',
           product_data: {
-            name: product.name,
+            name: numberOfDays > 1 ? `${product.name} (${numberOfDays} days)` : product.name,
             description: product.description,
           },
           unit_amount: Math.round(unitPrice * 100),
