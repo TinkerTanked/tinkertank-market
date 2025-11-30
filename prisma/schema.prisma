@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,6 +5,153 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Student {
+  id         String      @id @default(cuid())
+  name       String
+  birthdate  DateTime
+  allergies  String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  bookings   Booking[]
+  orderItems OrderItem[]
+
+  @@map("students")
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  type        ProductType
+  price       Decimal     @db.Money
+  duration    Int?
+  description String
+  ageMin      Int
+  ageMax      Int
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  bookings    Booking[]
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+model Location {
+  id                 String              @id @default(cuid())
+  name               String
+  address            String
+  capacity           Int
+  timezone           String              @default("Australia/Sydney")
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  bookings           Booking[]
+  events             Event[]
+  recurringTemplates RecurringTemplate[]
+
+  @@map("locations")
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  studentId  String
+  productId  String
+  locationId String
+  eventId    String?
+  startDate  DateTime
+  endDate    DateTime
+  status     BookingStatus @default(PENDING)
+  totalPrice Decimal       @db.Money
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  event      Event?        @relation(fields: [eventId], references: [id])
+  location   Location      @relation(fields: [locationId], references: [id])
+  product    Product       @relation(fields: [productId], references: [id])
+  student    Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  customerEmail         String
+  customerName          String
+  stripePaymentIntentId String?     @unique
+  status                OrderStatus @default(PENDING)
+  totalAmount           Decimal     @db.Money
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  orderItems            OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String
+  studentId   String
+  bookingDate DateTime
+  price       Decimal  @db.Money
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+  student     Student  @relation(fields: [studentId], references: [id])
+
+  @@map("order_items")
+}
+
+model Event {
+  id                  String             @id @default(cuid())
+  title               String
+  description         String?
+  type                EventType
+  status              EventStatus        @default(SCHEDULED)
+  startDateTime       DateTime
+  endDateTime         DateTime
+  isRecurring         Boolean            @default(false)
+  maxCapacity         Int                @default(10)
+  currentCount        Int                @default(0)
+  locationId          String
+  recurringTemplateId String?
+  instructorId        String?
+  instructorNotes     String?
+  ageMin              Int?
+  ageMax              Int?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  bookings            Booking[]
+  location            Location           @relation(fields: [locationId], references: [id])
+  recurringTemplate   RecurringTemplate? @relation(fields: [recurringTemplateId], references: [id])
+
+  @@map("events")
+}
+
+model RecurringTemplate {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  type        EventType
+  startTime   String
+  endTime     String
+  duration    Int
+  daysOfWeek  Int[]
+  startDate   DateTime
+  endDate     DateTime?
+  maxCapacity Int       @default(10)
+  locationId  String
+  ageMin      Int?
+  ageMax      Int?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  events      Event[]
+  location    Location  @relation(fields: [locationId], references: [id])
+
+  @@map("recurring_templates")
 }
 
 enum ProductType {
@@ -30,115 +174,6 @@ enum OrderStatus {
   REFUNDED
 }
 
-model Student {
-  id        String   @id @default(cuid())
-  name      String
-  birthdate DateTime
-  allergies String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  bookings   Booking[]
-  orderItems OrderItem[]
-
-  @@map("students")
-}
-
-model Product {
-  id          String      @id @default(cuid())
-  name        String
-  type        ProductType
-  price       Decimal     @db.Money
-  duration    Int? // Duration in minutes for camps/birthdays, or months for subscriptions
-  description String
-  ageMin      Int
-  ageMax      Int
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  // Relations
-  bookings   Booking[]
-  orderItems OrderItem[]
-
-  @@map("products")
-}
-
-model Location {
-  id       String @id @default(cuid())
-  name     String
-  address  String
-  capacity Int
-  timezone String @default("Australia/Sydney")
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  bookings Booking[]
-  events   Event[]
-  recurringTemplates RecurringTemplate[]
-
-  @@map("locations")
-}
-
-model Booking {
-  id         String        @id @default(cuid())
-  studentId  String
-  productId  String
-  locationId String
-  eventId    String?       // Link to calendar event
-  startDate  DateTime
-  endDate    DateTime
-  status     BookingStatus @default(PENDING)
-  totalPrice Decimal       @db.Money
-  notes      String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-
-  // Relations
-  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  product  Product  @relation(fields: [productId], references: [id])
-  location Location @relation(fields: [locationId], references: [id])
-  event    Event?   @relation(fields: [eventId], references: [id])
-
-  @@map("bookings")
-}
-
-model Order {
-  id                    String      @id @default(cuid())
-  customerEmail         String
-  customerName          String
-  stripePaymentIntentId String?     @unique
-  status                OrderStatus @default(PENDING)
-  totalAmount           Decimal     @db.Money
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
-
-  // Relations
-  orderItems OrderItem[]
-
-  @@map("orders")
-}
-
-model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  productId   String
-  studentId   String
-  bookingDate DateTime
-  price       Decimal  @db.Money
-  createdAt   DateTime @default(now())
-
-  // Relations
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-  student Student @relation(fields: [studentId], references: [id])
-
-  @@map("order_items")
-}
-
 enum EventType {
   CAMP
   BIRTHDAY
@@ -152,86 +187,4 @@ enum EventStatus {
   COMPLETED
   CANCELLED
   NO_SHOW
-}
-
-model Event {
-  id            String      @id @default(cuid())
-  title         String
-  description   String?
-  type          EventType
-  status        EventStatus @default(SCHEDULED)
-  
-  // Date/Time fields
-  startDateTime DateTime
-  endDateTime   DateTime
-  isRecurring   Boolean     @default(false)
-  
-  // Capacity and attendee management
-  maxCapacity   Int         @default(10)
-  currentCount  Int         @default(0)
-  
-  // Relations
-  locationId    String
-  location      Location    @relation(fields: [locationId], references: [id])
-  
-  // Associated bookings
-  bookings      Booking[]
-  
-  // Recurring event template (if applicable)
-  recurringTemplateId String?
-  recurringTemplate   RecurringTemplate? @relation(fields: [recurringTemplateId], references: [id])
-  
-  // Instructor assignment (placeholder for now)
-  instructorId  String?
-  instructorNotes String?
-  
-  // Age groups
-  ageMin        Int?
-  ageMax        Int?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@map("events")
-}
-
-model RecurringTemplate {
-  id              String    @id @default(cuid())
-  name            String
-  description     String?
-  type            EventType
-  
-  // Time settings
-  startTime       String    // HH:MM format
-  endTime         String    // HH:MM format
-  duration        Int       // Duration in minutes
-  
-  // Recurrence pattern
-  daysOfWeek      Int[]     // 0=Sunday, 1=Monday, etc.
-  
-  // Date range
-  startDate       DateTime
-  endDate         DateTime?
-  
-  // Capacity
-  maxCapacity     Int       @default(10)
-  
-  // Location
-  locationId      String
-  location        Location  @relation(fields: [locationId], references: [id])
-  
-  // Age restrictions
-  ageMin          Int?
-  ageMax          Int?
-  
-  // Status
-  isActive        Boolean   @default(true)
-  
-  // Relations
-  events          Event[]
-  
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  @@map("recurring_templates")
 }
