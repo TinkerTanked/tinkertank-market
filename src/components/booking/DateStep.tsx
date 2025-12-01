@@ -64,8 +64,14 @@ export default function DateStep({
   }
 
   const handleDateClick = (date: Date) => {
+    // Always block weekends first
+    if (isWeekend(date)) {
+      console.warn('Weekend date blocked:', date)
+      return
+    }
+    
     const isAvailable = location ? isDateAvailableForLocation(date, location.name) : true
-    if (!isWeekend(date) && !isBefore(date, today) && !isClosureDate(date) && isAvailable) {
+    if (!isBefore(date, today) && !isClosureDate(date) && isAvailable) {
       if (enableMultiSelect) {
         let newSelectedDates: Date[]
         
