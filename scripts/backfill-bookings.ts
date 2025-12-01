@@ -59,7 +59,9 @@ async function main() {
     // Create bookings for each order item
     for (const orderItem of order.orderItems) {
       if (orderItem.product.type === 'CAMP' || orderItem.product.type === 'BIRTHDAY') {
-        const startDate = orderItem.bookingDate
+        // Parse the bookingDate and set to 9 AM Sydney time
+        const bookingDateStr = orderItem.bookingDate.toISOString().split('T')[0]
+        const startDate = new Date(`${bookingDateStr}T09:00:00+11:00`)
         const endDate = new Date(startDate.getTime() + (orderItem.product.duration || 360) * 60 * 1000)
 
         const booking = await prisma.booking.create({
