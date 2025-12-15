@@ -208,7 +208,7 @@ export default function BookingList({ filters }: BookingListProps) {
                     {getStatusBadge(booking.status)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${booking.totalPrice.toFixed(2)}
+                    ${Number(booking.totalPrice || 0).toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-2">

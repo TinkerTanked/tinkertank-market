@@ -107,7 +107,7 @@ export default function RecentBookings() {
                   </div>
                 </div>
                 <div className="flex-shrink-0 text-sm font-medium text-gray-900">
-                  ${booking.totalPrice.toFixed(2)}
+                  ${Number(booking.totalPrice || 0).toFixed(2)}
                 </div>
               </div>
             </div>
