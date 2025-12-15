@@ -59,10 +59,8 @@ async function main() {
     // Create bookings for each order item
     for (const orderItem of order.orderItems) {
       if (orderItem.product.type === 'CAMP' || orderItem.product.type === 'BIRTHDAY') {
-        // Parse the bookingDate - add T12:00:00.000Z to ensure it stays on the correct date
-        const originalDate = new Date(orderItem.bookingDate)
-        const bookingDateStr = originalDate.toISOString().split('T')[0]
-        const startDate = new Date(`${bookingDateStr}T12:00:00.000Z`)
+        // Keep the original booking date as-is - it's already correct from the API
+        const startDate = new Date(orderItem.bookingDate)
         const endDate = new Date(startDate.getTime() + (orderItem.product.duration || 360) * 60 * 1000)
 
         const booking = await prisma.booking.create({
