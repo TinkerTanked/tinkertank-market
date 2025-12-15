@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         orderItems.push({
           productId: product.id,
           studentId: createdStudent.id,
-          bookingDate: item.selectedDate ? new Date(item.selectedDate) : new Date(),
+          bookingDate: item.selectedDate ? new Date(item.selectedDate + 'T00:00:00.000Z') : new Date(),
           price: unitPrice,
         })
       }
