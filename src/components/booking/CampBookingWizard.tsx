@@ -5,7 +5,7 @@ import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import LocationStep from './LocationStep'
 import DateStep from './DateStep'
 import CampTypeStep from './CampTypeStep'
-import ConfirmationStep from './ConfirmationStep'
+import ConfirmationStep from './ConfirmationStepNew'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
 
 interface BookingData {
