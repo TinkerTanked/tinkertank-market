@@ -102,7 +102,7 @@ export default function AdminCalendar({
       dayStats.totalCapacity += event.extendedProps.capacity || 0
 
       event.extendedProps.bookings?.forEach((booking: BookingEvent) => {
-        dayStats.revenue += booking.amountPaid
+        dayStats.revenue += Number(booking.totalPrice) || 0
         dayStats.statusCounts[booking.status]++
       })
     })
@@ -274,7 +274,7 @@ export default function AdminCalendar({
         totalCapacity={events.reduce((sum, e) => sum + (e.extendedProps.capacity || 0), 0)}
         revenue={events.reduce((sum, e) => 
           sum + (e.extendedProps.bookings?.reduce((bookingSum: number, b: BookingEvent) => 
-            bookingSum + b.amountPaid, 0) || 0), 0
+            bookingSum + (Number(b.totalPrice) || 0), 0) || 0), 0
         )}
       />
 
