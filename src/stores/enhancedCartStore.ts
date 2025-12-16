@@ -50,12 +50,18 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
       addItem: (product: Product, options = {}) => {
         set((state) => {
           const dateCount = options.selectedDates?.length || 1;
+          const normalizeDate = (d: any) => {
+            if (!d) return null
+            const date = d instanceof Date ? d : new Date(d)
+            return date.getTime()
+          }
+          
           const existingItemIndex = state.items.findIndex(
             (item) => 
               item.product.id === product.id && 
-              item.selectedDate?.getTime() === options.selectedDate?.getTime() &&
+              normalizeDate(item.selectedDate) === normalizeDate(options.selectedDate) &&
               JSON.stringify(item.selectedTimeSlot) === JSON.stringify(options.selectedTimeSlot) &&
-              JSON.stringify(item.selectedDates?.map(d => d.getTime())) === JSON.stringify(options.selectedDates?.map(d => d.getTime()))
+              JSON.stringify(item.selectedDates?.map(d => normalizeDate(d))) === JSON.stringify(options.selectedDates?.map(d => normalizeDate(d)))
           );
 
           if (existingItemIndex >= 0) {
