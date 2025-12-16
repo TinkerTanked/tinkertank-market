@@ -52,7 +52,7 @@ export default function AdminCalendarPage() {
       sum + (event.extendedProps.capacity || 0), 0
     ),
     revenue: adminEvents.reduce((sum, event) => 
-      sum + (event.extendedProps.bookings?.reduce((bookingSum: number, booking: BookingEvent) => 
+      sum + (event.extendedProps.bookings?.reduce((bookingSum: number, booking: any) => 
         bookingSum + (Number(booking.totalPrice) || 0), 0) || 0), 0
     ),
   }
