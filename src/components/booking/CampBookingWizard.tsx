@@ -77,7 +77,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
 
   const handleAddToCart = () => {
     if (bookingData.location && bookingData.dates.length > 0 && bookingData.campType) {
-      const firstDate = bookingData.dates[0]
+      const firstDate = new Date(bookingData.dates[0])
       const cartItem = {
         id: bookingData.campType.id,
         name: bookingData.campType.name,
@@ -102,7 +102,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
 
       addItem(cartItem, { 
         selectedDate: firstDate,
-        selectedDates: bookingData.dates 
+        selectedDates: bookingData.dates.map(d => new Date(d))
       })
       onClose()
     }

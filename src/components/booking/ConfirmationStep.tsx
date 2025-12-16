@@ -232,7 +232,7 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
           onClick={onAddToCart}
           className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-4 px-8 rounded-xl font-bold text-lg hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
-          Add ${totalPrice} {dates.length > 1 ? `(${dates.length}-Day) ` : ''}Camp to Cart 🚀
+          Add ${totalPrice.toFixed(2)} {dates.length > 1 ? `(${dates.length}-Day) ` : ''}Camp to Cart 🚀
         </button>
         <p className="text-sm text-gray-500 mt-2">
           You'll be able to add student details and complete payment in the next step
