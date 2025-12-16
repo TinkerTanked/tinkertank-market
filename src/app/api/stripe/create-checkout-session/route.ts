@@ -84,9 +84,15 @@ export async function POST(request: NextRequest) {
 
         let bookingDate: Date
         if (item.selectedDate && item.selectedDate !== 'undefined') {
-          bookingDate = new Date(item.selectedDate + 'T00:00:00.000Z')
+          // If already ISO string with time, use as-is. Otherwise append time.
+          bookingDate = item.selectedDate.includes('T') 
+            ? new Date(item.selectedDate)
+            : new Date(item.selectedDate + 'T00:00:00.000Z')
         } else if (item.selectedDates && item.selectedDates.length > 0 && item.selectedDates[0] !== 'undefined') {
-          bookingDate = new Date(item.selectedDates[0] + 'T00:00:00.000Z')
+          const firstDate = item.selectedDates[0]
+          bookingDate = firstDate.includes('T')
+            ? new Date(firstDate)
+            : new Date(firstDate + 'T00:00:00.000Z')
         } else {
           console.error('No valid date provided for booking:', { selectedDate: item.selectedDate, selectedDates: item.selectedDates })
           throw new Error('Valid booking date is required')
