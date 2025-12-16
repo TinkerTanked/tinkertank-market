@@ -81,11 +81,15 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        const bookingDate = item.selectedDate 
-          ? new Date(item.selectedDate + 'T00:00:00.000Z')
-          : item.selectedDates && item.selectedDates.length > 0
-          ? new Date(item.selectedDates[0] + 'T00:00:00.000Z')
-          : new Date()
+        let bookingDate: Date
+        if (item.selectedDate && item.selectedDate !== 'undefined') {
+          bookingDate = new Date(item.selectedDate + 'T00:00:00.000Z')
+        } else if (item.selectedDates && item.selectedDates.length > 0 && item.selectedDates[0] !== 'undefined') {
+          bookingDate = new Date(item.selectedDates[0] + 'T00:00:00.000Z')
+        } else {
+          console.error('No valid date provided for booking:', { selectedDate: item.selectedDate, selectedDates: item.selectedDates })
+          throw new Error('Valid booking date is required')
+        }
         
         orderItems.push({
           productId: product.id,
