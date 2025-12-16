@@ -101,7 +101,7 @@ export default function AdminCalendar({
       dayStats.totalBookings += event.extendedProps.currentBookings || 0
       dayStats.totalCapacity += event.extendedProps.capacity || 0
 
-      event.extendedProps.bookings?.forEach((booking: BookingEvent) => {
+      event.extendedProps.bookings?.forEach((booking: any) => {
         dayStats.revenue += Number(booking.totalPrice) || 0
         dayStats.statusCounts[booking.status]++
       })
