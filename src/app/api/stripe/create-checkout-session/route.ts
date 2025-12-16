@@ -33,6 +33,7 @@ const CreateCheckoutSessionSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log('Checkout session request:', JSON.stringify(body, null, 2))
     const validatedData = CreateCheckoutSessionSchema.parse(body)
 
     const productIds = validatedData.items.map(item => item.productId)
