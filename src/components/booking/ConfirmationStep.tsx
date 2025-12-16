@@ -57,7 +57,7 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
     )
   }
 
-  const totalPrice = campType.price * dates.length
+  const totalPrice = Number((campType.price * dates.length).toFixed(2))
 
   return (
     <div className="space-y-6">
@@ -77,9 +77,9 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
             </div>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold text-primary-600">${totalPrice}</div>
+            <div className="text-3xl font-bold text-primary-600">${totalPrice.toFixed(2)}</div>
             <div className="text-sm text-gray-500">
-              {dates.length > 1 ? `${dates.length} days × $${campType.price}` : 'per child'}
+              {dates.length > 1 ? `${dates.length} days × $${campType.price.toFixed(2)}` : 'per child'}
             </div>
           </div>
         </div>
