@@ -81,10 +81,16 @@ export async function POST(request: NextRequest) {
           }
         })
 
+        const bookingDate = item.selectedDate 
+          ? new Date(item.selectedDate + 'T00:00:00.000Z')
+          : item.selectedDates && item.selectedDates.length > 0
+          ? new Date(item.selectedDates[0] + 'T00:00:00.000Z')
+          : new Date()
+        
         orderItems.push({
           productId: product.id,
           studentId: createdStudent.id,
-          bookingDate: item.selectedDate ? new Date(item.selectedDate + 'T00:00:00.000Z') : new Date(),
+          bookingDate,
           price: unitPrice,
         })
       }
