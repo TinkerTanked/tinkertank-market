@@ -144,7 +144,9 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
       case 4:
         return (
           <ConfirmationStep 
-            bookingData={bookingData}
+            location={bookingData.location!}
+            dates={bookingData.dates}
+            campType={bookingData.campType!}
             onAddToCart={handleAddToCart}
           />
         )
