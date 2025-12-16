@@ -109,6 +109,7 @@ export async function GET(request: Request) {
           select: {
             name: true,
             birthdate: true,
+            allergies: true,
           },
         },
         product: {
