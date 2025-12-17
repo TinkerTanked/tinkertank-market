@@ -66,9 +66,9 @@ export default function EventModal({
     productType
   } = event.extendedProps
 
-  const totalRevenue = bookings.reduce((sum, booking) => sum + (Number(booking.totalPrice) || 0), 0)
+  const totalRevenue = bookings.reduce((sum, booking: any) => sum + (Number(booking.totalPrice) || 0), 0)
   const totalPending = 0
-  const totalExpected = bookings.reduce((sum, booking) => sum + booking.totalAmount, 0)
+  const totalExpected = bookings.reduce((sum, booking: any) => sum + (Number(booking.totalAmount) || 0), 0)
 
   const statusCounts = bookings.reduce((counts, booking) => {
     counts[booking.status] = (counts[booking.status] || 0) + 1
