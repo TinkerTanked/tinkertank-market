@@ -273,7 +273,7 @@ export default function AdminCalendar({
         totalBookings={events.reduce((sum, e) => sum + (e.extendedProps.currentBookings || 0), 0)}
         totalCapacity={events.reduce((sum, e) => sum + (e.extendedProps.capacity || 0), 0)}
         revenue={events.reduce((sum, e) => 
-          sum + (e.extendedProps.bookings?.reduce((bookingSum: number, b: BookingEvent) => 
+          sum + (e.extendedProps.bookings?.reduce((bookingSum: number, b: any) => 
             bookingSum + (Number(b.totalPrice) || 0), 0) || 0), 0
         )}
       />
