@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { getBookingStatusColor, getPaymentStatusColor, PaymentStatus } from '@/types/booking'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const FullCalendarQuerySchema = z.object({
   start: z.string().transform(str => new Date(str)),
   end: z.string().transform(str => new Date(str)),
