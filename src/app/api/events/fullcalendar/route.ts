@@ -64,15 +64,14 @@ export async function GET(request: NextRequest) {
       const productName = firstEvent.bookings[0]?.product.name || firstEvent.title.split(' - ')[0];
       const availableSpots = totalCapacity - totalStudents;
 
-      const dateKey = firstEvent.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+      const sydneyDate = firstEvent.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
       
       const baseEvent = {
         id: `grouped-${groupKey}`,
         title: query.view === 'admin' 
           ? `${productName} (${totalStudents}/${totalCapacity})`
           : productName,
-        start: dateKey,
-        allDay: true,
+        start: `${sydneyDate}T00:00:00+11:00`,
         backgroundColor: getEventStatusColor(firstEvent.status),
         borderColor: '#3B82F6',
         textColor: '#ffffff'
@@ -125,7 +124,7 @@ export async function GET(request: NextRequest) {
       const studentCount = event.bookings.length
       const availableSpots = event.maxCapacity - event.currentCount
 
-      const dateKey = event.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+      const sydneyDate = event.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
       const isMultiDay = event.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' }) !== 
                          event.endDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
       
@@ -135,9 +134,8 @@ export async function GET(request: NextRequest) {
         title: query.view === 'admin' 
           ? `${event.title} (${studentCount}/${event.maxCapacity})`
           : event.title,
-        start: event.type === 'CAMP' || event.type === 'SUBSCRIPTION' ? dateKey : event.startDateTime.toISOString(),
+        start: event.type === 'CAMP' || event.type === 'SUBSCRIPTION' ? `${sydneyDate}T00:00:00+11:00` : event.startDateTime.toISOString(),
         end: isMultiDay && event.type !== 'BIRTHDAY' ? undefined : (event.type === 'BIRTHDAY' ? event.endDateTime.toISOString() : undefined),
-        allDay: event.type === 'CAMP' || event.type === 'SUBSCRIPTION',
         backgroundColor: getEventStatusColor(event.status),
         borderColor: primaryBooking 
           ? getPaymentStatusColor(primaryBooking.status === 'CONFIRMED' ? PaymentStatus.PAID : PaymentStatus.PENDING)
