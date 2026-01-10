@@ -61,13 +61,15 @@ export async function GET(request: NextRequest) {
       const productName = firstEvent.bookings[0]?.product.name || firstEvent.title.split(' - ')[0];
       const availableSpots = totalCapacity - totalStudents;
 
+      const dateKey = firstEvent.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+      
       const baseEvent = {
         id: `grouped-${groupKey}`,
         title: query.view === 'admin' 
           ? `${productName} (${totalStudents}/${totalCapacity})`
           : productName,
-        start: firstEvent.startDateTime.toISOString(),
-        end: firstEvent.endDateTime.toISOString(),
+        start: dateKey,
+        allDay: true,
         backgroundColor: getEventStatusColor(firstEvent.status),
         borderColor: '#3B82F6',
         textColor: '#ffffff'
@@ -120,14 +122,19 @@ export async function GET(request: NextRequest) {
       const studentCount = event.bookings.length
       const availableSpots = event.maxCapacity - event.currentCount
 
+      const dateKey = event.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+      const isMultiDay = event.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' }) !== 
+                         event.endDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+      
       // Base event data
       const baseEvent = {
         id: event.id,
         title: query.view === 'admin' 
           ? `${event.title} (${studentCount}/${event.maxCapacity})`
           : event.title,
-        start: event.startDateTime.toISOString(),
-        end: event.endDateTime.toISOString(),
+        start: event.type === 'CAMP' || event.type === 'SUBSCRIPTION' ? dateKey : event.startDateTime.toISOString(),
+        end: isMultiDay && event.type !== 'BIRTHDAY' ? undefined : (event.type === 'BIRTHDAY' ? event.endDateTime.toISOString() : undefined),
+        allDay: event.type === 'CAMP' || event.type === 'SUBSCRIPTION',
         backgroundColor: getEventStatusColor(event.status),
         borderColor: primaryBooking 
           ? getPaymentStatusColor(primaryBooking.status === 'CONFIRMED' ? PaymentStatus.PAID : PaymentStatus.PENDING)

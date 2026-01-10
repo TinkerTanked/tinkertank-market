@@ -1,0 +1,478 @@
+[
+  {
+    "subscriptionId": "sub_1SdO9wDqupgKyrhoOhimWgay",
+    "customerId": "cus_TaZIVhIwrFDkbo",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:31.715Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SdNxRDqupgKyrhoWNcQYi4I",
+    "customerId": "cus_TaZ5M8sBkA99FY",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:32.480Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SdNwIDqupgKyrhoPZQ1uZ2u",
+    "customerId": "cus_TaZ4l15QWfyOSE",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:33.303Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SbcyRDqupgKyrhovzwzu1LW",
+    "customerId": "cus_TYkTqZpu5P5Pkz",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:34.071Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SXXEXDqupgKyrho3kvK6gQF",
+    "customerId": "cus_TUWHqIBKeMD4Gj",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:34.975Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SWuJzDqupgKyrho1Wxl7jA2",
+    "customerId": "cus_TTs42FQgITHYER",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:35.692Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1STqz1DqupgKyrhoDhWNf95u",
+    "customerId": "cus_TQiPoZzP6K9TTH",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:44:36.474Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SSQGrDqupgKyrhoVxkk7q9K",
+    "customerId": "cus_TPEkWDp0lganol",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:37.290Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SS7n6DqupgKyrhoBBMwe51L",
+    "customerId": "cus_TOveD0ZdRRsOFn",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:38.130Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SPi3hDqupgKyrhokzOOhZ9X",
+    "customerId": "cus_TMQv6zsNTjlIOr",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:38.903Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SMy0QDqupgKyrhoJW8ikCeV",
+    "customerId": "cus_TJbCTY0lYPiMW4",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:44:39.748Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SLZTnDqupgKyrhoB7afSeLU",
+    "customerId": "cus_TI9neIeaMoleSQ",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:40.567Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SLGKvDqupgKyrhodpKa7Kml",
+    "customerId": "cus_THq0tk8v22NdsH",
+    "weeklyAmount": 25,
+    "pausedAt": "2025-12-27T23:44:41.359Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SK8BtDqupgKyrhocBdvW5JP",
+    "customerId": "cus_TGfWdw66qfXNDw",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:42.140Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SK4ixDqupgKyrhoQgQCXNLR",
+    "customerId": "cus_TGbwMBqdE3oAEH",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:44:42.886Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SJRsRDqupgKyrhoA4WOfnYH",
+    "customerId": "cus_TFxoTdSB2YB7In",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:44:43.631Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SIEMIDqupgKyrho7vkaQ3ZD",
+    "customerId": "cus_TEhlQzPz1RXtLi",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:44.426Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SIEKoDqupgKyrhoa9GuECl6",
+    "customerId": "cus_TEhkcglGNZBeFB",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:45.258Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SHj5kDqupgKyrhosjoldqbs",
+    "customerId": "cus_TEBSKIP7ITT3RF",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:46.012Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SH0QYDqupgKyrhoV0GB7YYy",
+    "customerId": "cus_TDRJZdbW2sf5YS",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:46.816Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SGR6MDqupgKyrho74wBpJSH",
+    "customerId": "cus_TCqnLNX7NHnKvP",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:44:47.530Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SFji3DqupgKyrhoIhGPxtd6",
+    "customerId": "cus_TC7x8RaAJsk5DK",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:44:48.390Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SFducDqupgKyrhoKFfc863W",
+    "customerId": "cus_TC1y7LTr8p4M1I",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:44:49.150Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SFdrvDqupgKyrhoS6YM7HfQ",
+    "customerId": "cus_TC1vEpSzIkR8Fs",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:44:50.026Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1SAK62DqupgKyrhosZXj9ru8",
+    "customerId": "cus_T6XAHkDebFQ0OW",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:44:50.810Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1S360wDqupgKyrhoN2g0BGeq",
+    "customerId": "cus_Sz49KRDxAgAxVJ",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:44:51.538Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1S2rfgDqupgKyrhoTkn2ELvu",
+    "customerId": "cus_SypKwaQDrdVqQv",
+    "weeklyAmount": 25,
+    "pausedAt": "2025-12-27T23:44:52.318Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1S2ljzDqupgKyrhoTp4EQiyB",
+    "customerId": "cus_SyjCav78w2YokK",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:44:53.070Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1Ry1uoDqupgKyrhoPWXPTheG",
+    "customerId": "cus_StpZhmHDq1cMzx",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:44:53.859Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RxnWLDqupgKyrhoLCgXtTNF",
+    "customerId": "cus_Stah26Fs8ILDEy",
+    "weeklyAmount": 25,
+    "pausedAt": "2025-12-27T23:44:54.605Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RvtnlDqupgKyrhodaZeYeiZ",
+    "customerId": "cus_Srd3fdljWP6rG8",
+    "weeklyAmount": 25,
+    "pausedAt": "2025-12-27T23:44:55.367Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RscniDqupgKyrho1yUiWM5V",
+    "customerId": "cus_SoFIA8IAFA9zuy",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:44:56.079Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RqnoNDqupgKyrhozHF00Dwx",
+    "customerId": "cus_SmMXC3leTF0nmS",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:44:56.911Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RpgrrDqupgKyrhoDgYaL8no",
+    "customerId": "cus_SRL05OVUuzPB6X",
+    "weeklyAmount": 49.99,
+    "pausedAt": "2025-12-27T23:44:57.624Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RnQdRDqupgKyrhoU18AL5D5",
+    "customerId": "cus_SisOiiYuTo2guG",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:44:58.380Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1Rmv4DDqupgKyrhoLCe1vnGc",
+    "customerId": "cus_SiLlVJpPxKmouE",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:44:59.092Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1Rm7llDqupgKyrhoXvHnMOnF",
+    "customerId": "cus_ShWpJAB0OjiPiZ",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:44:59.902Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RiOTMDqupgKyrhobLMYXJZ6",
+    "customerId": "cus_SdfpaFL0J46GZM",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:45:00.625Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RiORUDqupgKyrhoLemqSnly",
+    "customerId": "cus_SdfnEhQTfpv13b",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:45:01.368Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RiOMzDqupgKyrho9rbjpU1T",
+    "customerId": "cus_SdfiZaFpoqSYSu",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:45:02.128Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RiOLgDqupgKyrho06fl4kc7",
+    "customerId": "cus_SdfhxS0ymlfQrx",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:45:02.891Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RbYXWDqupgKyrhollc6YpP6",
+    "customerId": "cus_SWblHIXhemnJdL",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:03.671Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RbY9eDqupgKyrhoN0mbx7Xx",
+    "customerId": "cus_SWbMl1BL2uAkOm",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:04.437Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1Rb6vLDqupgKyrhoEU1JW0eW",
+    "customerId": "cus_SW9DPodDOjZfCb",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:45:05.246Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RZM1WDqupgKyrhoTwqwZzcv",
+    "customerId": "cus_SUKg3vm9f5txxV",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:45:06.051Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RZM0NDqupgKyrhoc7Gpb6x3",
+    "customerId": "cus_SUKf4gmSnco2zj",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:45:06.856Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RYaXkDqupgKyrho6kf2ajSh",
+    "customerId": "cus_STXcRl4zFU1LsZ",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:07.677Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RYCqlDqupgKyrhodcAjqkUH",
+    "customerId": "cus_SPEQ9fwfniRT3A",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:08.408Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RVlPRDqupgKyrho9uePVZZq",
+    "customerId": "cus_SQceCW2O4rPEav",
+    "weeklyAmount": 25,
+    "pausedAt": "2025-12-27T23:45:09.239Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RVjO7DqupgKyrhofUMyfbSu",
+    "customerId": "cus_SQaZzbPe4BGZCa",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:45:10.009Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RVUcUDqupgKyrhoK8KwPlM0",
+    "customerId": "cus_SQLJsoZcOSuSZO",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:45:10.736Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RV3ATDqupgKyrhoOCn8OO7d",
+    "customerId": "cus_SPswLWMTjCLDdh",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:11.492Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RTzjUDqupgKyrhoLyowhhtf",
+    "customerId": "cus_SOnKOKtfvP0oxo",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:12.355Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RPFBtDqupgKyrhoQB96GKEl",
+    "customerId": "cus_SJsxBDZ47xHrEb",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:13.147Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1ROZnHDqupgKyrho0LwE44Qd",
+    "customerId": "cus_SJCBLH3bVjWwaO",
+    "weeklyAmount": 39.99,
+    "pausedAt": "2025-12-27T23:45:13.936Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1ROGBzDqupgKyrhoLVlMEorA",
+    "customerId": "cus_SIrvvS4khpyVZp",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:14.724Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RM62eDqupgKyrhoGI4vTHWZ",
+    "customerId": "cus_SGdJAhtHGIE7R8",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:45:15.488Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RM2pNDqupgKyrhoUBewsl1e",
+    "customerId": "cus_SGZzrOqWODUhPK",
+    "weeklyAmount": 25,
+    "pausedAt": "2025-12-27T23:45:16.235Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RJso8DqupgKyrhomS9I2lNq",
+    "customerId": "cus_SELVPK3dVQxO5B",
+    "weeklyAmount": 25,
+    "pausedAt": "2025-12-27T23:45:17.072Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RJsN9DqupgKyrhoBMtInBMz",
+    "customerId": "cus_SEL38ZDeNQ9BZZ",
+    "weeklyAmount": 25,
+    "pausedAt": "2025-12-27T23:45:17.836Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RJoyeDqupgKyrho3Cct9MbE",
+    "customerId": "cus_SEHXNBvyG7qTFN",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:18.595Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RJovsDqupgKyrhoYBks7QVo",
+    "customerId": "cus_SEHUWQVMFBvmXa",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:19.379Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RJRJ4DqupgKyrhoyDLDVeU9",
+    "customerId": "cus_Q1qMVxE8nGXbKn",
+    "weeklyAmount": 25,
+    "pausedAt": "2025-12-27T23:45:20.131Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RJRDtDqupgKyrhopwJ2v12z",
+    "customerId": "cus_Q19PGj1xAI07LW",
+    "weeklyAmount": 25,
+    "pausedAt": "2025-12-27T23:45:21.016Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RIpzlDqupgKyrhoAMuuBiqC",
+    "customerId": "cus_SDGWLYP6Wqb3hj",
+    "weeklyAmount": 29.99,
+    "pausedAt": "2025-12-27T23:45:21.819Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1RGEyFDqupgKyrhoUYm9A3gs",
+    "customerId": "cus_SAa8ATubhu5gxo",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:45:22.535Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1QusVvDqupgKyrhoaiw60voV",
+    "customerId": "cus_RoVWJ4gcUQfsWa",
+    "weeklyAmount": 54.99,
+    "pausedAt": "2025-12-27T23:45:23.239Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  },
+  {
+    "subscriptionId": "sub_1QdSNSDqupgKyrhosYROeb9w",
+    "customerId": "cus_RWVOjPsPPFJpaj",
+    "weeklyAmount": 49.99,
+    "pausedAt": "2025-12-27T23:45:23.966Z",
+    "resumesAt": "2026-01-31T13:00:00.000Z"
+  }
+]
