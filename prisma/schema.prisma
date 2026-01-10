@@ -50,6 +50,7 @@ model Location {
   bookings           Booking[]
   events             Event[]
   recurringTemplates RecurringTemplate[]
+  orders             Order[]
 
   @@map("locations")
 }
@@ -82,8 +83,10 @@ model Order {
   stripePaymentIntentId String?     @unique
   status                OrderStatus @default(PENDING)
   totalAmount           Decimal     @db.Money
+  locationId            String?
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
+  location              Location?   @relation(fields: [locationId], references: [id])
   orderItems            OrderItem[]
 
   @@map("orders")

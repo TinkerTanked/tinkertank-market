@@ -31,6 +31,8 @@ export interface EnhancedCartItem {
   selectedDate?: Date;
   selectedDates?: Date[];
   selectedTimeSlot?: TimeSlot;
+  locationId?: string;
+  locationName?: string;
   pricePerItem: number;
   totalPrice: number;
   createdAt: Date;
