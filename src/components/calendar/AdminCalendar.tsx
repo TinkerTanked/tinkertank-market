@@ -78,7 +78,7 @@ export default function AdminCalendar({
     
     events.forEach(event => {
       const startDate = typeof event.start === 'string' ? new Date(event.start) : event.start
-      const dateKey = startDate.toISOString().split('T')[0]
+      const dateKey = startDate.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' })
       
       if (!stats[dateKey]) {
         stats[dateKey] = {
@@ -238,7 +238,7 @@ export default function AdminCalendar({
   }
 
   const dayCellContent = (arg: any) => {
-    const dateKey = arg.date.toISOString().split('T')[0]
+    const dateKey = arg.date.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' })
     const dayStats = dailyStats[dateKey]
 
     if (!dayStats || currentView !== 'dayGridMonth') {

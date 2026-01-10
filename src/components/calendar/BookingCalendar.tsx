@@ -101,9 +101,10 @@ export default function BookingCalendar({
       return ['bg-gray-100', 'text-gray-400', 'cursor-not-allowed', 'opacity-50']
     }
 
+    const dateKey = arg.date.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' })
     const dayEvents = filteredEvents.filter(event => {
-      const eventDate = new Date(event.start)
-      return eventDate.toDateString() === date.toDateString()
+      const eventKey = new Date(event.start).toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' })
+      return eventKey === dateKey
     })
 
     if (dayEvents.length > 0) {
@@ -180,9 +181,10 @@ export default function BookingCalendar({
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
     const isToday = arg.isToday
 
+    const dateKey = arg.date.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' })
     const dayEvents = filteredEvents.filter(event => {
-      const eventDate = new Date(event.start)
-      return eventDate.toDateString() === date.toDateString()
+      const eventKey = new Date(event.start).toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' })
+      return eventKey === dateKey
     })
 
     return (
@@ -331,7 +333,7 @@ export default function BookingCalendar({
           }}
           locale="en-AU"
           validRange={{
-            start: new Date().toISOString().split('T')[0]
+            start: new Date().toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' })
           }}
         />
       </div>
