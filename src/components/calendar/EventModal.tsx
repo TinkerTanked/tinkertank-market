@@ -489,7 +489,7 @@ export default function EventModal({
                                     → Check Out
                                   </button>
                                 )}
-                                {attendance.status !== 'ABSENT' && (
+                                {attendance.status === 'NOT_ARRIVED' && (
                                   <button
                                     onClick={() => handleMarkAbsent(booking.id)}
                                     className="px-4 py-3 bg-red-100 text-red-700 rounded-lg font-bold text-sm hover:bg-red-200 transition-colors"
@@ -499,22 +499,13 @@ export default function EventModal({
                                 )}
                               </div>
 
-                              <div className="grid grid-cols-2 gap-2">
-                                <a
-                                  href="tel:"
-                                  className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm hover:bg-blue-200 transition-colors"
-                                >
-                                  <PhoneIcon className="h-4 w-4" />
-                                  Call Parent
-                                </a>
-                                <a
-                                  href="mailto:"
-                                  className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg font-semibold text-sm hover:bg-purple-200 transition-colors"
-                                >
-                                  <EnvelopeIcon className="h-4 w-4" />
-                                  Email
-                                </a>
-                              </div>
+                              <a
+                                href="tel:"
+                                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm hover:bg-blue-200 transition-colors w-full"
+                              >
+                                <PhoneIcon className="h-5 w-5" />
+                                Call Parent
+                              </a>
                             </div>
                           )
                         })}
@@ -578,22 +569,14 @@ export default function EventModal({
                                     </div>
                                   </td>
                                   <td className="px-4 py-3">
-                                    <div className="flex gap-2">
-                                      <a
-                                        href="tel:"
-                                        className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-                                        title="Call parent"
-                                      >
-                                        <PhoneIcon className="h-4 w-4" />
-                                      </a>
-                                      <a
-                                        href="mailto:"
-                                        className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-                                        title="Email parent"
-                                      >
-                                        <EnvelopeIcon className="h-4 w-4" />
-                                      </a>
-                                    </div>
+                                    <a
+                                      href="tel:"
+                                      className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-semibold text-sm"
+                                      title="Call parent"
+                                    >
+                                      <PhoneIcon className="h-4 w-4" />
+                                      Call
+                                    </a>
                                   </td>
                                   <td className="px-4 py-3">
                                     <div className="flex gap-2">
@@ -613,7 +596,7 @@ export default function EventModal({
                                           Check Out
                                         </button>
                                       )}
-                                      {attendance.status !== 'ABSENT' && (
+                                      {attendance.status === 'NOT_ARRIVED' && (
                                         <button
                                           onClick={() => handleMarkAbsent(booking.id)}
                                           className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg font-bold text-xs hover:bg-red-200 transition-colors"
