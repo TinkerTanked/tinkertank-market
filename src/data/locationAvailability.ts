@@ -16,12 +16,12 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
     locationName: 'Manly Library',
     availableCampTypes: ['day'],
     availableDates: [
-      new Date('2026-01-13'),
-      new Date('2026-01-14'),
-      new Date('2026-01-15'),
-      new Date('2026-01-20'),
-      new Date('2026-01-21'),
-      new Date('2026-01-22'),
+      new Date('2026-01-13T00:00:00+11:00'),
+      new Date('2026-01-14T00:00:00+11:00'),
+      new Date('2026-01-15T00:00:00+11:00'),
+      new Date('2026-01-20T00:00:00+11:00'),
+      new Date('2026-01-21T00:00:00+11:00'),
+      new Date('2026-01-22T00:00:00+11:00'),
     ]
   }
 ]
@@ -41,9 +41,9 @@ export function isDateAvailableForLocation(date: Date, locationName: string): bo
   
   if (!availability.availableDates) return true
   
-  const dateStr = date.toISOString().split('T')[0]
+  const dateStr = date.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' })
   return availability.availableDates.some(availDate => 
-    availDate.toISOString().split('T')[0] === dateStr
+    availDate.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' }) === dateStr
   )
 }
 
