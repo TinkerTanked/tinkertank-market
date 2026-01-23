@@ -1,3 +1,4 @@
+import { Metadata } from 'next'
 import Link from 'next/link'
 import { 
   AcademicCapIcon, 
@@ -7,6 +8,24 @@ import {
   RocketLaunchIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline'
+import { BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
+
+export const metadata: Metadata = {
+  title: 'About TinkerTank - Our Story & Mission',
+  description:
+    "Learn about TinkerTank, Sydney's premier STEAM education provider. Our mission is to inspire creativity and innovation in children through hands-on learning experiences.",
+  alternates: {
+    canonical: `${baseUrl}/about`
+  },
+  openGraph: {
+    title: 'About TinkerTank | STEAM Education Sydney',
+    description: 'Our mission is to inspire creativity and innovation in children through hands-on STEAM learning.',
+    url: `${baseUrl}/about`,
+    type: 'website'
+  }
+}
 
 export default function AboutPage() {
   return (
