@@ -98,7 +98,6 @@ export default function CheckoutForm({ onBack, onClientSecretReady }: CheckoutFo
               country: 'AU',
             },
           },
-          locationId: items[0]?.locationId || null,
         }),
       });
 

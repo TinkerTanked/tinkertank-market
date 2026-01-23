@@ -44,7 +44,6 @@ const CreatePaymentIntentSchema = z.object({
       country: z.string().min(2).max(2).default('AU'),
     }),
   }),
-  locationId: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -118,7 +117,6 @@ export async function POST(request: NextRequest) {
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
-        locationId: validatedData.locationId || '',
       },
       shipping: {
         name: validatedData.customerInfo.name,
@@ -158,7 +156,6 @@ export async function POST(request: NextRequest) {
         stripePaymentIntentId: paymentIntent.id,
         status: 'PENDING',
         totalAmount: total,
-        locationId: validatedData.locationId || null,
         orderItems: {
           create: createdStudents.map((item) => ({
             productId: item.productId,

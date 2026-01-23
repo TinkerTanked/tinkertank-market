@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { addDays, addWeeks, format, isBefore, setHours, setMinutes } from 'date-fns'
-import { toZonedTime, fromZonedTime } from 'date-fns-tz'
+import { toZonedTime } from 'date-fns-tz'
 import { isClosureDate, getClosureInfo } from '@/types'
 
 export interface CreateEventParams {
@@ -442,9 +442,10 @@ export class EventCreationService {
    */
   private createDateTimeFromTimeString(date: Date, timeString: string): Date {
     const [hours, minutes] = timeString.split(':').map(Number)
-    const local = new Date(date)
-    local.setHours(hours, minutes, 0, 0)
-    return fromZonedTime(local, BUSINESS_CONSTANTS.LOCATION_TIMEZONE)
+    return toZonedTime(
+      setMinutes(setHours(date, hours), minutes),
+      BUSINESS_CONSTANTS.LOCATION_TIMEZONE
+    )
   }
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
 import { 
@@ -15,11 +15,7 @@ import {
   TrashIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
-  BanknotesIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  UserCircleIcon,
-  ClipboardDocumentCheckIcon
+  BanknotesIcon
 } from '@heroicons/react/24/outline'
 import { 
   AdminCalendarEvent, 
@@ -31,20 +27,6 @@ import {
 } from '@/types/booking'
 import { format } from 'date-fns'
 import { clsx } from 'clsx'
-
-const toDate = (d: string | Date | null | undefined): Date => 
-  d instanceof Date ? d : d ? new Date(d) : new Date()
-
-type AttendanceStatus = 'NOT_ARRIVED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'ABSENT'
-
-interface AttendanceRecord {
-  id?: string
-  bookingId: string
-  status: AttendanceStatus
-  checkInAt?: string
-  checkOutAt?: string
-  notes?: string
-}
 
 interface EventModalProps {
   isOpen: boolean
@@ -71,8 +53,6 @@ export default function EventModal({
 }: EventModalProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'students' | 'settings'>('overview')
   const [isEditing, setIsEditing] = useState(false)
-  const [attendanceByBooking, setAttendanceByBooking] = useState<Record<string, AttendanceRecord>>({})
-  const [attendanceFilter, setAttendanceFilter] = useState<'all' | AttendanceStatus>('all')
 
   const { 
     product, 
@@ -114,45 +94,9 @@ export default function EventModal({
     }
   }
 
-  useEffect(() => {
-    if (isOpen) {
-      const initialAttendance: Record<string, AttendanceRecord> = {}
-      bookings.forEach((booking: any) => {
-        initialAttendance[booking.id] = {
-          bookingId: booking.id,
-          status: 'NOT_ARRIVED' as AttendanceStatus
-        }
-      })
-      setAttendanceByBooking(initialAttendance)
-    }
-  }, [isOpen, bookings])
-
-  const handleCheckIn = async (bookingId: string) => {
-    const now = new Date().toISOString()
-    setAttendanceByBooking(prev => ({
-      ...prev,
-      [bookingId]: { ...prev[bookingId], status: 'CHECKED_IN', checkInAt: now }
-    }))
-  }
-
-  const handleCheckOut = async (bookingId: string) => {
-    const now = new Date().toISOString()
-    setAttendanceByBooking(prev => ({
-      ...prev,
-      [bookingId]: { ...prev[bookingId], status: 'CHECKED_OUT', checkOutAt: now }
-    }))
-  }
-
-  const handleMarkAbsent = async (bookingId: string) => {
-    setAttendanceByBooking(prev => ({
-      ...prev,
-      [bookingId]: { ...prev[bookingId], status: 'ABSENT' }
-    }))
-  }
-
   const exportToICal = () => {
-    const startDate = toDate(event.start).toISOString().replace(/[:\-]|\.\d\d\d/g, '')
-    const endDate = toDate(event.end).toISOString().replace(/[:\-]|\.\d\d\d/g, '')
+    const startDate = event.start.toISOString().replace(/[:\-]|\.\d\d\d/g, '')
+    const endDate = event.end.toISOString().replace(/[:\-]|\.\d\d\d/g, '')
     
     const icalContent = [
       'BEGIN:VCALENDAR',
@@ -224,7 +168,7 @@ export default function EventModal({
                         <div className="flex items-center gap-2">
                           <ClockIcon className="h-4 w-4" />
                           <span className="font-medium">
-                            {format(toDate(event.start), 'EEEE, MMMM d, yyyy')}
+                            {format(event.start, 'EEEE, MMMM d, yyyy • h:mm a')} - {format(event.end, 'h:mm a')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -378,237 +322,97 @@ export default function EventModal({
                   )}
 
                   {activeTab === 'students' && (
-                    <div className="space-y-6">
-                      {/* Attendance Summary */}
-                      <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-5 rounded-xl border border-green-200">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <ClipboardDocumentCheckIcon className="h-6 w-6 text-green-700" />
-                            <div>
-                              <div className="text-sm font-medium text-green-900">Attendance</div>
-                              <div className="text-2xl font-bold text-green-700">
-                                {Object.values(attendanceByBooking).filter(a => a.status === 'CHECKED_IN').length}/{bookings.length}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-xs text-green-700 font-medium space-y-1 text-right">
-                            <div>{Object.values(attendanceByBooking).filter(a => a.status === 'CHECKED_OUT').length} checked out</div>
-                            <div>{Object.values(attendanceByBooking).filter(a => a.status === 'ABSENT').length} absent</div>
-                          </div>
-                        </div>
-                        <div className="w-full bg-green-200 rounded-full h-3 overflow-hidden">
-                          <div 
-                            className="bg-green-600 h-full rounded-full transition-all"
-                            style={{ 
-                              width: `${bookings.length > 0 ? (Object.values(attendanceByBooking).filter(a => a.status === 'CHECKED_IN').length / bookings.length) * 100 : 0}%` 
-                            }}
-                          />
-                        </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-bold text-gray-900">
+                          Enrolled Students ({bookings.length})
+                        </h3>
                       </div>
-
-                      {/* Filter Tabs */}
-                      <div className="flex gap-2 overflow-x-auto pb-2">
-                        {(['all', 'NOT_ARRIVED', 'CHECKED_IN', 'CHECKED_OUT', 'ABSENT'] as const).map((filter) => {
-                          const count = filter === 'all' 
-                            ? bookings.length 
-                            : Object.values(attendanceByBooking).filter(a => a.status === filter).length
-                          return (
-                            <button
-                              key={filter}
-                              onClick={() => setAttendanceFilter(filter)}
-                              className={clsx(
-                                'px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all',
-                                attendanceFilter === filter
-                                  ? 'bg-primary-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              )}
-                            >
-                              {filter === 'all' ? 'All' : filter.replace('_', ' ')} ({count})
-                            </button>
-                          )
-                        })}
-                      </div>
-
-                      {/* Student List - Mobile Cards */}
-                      <div className="space-y-4 md:hidden">
-                        {bookings
-                          .filter((booking: any) => {
-                            if (attendanceFilter === 'all') return true
-                            return attendanceByBooking[booking.id]?.status === attendanceFilter
-                          })
-                          .map((booking: any) => {
-                          const attendance = attendanceByBooking[booking.id] || { status: 'NOT_ARRIVED' }
-                          const allergies = booking.student?.allergies || booking.specialRequests
-                          
-                          return (
-                            <div key={booking.id} className="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm">
-                              <div className="flex items-start gap-3 mb-3">
-                                <div className="w-14 h-14 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                                  {(booking.student?.name || 'U')[0].toUpperCase()}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-lg font-bold text-gray-900 truncate">
-                                    {booking.student?.name || 'Unknown Student'}
-                                  </div>
-                                  {allergies && (
-                                    <div className="flex items-center gap-1 mt-1">
-                                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-red-100 text-red-800 text-xs font-bold">
-                                        ⚠️ {allergies}
-                                      </span>
-                                    </div>
-                                  )}
-                                  <div className={clsx(
-                                    'inline-flex items-center px-2 py-1 rounded-md text-xs font-bold mt-2',
-                                    attendance.status === 'CHECKED_IN' && 'bg-green-100 text-green-800',
-                                    attendance.status === 'CHECKED_OUT' && 'bg-indigo-100 text-indigo-800',
-                                    attendance.status === 'ABSENT' && 'bg-red-100 text-red-800',
-                                    attendance.status === 'NOT_ARRIVED' && 'bg-gray-100 text-gray-800'
-                                  )}>
-                                    {attendance.status === 'CHECKED_IN' && `✓ In at ${format(new Date(attendance.checkInAt!), 'h:mm a')}`}
-                                    {attendance.status === 'CHECKED_OUT' && `← Out at ${format(new Date(attendance.checkOutAt!), 'h:mm a')}`}
-                                    {attendance.status === 'ABSENT' && '✗ Absent'}
-                                    {attendance.status === 'NOT_ARRIVED' && '○ Not arrived'}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-2 mb-3">
-                                {attendance.status !== 'CHECKED_IN' && attendance.status !== 'CHECKED_OUT' && (
-                                  <button
-                                    onClick={() => handleCheckIn(booking.id)}
-                                    className="px-4 py-3 bg-green-600 text-white rounded-lg font-bold text-sm hover:bg-green-700 transition-colors shadow-md"
-                                  >
-                                    ✓ Check In
-                                  </button>
-                                )}
-                                {attendance.status === 'CHECKED_IN' && (
-                                  <button
-                                    onClick={() => handleCheckOut(booking.id)}
-                                    className="px-4 py-3 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors shadow-md"
-                                  >
-                                    → Check Out
-                                  </button>
-                                )}
-                                {attendance.status === 'NOT_ARRIVED' && (
-                                  <button
-                                    onClick={() => handleMarkAbsent(booking.id)}
-                                    className="px-4 py-3 bg-red-100 text-red-700 rounded-lg font-bold text-sm hover:bg-red-200 transition-colors"
-                                  >
-                                    ✗ Absent
-                                  </button>
-                                )}
-                              </div>
-
-                              <a
-                                href="tel:"
-                                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm hover:bg-blue-200 transition-colors w-full"
-                              >
-                                <PhoneIcon className="h-5 w-5" />
-                                Call Parent
-                              </a>
-                            </div>
-                          )
-                        })}
-                      </div>
-
-                      {/* Student List - Desktop Table */}
-                      <div className="hidden md:block overflow-hidden shadow-sm ring-1 ring-gray-200 rounded-xl">
+                      <div className="overflow-hidden shadow-sm ring-1 ring-gray-200 rounded-xl">
                         <table className="min-w-full divide-y divide-gray-300">
                           <thead className="bg-gray-50">
                             <tr>
-                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Student</th>
-                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Allergies/Medical</th>
-                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Attendance</th>
-                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Contact</th>
-                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Actions</th>
+                              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                Student
+                              </th>
+                              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                Status
+                              </th>
+                              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                Payment
+                              </th>
+                              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                Amount
+                              </th>
+                              <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                Actions
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
-                            {bookings
-                              .filter((booking: any) => {
-                                if (attendanceFilter === 'all') return true
-                                return attendanceByBooking[booking.id]?.status === attendanceFilter
-                              })
-                              .map((booking: any) => {
-                              const attendance = attendanceByBooking[booking.id] || { status: 'NOT_ARRIVED' }
-                              const allergies = booking.student?.allergies || booking.specialRequests
-                              
-                              return (
-                                <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                                  <td className="px-4 py-3 whitespace-nowrap">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold">
-                                        {(booking.student?.name || 'U')[0].toUpperCase()}
-                                      </div>
+                            {bookings.map((booking: any) => (
+                              <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold">
+                                      {(booking.student?.name || 'U')[0].toUpperCase()}
+                                    </div>
+                                    <div>
                                       <div className="text-sm font-semibold text-gray-900">
                                         {booking.student?.name || 'Unknown Student'}
                                       </div>
-                                    </div>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    {allergies ? (
-                                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-red-100 text-red-800 text-xs font-bold">
-                                        ⚠️ {allergies}
-                                      </span>
-                                    ) : (
-                                      <span className="text-gray-400 text-xs">None</span>
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <div className={clsx(
-                                      'inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold',
-                                      attendance.status === 'CHECKED_IN' && 'bg-green-100 text-green-800',
-                                      attendance.status === 'CHECKED_OUT' && 'bg-indigo-100 text-indigo-800',
-                                      attendance.status === 'ABSENT' && 'bg-red-100 text-red-800',
-                                      attendance.status === 'NOT_ARRIVED' && 'bg-gray-100 text-gray-800'
-                                    )}>
-                                      {attendance.status === 'CHECKED_IN' && `In ${format(new Date(attendance.checkInAt!), 'h:mm a')}`}
-                                      {attendance.status === 'CHECKED_OUT' && `Out ${format(new Date(attendance.checkOutAt!), 'h:mm a')}`}
-                                      {attendance.status === 'ABSENT' && 'Absent'}
-                                      {attendance.status === 'NOT_ARRIVED' && 'Not arrived'}
-                                    </div>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <a
-                                      href="tel:"
-                                      className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-semibold text-sm"
-                                      title="Call parent"
-                                    >
-                                      <PhoneIcon className="h-4 w-4" />
-                                      Call
-                                    </a>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <div className="flex gap-2">
-                                      {attendance.status !== 'CHECKED_IN' && attendance.status !== 'CHECKED_OUT' && (
-                                        <button
-                                          onClick={() => handleCheckIn(booking.id)}
-                                          className="px-3 py-1.5 bg-green-600 text-white rounded-lg font-bold text-xs hover:bg-green-700 transition-colors"
-                                        >
-                                          Check In
-                                        </button>
-                                      )}
-                                      {attendance.status === 'CHECKED_IN' && (
-                                        <button
-                                          onClick={() => handleCheckOut(booking.id)}
-                                          className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg font-bold text-xs hover:bg-indigo-700 transition-colors"
-                                        >
-                                          Check Out
-                                        </button>
-                                      )}
-                                      {attendance.status === 'NOT_ARRIVED' && (
-                                        <button
-                                          onClick={() => handleMarkAbsent(booking.id)}
-                                          className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg font-bold text-xs hover:bg-red-200 transition-colors"
-                                        >
-                                          Absent
-                                        </button>
+                                      {booking.specialRequests && (
+                                        <div className="text-xs text-gray-500 mt-1">
+                                          Note: {booking.specialRequests}
+                                        </div>
                                       )}
                                     </div>
-                                  </td>
-                                </tr>
-                              )
-                            })}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <select
+                                    value={booking.status}
+                                    onChange={(e) => handleStatusChange(booking.id, e.target.value as BookingStatus)}
+                                    className="text-xs px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium"
+                                  >
+                                    {Object.values(BookingStatus).map((status) => (
+                                      <option key={status} value={status}>
+                                        {status.toLowerCase().replace('_', ' ')}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <select
+                                    value={booking.paymentStatus}
+                                    onChange={(e) => handlePaymentStatusChange(booking.id, e.target.value as PaymentStatus)}
+                                    className="text-xs px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium"
+                                  >
+                                    {Object.values(PaymentStatus).map((status) => (
+                                      <option key={status} value={status}>
+                                        {status.toLowerCase().replace('_', ' ')}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-bold text-gray-900">
+                                    ${Number(booking.totalPrice || 0).toFixed(2)}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    of ${Number(booking.totalAmount || 0).toFixed(2)}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                  <button className="text-primary-600 hover:text-primary-800 font-medium mr-3">
+                                    View
+                                  </button>
+                                  <button className="text-red-600 hover:text-red-800 font-medium">
+                                    Remove
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>

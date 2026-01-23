@@ -5,9 +5,6 @@ import { prismaBookingToCalendarEvent } from '@/lib/calendar-utils'
 import { startOfMonth, endOfMonth, parseISO } from 'date-fns'
 import { isClosureDate, getClosureInfo } from '@/types'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -54,55 +51,14 @@ export async function GET(request: NextRequest) {
     })
 
     if (viewType === 'admin') {
-      // Group camp bookings by date and product type
-      const campBookings = bookings.filter(b => b.product.type === 'CAMP');
-      const nonCampBookings = bookings.filter(b => b.product.type !== 'CAMP');
-      
-      const campEventsMap = new Map<string, AdminCalendarEvent>();
-      
-      // Group camps by date + product name
-      campBookings.forEach((booking) => {
-        const sydneyDate = booking.startDate.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
-        const key = `${sydneyDate}|${booking.product.name}`;
-        
-        if (!campEventsMap.has(key)) {
-          const calendarEvent = prismaBookingToCalendarEvent(booking);
-          
-          campEventsMap.set(key, {
-            id: `grouped-${key}`,
-            title: `${booking.product.name} (1/20)`,
-            start: `${sydneyDate}T00:00:00+11:00` as any,
-            backgroundColor: '#3B82F6',
-            borderColor: '#2563EB',
-            extendedProps: {
-              productType: booking.product.type,
-              location: booking.location.name,
-              status: 'SCHEDULED' as any,
-              paymentStatus: 'PAID' as any,
-              capacity: 20,
-              currentBookings: 1,
-              availableSpots: 19,
-              product: booking.product as any,
-              bookings: [booking as any],
-            },
-          } as any);
-        } else {
-          const event = campEventsMap.get(key)!;
-          event.extendedProps.bookings.push(booking as any);
-          event.extendedProps.currentBookings = (event.extendedProps.currentBookings || 0) + 1;
-          event.extendedProps.availableSpots = 20 - event.extendedProps.currentBookings;
-          event.title = `${booking.product.name} (${event.extendedProps.currentBookings}/20)`;
-        }
-      });
-      
-      // Process non-camp events normally
-      const eventsMap = new Map<string, AdminCalendarEvent>();
-      
-      nonCampBookings.forEach((booking) => {
-        const key = `${booking.productId}-${booking.startDate.getTime()}`;
+      // Group bookings by product/time slot for admin view
+      const eventsMap = new Map<string, AdminCalendarEvent>()
+
+      bookings.forEach((booking) => {
+        const key = `${booking.productId}-${booking.startDate.getTime()}`
         
         if (!eventsMap.has(key)) {
-          const calendarEvent = prismaBookingToCalendarEvent(booking);
+          const calendarEvent = prismaBookingToCalendarEvent(booking)
           
           eventsMap.set(key, {
             ...calendarEvent,
@@ -110,21 +66,21 @@ export async function GET(request: NextRequest) {
               ...calendarEvent.extendedProps,
               product: booking.product as any,
               bookings: [booking as any],
-              availableSpots: 20 - 1,
+              availableSpots: 20 - 1, // Default capacity since Prisma Product model doesn't have this field yet
               currentBookings: 1,
             },
-          } as AdminCalendarEvent);
+          } as AdminCalendarEvent)
         } else {
-          const event = eventsMap.get(key)!;
-          event.extendedProps.bookings.push(booking as any);
-          event.extendedProps.currentBookings = (event.extendedProps.currentBookings || 0) + 1;
-          event.extendedProps.availableSpots = 20 - event.extendedProps.currentBookings;
+          const event = eventsMap.get(key)!
+          event.extendedProps.bookings.push(booking as any)
+          event.extendedProps.currentBookings = (event.extendedProps.currentBookings || 0) + 1
+          event.extendedProps.availableSpots = 20 - event.extendedProps.currentBookings
         }
-      });
+      })
 
       return NextResponse.json({
         success: true,
-        events: [...Array.from(campEventsMap.values()), ...Array.from(eventsMap.values())],
+        events: Array.from(eventsMap.values()),
       })
     } else {
       // Customer view - show individual available slots

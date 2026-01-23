@@ -102,9 +102,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
 
       addItem(cartItem, { 
         selectedDate: firstDate,
-        selectedDates: bookingData.dates.map(d => new Date(d)),
-        locationId: bookingData.location.id,
-        locationName: bookingData.location.name
+        selectedDates: bookingData.dates.map(d => new Date(d))
       })
       onClose()
     }

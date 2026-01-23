@@ -3,9 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { getBookingStatusColor, getPaymentStatusColor, PaymentStatus } from '@/types/booking'
 import { z } from 'zod'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
 const FullCalendarQuerySchema = z.object({
   start: z.string().transform(str => new Date(str)),
   end: z.string().transform(str => new Date(str)),
@@ -41,101 +38,20 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Group camp events by day and product type
-    const groupedCampEvents = new Map<string, typeof events>();
-    const nonCampEvents = events.filter(event => event.type !== 'CAMP');
-    
-    events.filter(event => event.type === 'CAMP').forEach(event => {
-      const dateKey = event.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
-      const productName = event.bookings[0]?.product.name || event.title;
-      const groupKey = `${dateKey}|${productName}`;
-      
-      if (!groupedCampEvents.has(groupKey)) {
-        groupedCampEvents.set(groupKey, []);
-      }
-      groupedCampEvents.get(groupKey)!.push(event);
-    });
-
-    // Create aggregated camp events
-    const aggregatedCampEvents = Array.from(groupedCampEvents.entries()).map(([groupKey, groupEvents]) => {
-      const firstEvent = groupEvents[0];
-      const totalStudents = groupEvents.reduce((sum, e) => sum + e.bookings.length, 0);
-      const totalCapacity = groupEvents.reduce((sum, e) => sum + e.maxCapacity, 0);
-      const productName = firstEvent.bookings[0]?.product.name || firstEvent.title.split(' - ')[0];
-      const availableSpots = totalCapacity - totalStudents;
-
-      const sydneyDate = firstEvent.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
-      
-      const baseEvent = {
-        id: `grouped-${groupKey}`,
-        title: query.view === 'admin' 
-          ? `${productName} (${totalStudents}/${totalCapacity})`
-          : productName,
-        start: `${sydneyDate}T00:00:00+11:00`,
-        backgroundColor: getEventStatusColor(firstEvent.status),
-        borderColor: '#3B82F6',
-        textColor: '#ffffff'
-      };
-
-      if (query.view === 'admin') {
-        return {
-          ...baseEvent,
-          extendedProps: {
-            type: 'CAMP',
-            status: firstEvent.status,
-            location: firstEvent.location.name,
-            capacity: totalCapacity,
-            currentCount: totalStudents,
-            availableSpots,
-            students: groupEvents.flatMap(event => event.bookings.map(booking => ({
-              id: booking.student.id,
-              name: booking.student.name,
-              age: calculateAge(booking.student.birthdate),
-              allergies: booking.student.allergies,
-              bookingStatus: booking.status,
-              product: booking.product.name
-            }))),
-            ageRange: firstEvent.ageMin && firstEvent.ageMax 
-              ? `Ages ${firstEvent.ageMin}-${firstEvent.ageMax}`
-              : null,
-            description: firstEvent.description,
-            isRecurring: firstEvent.isRecurring,
-            eventIds: groupEvents.map(e => e.id)
-          }
-        };
-      }
-
-      return {
-        ...baseEvent,
-        extendedProps: {
-          type: 'CAMP',
-          location: firstEvent.location.name,
-          availableSpots: availableSpots > 0 ? availableSpots : 0,
-          ageRange: firstEvent.ageMin && firstEvent.ageMax 
-            ? `Ages ${firstEvent.ageMin}-${firstEvent.ageMax}`
-            : null
-        }
-      };
-    });
-
-    // Transform non-camp events to FullCalendar format
-    const fullCalendarEvents = nonCampEvents.map(event => {
+    // Transform to FullCalendar format
+    const fullCalendarEvents = events.map(event => {
       const primaryBooking = event.bookings[0] // Get first booking for display
       const studentCount = event.bookings.length
       const availableSpots = event.maxCapacity - event.currentCount
 
-      const sydneyDate = event.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
-      const isMultiDay = event.startDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' }) !== 
-                         event.endDateTime.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
-      
       // Base event data
       const baseEvent = {
         id: event.id,
         title: query.view === 'admin' 
           ? `${event.title} (${studentCount}/${event.maxCapacity})`
           : event.title,
-        start: event.type === 'CAMP' || event.type === 'SUBSCRIPTION' ? `${sydneyDate}T00:00:00+11:00` : event.startDateTime.toISOString(),
-        end: isMultiDay && event.type !== 'BIRTHDAY' ? undefined : (event.type === 'BIRTHDAY' ? event.endDateTime.toISOString() : undefined),
+        start: event.startDateTime.toISOString(),
+        end: event.endDateTime.toISOString(),
         backgroundColor: getEventStatusColor(event.status),
         borderColor: primaryBooking 
           ? getPaymentStatusColor(primaryBooking.status === 'CONFIRMED' ? PaymentStatus.PAID : PaymentStatus.PENDING)
@@ -187,7 +103,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json([...aggregatedCampEvents, ...fullCalendarEvents])
+    return NextResponse.json(fullCalendarEvents)
 
   } catch (error) {
     console.error('Error fetching FullCalendar events:', error)
