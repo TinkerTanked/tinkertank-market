@@ -24,11 +24,16 @@ export default function LocationStep({ selectedLocation, onLocationSelect }: Loc
         const response = await fetch('/api/admin/locations')
         const data = await response.json()
         if (data.success) {
-          setLocations(data.locations.map((loc: any) => ({
-            id: loc.id,
-            name: loc.name,
-            address: loc.address
-          })))
+          const HIDDEN_LOCATIONS = ['manly', 'manly library', 'manly-library']
+          setLocations(
+            data.locations
+              .filter((loc: any) => !HIDDEN_LOCATIONS.some(hidden => loc.name.toLowerCase().includes(hidden)))
+              .map((loc: any) => ({
+                id: loc.id,
+                name: loc.name,
+                address: loc.address
+              }))
+          )
         }
       } catch (error) {
         console.error('Failed to fetch locations:', error)
