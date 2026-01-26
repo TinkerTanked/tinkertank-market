@@ -9,17 +9,15 @@ import {
   MapPinIcon, 
   CheckIcon,
   CalendarIcon,
-  ShoppingCartIcon,
   RocketLaunchIcon,
   AcademicCapIcon
 } from '@heroicons/react/24/outline'
 import { getProductById } from '@/data/products'
-import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
+import IgniteBookingWizard from '@/components/booking/IgniteBookingWizard'
 
 export default function IgniteDetailPage() {
   const params = useParams()
-  const { addItem } = useEnhancedCartStore()
-  const [isEnrolling, setIsEnrolling] = useState(false)
+  const [isWizardOpen, setIsWizardOpen] = useState(false)
 
   const product = getProductById(params.id as string)
 
@@ -43,13 +41,6 @@ export default function IgniteDetailPage() {
       currency: 'AUD',
       minimumFractionDigits: 2,
     }).format(price)
-  }
-
-  const handleEnroll = () => {
-    addItem(product, {
-      quantity: 1
-    })
-    setIsEnrolling(false)
   }
 
   return (
@@ -98,19 +89,19 @@ export default function IgniteDetailPage() {
                 <div className='flex items-center space-x-3'>
                   <CalendarIcon className='w-6 h-6 text-green-500' />
                   <div>
-                    <p className='font-medium text-gray-900'>Weekly Price</p>
-                    <p className='text-gray-600 font-bold text-xl'>{formatPrice(product.price)}</p>
+                    <p className='font-medium text-gray-900'>From</p>
+                    <p className='text-gray-600 font-bold text-xl'>{formatPrice(product.price)}/wk</p>
                   </div>
                 </div>
               </div>
 
               <div className='pt-4'>
                 <button
-                  onClick={() => setIsEnrolling(true)}
+                  onClick={() => setIsWizardOpen(true)}
                   className='bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-medium px-8 py-4 rounded-lg transition-all duration-200 inline-flex items-center justify-center text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1'
                 >
                   <RocketLaunchIcon className='w-5 h-5 mr-2' />
-                  Enroll Now
+                  Subscribe Now
                 </button>
               </div>
             </div>
@@ -184,7 +175,7 @@ export default function IgniteDetailPage() {
                     Small Groups
                   </h3>
                   <p className='text-purple-800'>
-                    Maximum 8 students per session ensures personalized attention and meaningful peer interaction.
+                    Small class sizes ensure personalized attention and meaningful peer interaction.
                   </p>
                 </div>
 
@@ -203,64 +194,34 @@ export default function IgniteDetailPage() {
         </div>
       </section>
 
-      {/* Enrollment Modal */}
-      {isEnrolling && (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
-          <div className='bg-white rounded-2xl max-w-2xl w-full p-8'>
-            <div className='text-center space-y-6'>
-              <div className='w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto'>
-                <RocketLaunchIcon className='w-8 h-8 text-green-600' />
-              </div>
-              
-              <h2 className='text-2xl font-display font-bold text-gray-900'>
-                Enroll in {product.name}
-              </h2>
-              
-              <div className='bg-gray-50 rounded-xl p-6 text-left'>
-                <h3 className='font-medium text-gray-900 mb-4'>Enrollment Summary</h3>
-                <div className='space-y-2 text-sm'>
-                  <div className='flex justify-between'>
-                    <span>Program:</span>
-                    <span className='font-medium'>{product.name}</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span>Duration:</span>
-                    <span className='font-medium'>{product.duration} per session</span>
-                  </div>
-                  <div className='flex justify-between'>
-                    <span>Location:</span>
-                    <span className='font-medium'>{product.location}</span>
-                  </div>
-                  <div className='flex justify-between font-bold text-lg pt-2 border-t'>
-                    <span>Weekly Price:</span>
-                    <span>{formatPrice(product.price)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <p className='text-gray-600'>
-                After enrollment, we'll contact you to schedule your child's sessions and discuss their interests.
-              </p>
-
-              <div className='flex gap-4'>
-                <button
-                  onClick={() => setIsEnrolling(false)}
-                  className='btn-outline flex-1'
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleEnroll}
-                  className='bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center flex-1'
-                >
-                  <ShoppingCartIcon className='w-5 h-5 mr-2' />
-                  Add to Cart
-                </button>
-              </div>
+      {/* CTA Section */}
+      <section className='py-16 bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 text-white'>
+        <div className='container-custom text-center'>
+          <div className='space-y-6'>
+            <h2 className='text-3xl md:text-4xl font-display font-bold'>
+              Ready to Get Started?
+            </h2>
+            <p className='text-xl text-blue-100 max-w-2xl mx-auto'>
+              Join {product.name} and watch your child's confidence and abilities grow week after week.
+            </p>
+            <div className='flex flex-col sm:flex-row gap-4 justify-center items-center'>
+              <button
+                onClick={() => setIsWizardOpen(true)}
+                className='btn-secondary text-lg px-8 py-4 shadow-lg inline-flex items-center'
+              >
+                <RocketLaunchIcon className='w-5 h-5 mr-2' />
+                Subscribe Now
+              </button>
+              <Link href='/contact' className='btn-outline border-white text-white hover:bg-white hover:text-purple-600 text-lg px-8 py-4'>
+                Ask Questions
+              </Link>
             </div>
           </div>
         </div>
-      )}
+      </section>
+
+      {/* Ignite Booking Wizard */}
+      <IgniteBookingWizard isOpen={isWizardOpen} onClose={() => setIsWizardOpen(false)} />
     </div>
   )
 }

@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { getProductsByCategory } from '@/data/products'
 import ProductCard from '@/components/ui/ProductCard'
+import IgniteBookingWizard from '@/components/booking/IgniteBookingWizard'
 import { 
   RocketLaunchIcon, 
   AcademicCapIcon, 
@@ -13,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function IgniteClient() {
+  const [isWizardOpen, setIsWizardOpen] = useState(false)
   const igniteProducts = getProductsByCategory('subscriptions')
 
   return (
@@ -47,9 +50,21 @@ export default function IgniteClient() {
                 <span>Weekly Sessions</span>
               </div>
             </div>
+            <div className='pt-6'>
+              <button
+                onClick={() => setIsWizardOpen(true)}
+                className='btn-secondary text-lg px-8 py-4 shadow-lg inline-flex items-center'
+              >
+                <RocketLaunchIcon className='w-5 h-5 mr-2' />
+                Subscribe Now
+              </button>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Ignite Booking Wizard */}
+      <IgniteBookingWizard isOpen={isWizardOpen} onClose={() => setIsWizardOpen(false)} />
 
       {/* Program Benefits */}
       <section className='py-16 bg-gray-50'>
@@ -250,10 +265,13 @@ export default function IgniteClient() {
               Join our weekly program and watch your child's confidence and abilities grow
             </p>
             <div className='flex flex-col sm:flex-row gap-4 justify-center items-center'>
-              <Link href='#programs' className='btn-secondary text-lg px-8 py-4 shadow-lg'>
+              <button
+                onClick={() => setIsWizardOpen(true)}
+                className='btn-secondary text-lg px-8 py-4 shadow-lg inline-flex items-center'
+              >
                 <RocketLaunchIcon className='w-5 h-5 mr-2' />
-                Choose Program
-              </Link>
+                Subscribe Now
+              </button>
               <Link href='/contact' className='btn-outline border-white text-white hover:bg-white hover:text-purple-600 text-lg px-8 py-4'>
                 Ask Questions
               </Link>

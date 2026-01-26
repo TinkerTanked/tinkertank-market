@@ -244,8 +244,8 @@ export const createProductCatalog = (): CatalogProduct[] => [
     shortDescription: 'Weekly tech education at your school',
     price: 25,
     category: 'subscriptions',
-    ageRange: '5-12 years',
-    duration: '1 hour weekly',
+    ageRange: '5-16 years',
+    duration: '1.5 hours weekly',
     location: 'Your school',
     availability: {
       type: 'weekly',
@@ -261,7 +261,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Term-based programs'
     ],
     images: ['/images/memberships.jpg', '/images/after-schoolers-3.png'],
-    maxCapacity: 30,
+    maxCapacity: 20,
     tags: ['weekly', 'in-school', 'curriculum', 'beginner-friendly']
   },
 
@@ -272,19 +272,19 @@ export const createProductCatalog = (): CatalogProduct[] => [
     shortDescription: 'Weekly studio sessions with pro equipment',
     price: 39.99,
     category: 'subscriptions',
-    ageRange: '6-16 years',
-    duration: '1.5 hours weekly',
+    ageRange: '5-16 years',
+    duration: '2 hours weekly',
     location: 'Neutral Bay Studio',
     availability: {
       type: 'weekly',
       timeSlots: [
-        { start: '16:00', end: '17:30' },
-        { start: '17:45', end: '19:15' }
+        { start: '15:30', end: '17:30' },
+        { start: '10:00', end: '12:00' }
       ],
       weekDays: [1, 2, 3, 4, 5, 6] // Monday to Saturday
     },
     features: [
-      'Small group sessions (max 8)',
+      'Small group sessions',
       'Professional equipment access',
       'Project-based learning',
       'Individual skill progression',
@@ -293,7 +293,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Showcase opportunities'
     ],
     images: ['/images/dropin.jpg', '/images/tinkerers1.jpg'],
-    maxCapacity: 8,
+    maxCapacity: 20,
     tags: ['weekly', 'studio', 'advanced', 'small-groups']
   },
 
@@ -304,12 +304,12 @@ export const createProductCatalog = (): CatalogProduct[] => [
     shortDescription: 'After-school pickup + studio learning',
     price: 54.99,
     category: 'subscriptions',
-    ageRange: '6-14 years',
+    ageRange: '5-16 years',
     duration: '2.5 hours weekly',
     location: 'Selected schools → Neutral Bay Studio',
     availability: {
       type: 'weekly',
-      timeSlots: [{ start: '15:30', end: '18:00' }],
+      timeSlots: [{ start: '15:00', end: '17:30' }],
       weekDays: [1, 2, 3, 4, 5] // Monday to Friday
     },
     features: [
@@ -322,7 +322,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Holiday program access'
     ],
     images: ['/images/after-schoolers-3.png', '/images/tinkerers2.jpg'],
-    maxCapacity: 12,
+    maxCapacity: 20,
     tags: ['weekly', 'pickup', 'after-school', 'extended-care']
   }
 ];

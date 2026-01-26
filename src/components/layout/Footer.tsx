@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   PhoneIcon, 
   EnvelopeIcon, 
@@ -14,9 +15,13 @@ export default function Footer() {
           {/* Company Info */}
           <div className='space-y-4'>
             <Link href='/' className='flex items-center space-x-3'>
-              <div className='w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center'>
-                <span className='text-white font-bold text-xl'>T</span>
-              </div>
+              <Image
+                src='/images/logo-white.png'
+                alt='TinkerTank Logo'
+                width={40}
+                height={40}
+                className='w-10 h-10'
+              />
               <span className='font-display font-bold text-xl'>TinkerTank</span>
             </Link>
             <p className='text-gray-300 leading-relaxed'>

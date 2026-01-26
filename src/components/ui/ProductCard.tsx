@@ -127,7 +127,7 @@ export default function ProductCard({ product, featured = false, showCategory = 
         {/* Action Button */}
         <div className='pt-4'>
           <Link
-            href={`/${product.category}/${product.id}`}
+            href={product.category === 'subscriptions' ? `/ignite/${product.id}` : `/${product.category}/${product.id}`}
             className='btn-primary w-full'
           >
             {product.category === 'subscriptions' ? 'Learn More' : 'Book Now'}

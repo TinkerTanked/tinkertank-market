@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Bars3Icon, XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
 
@@ -16,10 +17,9 @@ export default function Header() {
   }, [])
 
   const navigation = [
-    { name: 'Home', href: '/' },
+    { name: 'Ignite Program', href: '/ignite' },
     { name: 'Camps', href: '/camps' },
     { name: 'Birthday Parties', href: '/birthdays' },
-    { name: 'Ignite Program', href: '/ignite' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
   ]
@@ -29,7 +29,14 @@ export default function Header() {
       <div className='container-custom'>
         <div className='flex items-center justify-between h-16'>
           {/* Logo */}
-          <Link href='/' className='flex items-center'>
+          <Link href='/' className='flex items-center space-x-2'>
+            <Image
+              src='/images/logo-black.png'
+              alt='TinkerTank Logo'
+              width={32}
+              height={32}
+              className='w-8 h-8'
+            />
             <span className='font-display font-bold text-xl text-gray-900'>TinkerTank®</span>
           </Link>
 
@@ -58,9 +65,6 @@ export default function Header() {
                   {itemCount}
                 </span>
               )}
-            </Link>
-            <Link href='/camps' className='btn-primary'>
-              Book Now
             </Link>
           </div>
 
@@ -100,13 +104,6 @@ export default function Header() {
                   {item.name}
                 </Link>
               ))}
-              <Link
-                href='/camps'
-                className='btn-primary mt-4 text-center'
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Book Now
-              </Link>
             </div>
           </div>
         )}
