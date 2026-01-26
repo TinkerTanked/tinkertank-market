@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         customerName: validatedData.customerInfo.name,
         status: 'PENDING',
         totalAmount: subtotal,
-        stripePaymentIntentId: 'pending',
+        stripePaymentIntentId: null,
         orderItems: {
           create: orderItems,
         },
