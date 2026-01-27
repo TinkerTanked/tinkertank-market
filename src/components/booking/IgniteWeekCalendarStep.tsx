@@ -32,8 +32,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '12:45',
     endTime: '13:45',
     priceWeekly: 25.99,
-    stripePriceId: 'price_1StKP9DqupgKyrhoQxEg01ua',
-    stripeProductId: 'prod_Tr2UrvopQoseGC'
+    stripePriceId: 'price_1Su9JTDqupgKyrho9wIuGaqS',
+    stripeProductId: 'prod_Trt5hst8hahf4U'
   },
   {
     id: 'ignite-balgowlah-thu',
@@ -44,8 +44,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '15:45',
     endTime: '17:15',
     priceWeekly: 29.99,
-    stripePriceId: 'price_1StKPADqupgKyrhoUmdMDcHc',
-    stripeProductId: 'prod_Tr2UButkR3rLsu'
+    stripePriceId: 'price_1Su9JUDqupgKyrhob01PL3JS',
+    stripeProductId: 'prod_Trt5EQZQcp1YJX'
   },
   {
     id: 'ignite-ics-tue',
@@ -56,8 +56,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '16:00',
     endTime: '17:30',
     priceWeekly: 30.99,
-    stripePriceId: 'price_1StKPBDqupgKyrhoFBdlmoKk',
-    stripeProductId: 'prod_Tr2USER37jHSqK'
+    stripePriceId: 'price_1Su9JVDqupgKyrhozbrw1ER7',
+    stripeProductId: 'prod_Trt5soXUfDu6Vq'
   },
   // Drop-Off Studio (blue)
   {
@@ -70,8 +70,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '15:30',
     endTime: '17:30',
     priceWeekly: 39.99,
-    stripePriceId: 'price_1StKPCDqupgKyrho8MVv42fB',
-    stripeProductId: 'prod_Tr2U8LvoUYQpUW'
+    stripePriceId: 'price_1Su9JXDqupgKyrhoWRBAADxP',
+    stripeProductId: 'prod_Trt5KoEzbHLSEk'
   },
   {
     id: 'ignite-nb-sat',
@@ -83,8 +83,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '10:00',
     endTime: '12:00',
     priceWeekly: 39.99,
-    stripePriceId: 'price_1StKPEDqupgKyrhomgKCSdXu',
-    stripeProductId: 'prod_Tr2UV2dbzeRGem'
+    stripePriceId: 'price_1Su9JYDqupgKyrhoZBqrL43R',
+    stripeProductId: 'prod_Trt5rd49MqV1Pv'
   },
   {
     id: 'ignite-brookvale-cc',
@@ -96,8 +96,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '15:30',
     endTime: '17:30',
     priceWeekly: 39.99,
-    stripePriceId: 'price_1StKPFDqupgKyrhoqs9xI4mj',
-    stripeProductId: 'prod_Tr2UeutYss76YJ'
+    stripePriceId: 'price_1Su9JZDqupgKyrhobc0WCIRS',
+    stripeProductId: 'prod_Trt5kBHgfTRNOY'
   },
   {
     id: 'ignite-manly-library',
@@ -109,8 +109,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '15:30',
     endTime: '17:30',
     priceWeekly: 39.99,
-    stripePriceId: 'price_1StKPGDqupgKyrhoqKltUzlP',
-    stripeProductId: 'prod_Tr2UMLGLz5ASmm'
+    stripePriceId: 'price_1Su9JbDqupgKyrhoEkaPRyys',
+    stripeProductId: 'prod_Trt5thpP2Vu8Ze'
   },
   // School Pickup (orange)
   {
@@ -122,8 +122,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '15:00',
     endTime: '17:30',
     priceWeekly: 44.99,
-    stripePriceId: 'price_1StKPHDqupgKyrhoDoXly8g2',
-    stripeProductId: 'prod_Tr2UsGEvnSNaK0'
+    stripePriceId: 'price_1Su9JcDqupgKyrhoImgjMexo',
+    stripeProductId: 'prod_Trt5nii5M9iQoF'
   },
   {
     id: 'ignite-manly-village',
@@ -134,8 +134,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '15:00',
     endTime: '17:30',
     priceWeekly: 54.99,
-    stripePriceId: 'price_1StKPIDqupgKyrhoYd0u5j2S',
-    stripeProductId: 'prod_Tr2UHCCqGtGvCB'
+    stripePriceId: 'price_1Su9JeDqupgKyrhoC822jky2',
+    stripeProductId: 'prod_Trt5JJHA2nTXxV'
   },
   {
     id: 'ignite-nb-ps',
@@ -146,8 +146,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '15:00',
     endTime: '17:30',
     priceWeekly: 54.99,
-    stripePriceId: 'price_1StKPKDqupgKyrho5L0t4yPu',
-    stripeProductId: 'prod_Tr2U80JbdBmEQS'
+    stripePriceId: 'price_1Su9JfDqupgKyrhoeKneIv7H',
+    stripeProductId: 'prod_Trt5Uer7uihqjb'
   },
   {
     id: 'ignite-redlands',
@@ -158,8 +158,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '15:00',
     endTime: '17:30',
     priceWeekly: 54.99,
-    stripePriceId: 'price_1StKPLDqupgKyrhoXcJwf3Bp',
-    stripeProductId: 'prod_Tr2UjbbOsxA9Yu'
+    stripePriceId: 'price_1Su9JgDqupgKyrhoudkyZNhg',
+    stripeProductId: 'prod_Trt5IodbfvxFMA'
   },
   {
     id: 'ignite-stmarys',
@@ -170,8 +170,8 @@ const IGNITE_SESSIONS: IgniteSession[] = [
     startTime: '15:00',
     endTime: '17:30',
     priceWeekly: 54.99,
-    stripePriceId: 'price_1StKPMDqupgKyrho5Yb1KWKj',
-    stripeProductId: 'prod_Tr2UU6GWX0k98g'
+    stripePriceId: 'price_1Su9JiDqupgKyrho6sG10bqE',
+    stripeProductId: 'prod_Trt5Z8qkkm8dbm'
   }
 ]
 
