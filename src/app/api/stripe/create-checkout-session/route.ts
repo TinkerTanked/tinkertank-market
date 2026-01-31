@@ -22,6 +22,10 @@ const CreateCheckoutSessionSchema = z.object({
     })),
     selectedDate: z.string().optional(),
     selectedDates: z.array(z.string()).optional(),
+    isSubscription: z.boolean().optional(),
+    stripePriceId: z.string().optional(),
+    productName: z.string().optional(),
+    productPrice: z.number().optional(),
   })),
   customerInfo: z.object({
     name: z.string().min(1),
@@ -36,12 +40,17 @@ export async function POST(request: NextRequest) {
     console.log('Checkout session request:', JSON.stringify(body, null, 2))
     const validatedData = CreateCheckoutSessionSchema.parse(body)
 
-    const productIds = validatedData.items.map(item => item.productId)
-    const products = await prisma.product.findMany({
-      where: { id: { in: productIds }, isActive: true },
-    })
+    // Separate subscription items from regular items
+    const subscriptionItems = validatedData.items.filter(item => item.isSubscription && item.stripePriceId)
+    const regularItems = validatedData.items.filter(item => !item.isSubscription || !item.stripePriceId)
 
-    if (products.length !== productIds.length) {
+    // Fetch products from database for regular items only
+    const productIds = regularItems.map(item => item.productId)
+    const products = productIds.length > 0 ? await prisma.product.findMany({
+      where: { id: { in: productIds }, isActive: true },
+    }) : []
+
+    if (regularItems.length > 0 && products.length !== productIds.length) {
       return NextResponse.json(
         { error: 'One or more products not found or inactive' },
         { status: 404 }
@@ -52,7 +61,23 @@ export async function POST(request: NextRequest) {
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
     const orderItems = []
 
-    for (const item of validatedData.items) {
+    // Handle subscription items (Ignite) - use Stripe price ID directly
+    for (const item of subscriptionItems) {
+      const unitPrice = item.productPrice || 0
+      subtotal += unitPrice * item.quantity
+
+      // Use the existing Stripe price for subscriptions
+      lineItems.push({
+        price: item.stripePriceId,
+        quantity: item.quantity,
+      })
+
+      // Note: For subscriptions, we don't create order items in the same way
+      // The webhook will handle subscription creation
+    }
+
+    // Handle regular items (camps, birthdays)
+    for (const item of regularItems) {
       const product = products.find(p => p.id === item.productId)!
       const unitPrice = Number(product.price)
       const numberOfDays = item.selectedDates?.length || 1
@@ -84,7 +109,6 @@ export async function POST(request: NextRequest) {
 
         let bookingDate: Date
         if (item.selectedDate && item.selectedDate !== 'undefined') {
-          // If already ISO string with time, use as-is. Otherwise append time.
           bookingDate = item.selectedDate.includes('T') 
             ? new Date(item.selectedDate)
             : new Date(item.selectedDate + 'T00:00:00.000Z')
@@ -109,6 +133,22 @@ export async function POST(request: NextRequest) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${request.headers.get('host')}`
 
+    // Determine checkout mode based on item types
+    const hasSubscriptions = subscriptionItems.length > 0
+    const hasRegularItems = regularItems.length > 0
+
+    // Stripe doesn't allow mixing subscription and one-time items in the same session
+    if (hasSubscriptions && hasRegularItems) {
+      return NextResponse.json(
+        { error: 'Cannot mix subscription and one-time items in the same checkout. Please complete them separately.' },
+        { status: 400 }
+      )
+    }
+
+    const checkoutMode = hasSubscriptions ? 'subscription' : 'payment'
+
+    // Only create order with items for regular purchases
+    // Subscriptions are handled via webhook after payment
     const order = await prisma.order.create({
       data: {
         customerEmail: validatedData.customerInfo.email,
@@ -116,22 +156,32 @@ export async function POST(request: NextRequest) {
         status: 'PENDING',
         totalAmount: subtotal,
         stripePaymentIntentId: null,
-        orderItems: {
+        orderItems: orderItems.length > 0 ? {
           create: orderItems,
-        },
+        } : undefined,
       },
     })
 
+    // Build session metadata
+    const metadata: Record<string, string> = {
+      orderId: order.id,
+      customerName: validatedData.customerInfo.name,
+      customerPhone: validatedData.customerInfo.phone,
+    }
+
+    // For subscriptions, include session details in metadata for webhook processing
+    if (hasSubscriptions && subscriptionItems[0]) {
+      metadata.isSubscription = 'true'
+      metadata.subscriptionProductId = subscriptionItems[0].productId
+      metadata.subscriptionPriceId = subscriptionItems[0].stripePriceId || ''
+    }
+
     const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
+      mode: checkoutMode,
       line_items: lineItems,
       customer_email: validatedData.customerInfo.email,
       client_reference_id: order.id,
-      metadata: {
-        orderId: order.id,
-        customerName: validatedData.customerInfo.name,
-        customerPhone: validatedData.customerInfo.phone,
-      },
+      metadata,
       success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
       cancel_url: `${appUrl}/checkout?canceled=true`,
     })
