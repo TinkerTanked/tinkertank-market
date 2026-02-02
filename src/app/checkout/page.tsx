@@ -30,6 +30,17 @@ export default function CheckoutPage() {
   const summary = getSummary()
   const validation = getValidation()
 
+  // Check if all items are Ignite subscriptions (student info already collected in wizard)
+  const allItemsAreIgnite = items.length > 0 && items.every(
+    item => item.product.isSubscription || item.product.category === 'ignite'
+  )
+
+  // For mixed carts, check if there are any non-Ignite items that need student info
+  const hasItemsNeedingStudentInfo = items.some(
+    item => !item.product.isSubscription && item.product.category !== 'ignite' &&
+            (item.product.category === 'camps' || item.product.category === 'birthdays')
+  )
+
   useEffect(() => {
     if (items.length === 0) {
       router.push('/camps')
@@ -61,14 +72,22 @@ export default function CheckoutPage() {
     }).format(price)
   }
 
-  const steps = [
-    { id: CheckoutStep.REVIEW, name: 'Review', icon: ShoppingCartIcon },
-    { id: CheckoutStep.STUDENTS, name: 'Students', icon: UserIcon },
-    { id: CheckoutStep.PAYMENT, name: 'Payment', icon: CreditCardIcon }
-  ]
+  // Build steps dynamically - skip STUDENTS step for all-Ignite carts
+  const steps = allItemsAreIgnite
+    ? [
+        { id: CheckoutStep.REVIEW, name: 'Review', icon: ShoppingCartIcon },
+        { id: CheckoutStep.PAYMENT, name: 'Payment', icon: CreditCardIcon }
+      ]
+    : [
+        { id: CheckoutStep.REVIEW, name: 'Review', icon: ShoppingCartIcon },
+        { id: CheckoutStep.STUDENTS, name: 'Students', icon: UserIcon },
+        { id: CheckoutStep.PAYMENT, name: 'Payment', icon: CreditCardIcon }
+      ]
 
-  const canProceedToStudents = currentStep === CheckoutStep.REVIEW
-  const canProceedToPayment = currentStep === CheckoutStep.STUDENTS && validation.isValid
+  const canProceedToStudents = currentStep === CheckoutStep.REVIEW && !allItemsAreIgnite
+  const canProceedToPayment = allItemsAreIgnite
+    ? currentStep === CheckoutStep.REVIEW
+    : currentStep === CheckoutStep.STUDENTS && validation.isValid
   const isCurrentStep = (step: CheckoutStep) => currentStep === step
   const isCompletedStep = (step: CheckoutStep) => {
     if (step === CheckoutStep.REVIEW) return currentStep !== CheckoutStep.REVIEW
@@ -167,11 +186,10 @@ export default function CheckoutPage() {
 
                 <div className='mt-8 flex justify-end'>
                   <button
-                    onClick={() => setCurrentStep(CheckoutStep.STUDENTS)}
-                    disabled={!canProceedToStudents}
+                    onClick={() => setCurrentStep(allItemsAreIgnite ? CheckoutStep.PAYMENT : CheckoutStep.STUDENTS)}
                     className='btn-primary text-lg px-8 py-4'
                   >
-                    Continue to Student Info
+                    {allItemsAreIgnite ? 'Continue to Payment' : 'Continue to Student Info'}
                   </button>
                 </div>
               </div>
@@ -236,10 +254,10 @@ export default function CheckoutPage() {
 
                   <button
                     type="button"
-                    onClick={() => setCurrentStep(CheckoutStep.STUDENTS)}
+                    onClick={() => setCurrentStep(allItemsAreIgnite ? CheckoutStep.REVIEW : CheckoutStep.STUDENTS)}
                     className="w-full text-center text-gray-600 hover:text-gray-900"
                   >
-                    ← Back to Student Info
+                    ← {allItemsAreIgnite ? 'Back to Review' : 'Back to Student Info'}
                   </button>
                 </div>
               </div>

@@ -41,7 +41,9 @@ export default function StudentInfoForm({ onComplete, onBack }: StudentInfoFormP
     const newErrors: Record<string, string> = {}
     
     items.forEach(item => {
-      if (item.product.category === 'camps' || item.product.category === 'birthdays') {
+      // Skip Ignite subscriptions - student info already collected in wizard
+      const isIgniteSubscription = item.product.isSubscription || item.product.category === 'ignite'
+      if (!isIgniteSubscription && (item.product.category === 'camps' || item.product.category === 'birthdays')) {
         if (item.students.length < item.quantity) {
           newErrors[`${item.id}-count`] = `${item.quantity - item.students.length} more student(s) required`
         }
@@ -87,7 +89,10 @@ export default function StudentInfoForm({ onComplete, onBack }: StudentInfoFormP
 
       {/* Student Forms for each item */}
       {items.map((item) => {
-        const needsStudentInfo = item.product.category === 'camps' || item.product.category === 'birthdays'
+        // Skip Ignite subscriptions - student info already collected in wizard
+        const isIgniteSubscription = item.product.isSubscription || item.product.category === 'ignite'
+        const needsStudentInfo = !isIgniteSubscription &&
+          (item.product.category === 'camps' || item.product.category === 'birthdays')
         
         if (!needsStudentInfo) return null
 
