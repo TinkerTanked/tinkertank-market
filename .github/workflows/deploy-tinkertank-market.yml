@@ -1,6 +1,10 @@
 name: Deploy TinkerTank Market
 
 on:
+  push:
+    branches:
+      - main
+      - feature/eks-deployment
   workflow_dispatch:
     inputs:
       environment:
