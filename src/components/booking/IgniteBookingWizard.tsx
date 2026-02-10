@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, ArrowRightIcon, ShoppingCartIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 import IgniteWeekCalendarStep, { IgniteSession } from './IgniteWeekCalendarStep'
 import IgniteStudentStep, { StudentInfo } from './IgniteStudentStep'
 import IgniteConfirmStep, { IgniteSession as ConfirmIgniteSession } from './IgniteConfirmStep'
@@ -52,7 +52,8 @@ const INITIAL_STUDENT_INFO: StudentInfo = {
   lastName: '',
   dateOfBirth: '',
   school: '',
-  medicalInfo: '',
+  allergies: '',
+  medicalNotes: '',
   emergencyContactName: '',
   emergencyContactPhone: ''
 }
@@ -63,6 +64,7 @@ export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWi
     session: null,
     studentInfo: INITIAL_STUDENT_INFO
   })
+  const [addedToCart, setAddedToCart] = useState(false)
   const { addItem } = useEnhancedCartStore()
 
   if (!isOpen) return null
@@ -132,7 +134,10 @@ export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWi
       addItem(cartItem, {
         notes: `Student: ${bookingData.studentInfo.firstName} ${bookingData.studentInfo.lastName}`
       })
-      onClose()
+      setAddedToCart(true)
+      setTimeout(() => {
+        onClose()
+      }, 1500)
     }
   }
 
@@ -263,13 +268,27 @@ export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWi
             ) : (
               <button
                 onClick={handleSubscribe}
-                className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition-colors shadow-sm"
+                disabled={addedToCart}
+                className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg font-medium hover:from-green-600 hover:to-blue-600 transition-colors shadow-sm disabled:opacity-50"
               >
-                Subscribe
-                <ArrowRightIcon className="w-4 h-4 ml-2" />
+                <ShoppingCartIcon className="w-4 h-4 mr-2" />
+                Add to Cart
               </button>
             )}
           </div>
+
+          {/* Success Overlay */}
+          {addedToCart && (
+            <div className="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-10">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircleIcon className="w-10 h-10 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Added to Cart!</h3>
+                <p className="text-gray-600">Your Ignite subscription has been added to your cart.</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

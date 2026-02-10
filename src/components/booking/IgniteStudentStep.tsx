@@ -7,7 +7,8 @@ export interface StudentInfo {
   lastName: string
   dateOfBirth: string
   school: string
-  medicalInfo: string
+  allergies: string
+  medicalNotes: string
   emergencyContactName: string
   emergencyContactPhone: string
 }
@@ -83,12 +84,19 @@ export default function IgniteStudentStep({ studentInfo, onStudentInfoChange }: 
         </div>
 
         <Input
-          label="Allergies / Medical Information (optional)"
+          label="Allergies (optional)"
+          value={studentInfo.allergies}
+          onChange={(e) => handleChange('allergies', e.target.value)}
+          placeholder="Any allergies or dietary restrictions"
+        />
+
+        <Input
+          label="Medical Information (optional)"
           as="textarea"
-          rows={3}
-          value={studentInfo.medicalInfo}
-          onChange={(e) => handleChange('medicalInfo', e.target.value)}
-          placeholder="Any allergies, medical conditions, or special requirements..."
+          rows={2}
+          value={studentInfo.medicalNotes}
+          onChange={(e) => handleChange('medicalNotes', e.target.value)}
+          placeholder="Any medical conditions we should know about"
         />
       </div>
 

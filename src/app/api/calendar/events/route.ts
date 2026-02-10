@@ -2,8 +2,125 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { CalendarEvent, AdminCalendarEvent } from '@/types/booking'
 import { prismaBookingToCalendarEvent } from '@/lib/calendar-utils'
-import { startOfMonth, endOfMonth, parseISO } from 'date-fns'
+import { startOfMonth, endOfMonth, parseISO, subWeeks, addDays, format } from 'date-fns'
 import { isClosureDate, getClosureInfo } from '@/types'
+import { IGNITE_SESSIONS, type IgniteSessionConfig } from '@/config/igniteProducts'
+
+// Map day names to day numbers (0 = Sunday, 1 = Monday, etc.)
+const DAY_NAME_TO_NUMBER: Record<string, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+}
+
+// Colors for Ignite program types
+const IGNITE_COLORS = {
+  'in-school': { bg: '#F0FDF4', border: '#22C55E', text: '#166534' },
+  'drop-off': { bg: '#EFF6FF', border: '#3B82F6', text: '#1E40AF' },
+  'school-pickup': { bg: '#FFF7ED', border: '#F97316', text: '#C2410C' },
+}
+
+// Short location names for cleaner display
+const LOCATION_SHORT_NAMES: Record<string, string> = {
+  'Balgowlah Heights Public': 'Balgowlah',
+  'International Chinese School': 'ICS',
+  'Neutral Bay Studio': 'NB Studio',
+  'Brookvale Community Centre': 'Brookvale CC',
+  'Manly Creative Library': 'Manly Library',
+  'Brookvale Public School': 'Brookvale PS',
+  'Manly Village Public School': 'Manly Village',
+  'Neutral Bay Public School': 'NB Public',
+  'Redlands School': 'Redlands',
+  'St Marys Catholic School': 'St Marys',
+}
+
+// Generate Ignite session events for a date range
+function generateIgniteEvents(
+  start: Date,
+  end: Date,
+  subscriberCounts: Map<string, number>
+): AdminCalendarEvent[] {
+  const events: AdminCalendarEvent[] = []
+  const current = new Date(start)
+
+  while (current <= end) {
+    const dayOfWeek = current.getDay()
+    const dayName = Object.keys(DAY_NAME_TO_NUMBER).find(
+      name => DAY_NAME_TO_NUMBER[name] === dayOfWeek
+    )
+
+    if (!dayName) {
+      current.setDate(current.getDate() + 1)
+      continue
+    }
+
+    // Find all Ignite sessions that run on this day
+    IGNITE_SESSIONS.forEach((session) => {
+      if (session.dayOfWeek.includes(dayName)) {
+        // Skip public holiday closure dates, but show during school holidays
+        // (admin needs to see all potential sessions)
+        if (isClosureDate(current)) {
+          return
+        }
+
+        const [startHour, startMin] = session.startTime.split(':').map(Number)
+        const [endHour, endMin] = session.endTime.split(':').map(Number)
+
+        const eventStart = new Date(current)
+        eventStart.setHours(startHour, startMin, 0, 0)
+
+        const eventEnd = new Date(current)
+        eventEnd.setHours(endHour, endMin, 0, 0)
+
+        const dateKey = format(current, 'yyyy-MM-dd')
+        const subscriberKey = `${session.id}-${dateKey}`
+        const subscriberCount = subscriberCounts.get(subscriberKey) || 0
+
+        const colors = IGNITE_COLORS[session.programType]
+        const shortLocation = LOCATION_SHORT_NAMES[session.location] || session.location
+
+        events.push({
+          id: `ignite-${session.id}-${dateKey}`,
+          title: shortLocation,
+          start: eventStart,
+          end: eventEnd,
+          backgroundColor: colors.bg,
+          borderColor: colors.border,
+          textColor: colors.text,
+          extendedProps: {
+            productType: 'IGNITE',
+            location: session.location,
+            shortLocation,
+            status: 'SCHEDULED' as any,
+            paymentStatus: 'PAID' as any,
+            capacity: 20,
+            currentBookings: subscriberCount,
+            product: {
+              id: session.id,
+              name: session.name,
+              type: 'IGNITE',
+              programType: session.programType,
+              priceWeekly: session.priceWeekly,
+            } as any,
+            bookings: [] as any,
+            availableSpots: 20 - subscriberCount,
+            subscriberCount,
+            subscriberDelta: 0,
+            previousWeekCount: 0,
+          },
+        })
+      }
+    })
+
+    current.setDate(current.getDate() + 1)
+  }
+
+  return events
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -54,7 +171,80 @@ export async function GET(request: NextRequest) {
       // Group bookings by product/time slot for admin view
       const eventsMap = new Map<string, AdminCalendarEvent>()
 
+      // For Ignite sessions, we want to show ALL configured sessions
+      // First, build a map of subscriber counts from actual bookings/subscriptions
+      const subscriberCounts = new Map<string, number>()
+      
+      // TODO: In the future, query actual Ignite subscriptions from the Subscription table
+      // For now, subscriber counts will be 0 until we have real subscription data
+      
+      // Generate Ignite events for all configured sessions (even without subscribers)
+      if (!productType || productType.toUpperCase() === 'IGNITE' || productType.toUpperCase() === 'SUBSCRIPTION') {
+        const igniteEvents = generateIgniteEvents(start, end, subscriberCounts)
+        igniteEvents.forEach(event => {
+          eventsMap.set(event.id, event)
+        })
+      }
+
+      // Also fetch non-Ignite events from the events table
+      const dbEvents = await prisma.event.findMany({
+        where: {
+          startDateTime: {
+            gte: start,
+            lte: end,
+          },
+          // Exclude Ignite types since we generate those from config
+          type: {
+            notIn: ['RECURRING_SESSION', 'SUBSCRIPTION'],
+          },
+          ...(productType && productType.toUpperCase() !== 'IGNITE' && productType.toUpperCase() !== 'SUBSCRIPTION' 
+            ? { type: productType.toUpperCase() as any } 
+            : {}),
+          ...(locationId ? { locationId } : {}),
+        },
+        include: {
+          location: true,
+          recurringTemplate: true,
+        },
+        orderBy: {
+          startDateTime: 'asc',
+        },
+      })
+
+      // Add non-Ignite events from the events table
+      dbEvents.forEach((event) => {
+        const key = `event-${event.id}`
+        
+        const adminEvent: AdminCalendarEvent = {
+          id: event.id,
+          title: event.title,
+          start: event.startDateTime,
+          end: event.endDateTime,
+          backgroundColor: '#E5F3FF',
+          borderColor: '#3B82F6',
+          textColor: '#1E40AF',
+          extendedProps: {
+            productType: event.type,
+            location: event.location?.name || 'Unknown',
+            status: event.status as any,
+            paymentStatus: 'PAID' as any,
+            capacity: event.maxCapacity,
+            currentBookings: event.currentCount,
+            product: { id: event.id, name: event.title, type: event.type } as any,
+            bookings: [] as any,
+            availableSpots: event.maxCapacity - event.currentCount,
+          },
+        }
+        eventsMap.set(key, adminEvent)
+      })
+
+      // Process bookings (camps, birthdays, etc.)
       bookings.forEach((booking) => {
+        // Skip subscription bookings - those are handled via Ignite events
+        if (booking.product?.type === 'SUBSCRIPTION') {
+          return
+        }
+        
         const key = `${booking.productId}-${booking.startDate.getTime()}`
         
         if (!eventsMap.has(key)) {
@@ -66,7 +256,7 @@ export async function GET(request: NextRequest) {
               ...calendarEvent.extendedProps,
               product: booking.product as any,
               bookings: [booking as any],
-              availableSpots: 20 - 1, // Default capacity since Prisma Product model doesn't have this field yet
+              availableSpots: 20 - 1,
               currentBookings: 1,
             },
           } as AdminCalendarEvent)

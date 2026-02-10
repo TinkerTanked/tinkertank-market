@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPinIcon, ClockIcon, CalendarIcon, UserIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
+import { MapPinIcon, ClockIcon, CalendarIcon, UserIcon, InformationCircleIcon, ShoppingCartIcon } from '@heroicons/react/24/outline'
 import { StudentInfo } from './IgniteStudentStep'
 
 export type IgniteProgramType = 'in-school' | 'drop-off' | 'school-pickup'
@@ -63,8 +63,8 @@ export default function IgniteConfirmStep({ session, studentInfo, onSubscribe }:
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Confirm Your Subscription</h3>
-        <p className="text-gray-600">Review the details before subscribing</p>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">Review Your Subscription</h3>
+        <p className="text-gray-600">Check the details before adding to cart</p>
       </div>
 
       <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-6">
@@ -120,13 +120,14 @@ export default function IgniteConfirmStep({ session, studentInfo, onSubscribe }:
 
       <button
         onClick={onSubscribe}
-        className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+        className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
       >
-        Subscribe - ${session.pricePerWeek}/week
+        <ShoppingCartIcon className="w-5 h-5" />
+        Add to Cart - ${session.pricePerWeek}/week
       </button>
 
       <p className="text-xs text-center text-gray-500">
-        By subscribing, you agree to our terms of service and cancellation policy
+        By adding to cart, you agree to our terms of service and cancellation policy
       </p>
     </div>
   )

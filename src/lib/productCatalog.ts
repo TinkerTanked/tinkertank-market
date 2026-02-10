@@ -8,7 +8,7 @@ export interface CatalogProduct {
   description: string;
   shortDescription: string;
   price: number;
-  category: 'camps' | 'birthdays' | 'subscriptions';
+  category: 'camps' | 'birthdays' | 'subscriptions' | 'ignite';
   ageRange: string;
   duration: string;
   location: string;
@@ -28,6 +28,16 @@ export interface CatalogProduct {
     maxQuantity?: number;
   }>;
   tags: string[];
+  isSubscription?: boolean;
+  studentInfo?: {
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    school?: string;
+    medicalInfo?: string;
+    emergencyContactName: string;
+    emergencyContactPhone: string;
+  };
 }
 
 // Create TinkerTank product catalog
@@ -332,7 +342,7 @@ export const getCatalogProductById = (id: string): CatalogProduct | undefined =>
   return createProductCatalog().find(product => product.id === id);
 };
 
-export const getCatalogProductsByCategory = (category: 'camps' | 'birthdays' | 'subscriptions'): CatalogProduct[] => {
+export const getCatalogProductsByCategory = (category: 'camps' | 'birthdays' | 'subscriptions' | 'ignite'): CatalogProduct[] => {
   return createProductCatalog().filter(product => product.category === category);
 };
 

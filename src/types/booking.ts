@@ -72,6 +72,7 @@ export interface CalendarEvent extends EventInput {
     productType: string
     studentName?: string
     location: string
+    shortLocation?: string
     status: BookingStatus
     paymentStatus: PaymentStatus
     capacity?: number
@@ -85,6 +86,9 @@ export interface AdminCalendarEvent extends CalendarEvent {
     product: Product
     bookings: BookingEvent[]
     availableSpots: number
+    subscriberCount?: number
+    subscriberDelta?: number
+    previousWeekCount?: number
   }
 }
 

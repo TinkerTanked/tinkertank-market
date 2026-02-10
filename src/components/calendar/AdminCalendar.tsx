@@ -33,30 +33,67 @@ const PRODUCT_TYPE_COLORS = {
     bg: '#3B82F6',
     border: '#2563EB',
     hover: '#1D4ED8',
-    light: '#DBEAFE',
-    text: '#1E40AF'
+    light: '#EFF6FF',
+    text: '#1E40AF',
+    label: 'Holiday Camps'
   },
   BIRTHDAY: {
     bg: '#F97316',
     border: '#EA580C',
     hover: '#C2410C',
-    light: '#FFEDD5',
-    text: '#C2410C'
+    light: '#FFF7ED',
+    text: '#9A3412',
+    label: 'Birthday Parties'
   },
   IGNITE: {
-    bg: '#8B5CF6',
-    border: '#7C3AED',
-    hover: '#6D28D9',
-    light: '#EDE9FE',
-    text: '#6D28D9'
+    bg: '#22C55E',
+    border: '#16A34A',
+    hover: '#15803D',
+    light: '#F0FDF4',
+    text: '#166534',
+    label: 'Ignite Sessions'
+  },
+  SUBSCRIPTION: {
+    bg: '#22C55E',
+    border: '#16A34A',
+    hover: '#15803D',
+    light: '#F0FDF4',
+    text: '#166534',
+    label: 'Ignite Sessions'
   },
   UNKNOWN: {
     bg: '#6B7280',
     border: '#4B5563',
     hover: '#374151',
-    light: '#F3F4F6',
-    text: '#4B5563'
+    light: '#F9FAFB',
+    text: '#374151',
+    label: 'Other'
   }
+}
+
+function CalendarLegend() {
+  const legendItems = [
+    { type: 'CAMP', ...PRODUCT_TYPE_COLORS.CAMP },
+    { type: 'BIRTHDAY', ...PRODUCT_TYPE_COLORS.BIRTHDAY },
+    { type: 'IGNITE', ...PRODUCT_TYPE_COLORS.IGNITE },
+  ]
+
+  return (
+    <div className="flex items-center gap-4 px-6 py-3 bg-gray-50 border-b border-gray-200">
+      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Legend:</span>
+      <div className="flex items-center gap-4">
+        {legendItems.map((item) => (
+          <div key={item.type} className="flex items-center gap-2">
+            <div 
+              className="w-3 h-3 rounded-sm border-l-2"
+              style={{ backgroundColor: item.light, borderColor: item.border }}
+            />
+            <span className="text-xs font-medium text-gray-600">{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function AdminCalendar({
@@ -154,12 +191,48 @@ export default function AdminCalendar({
     const event = events.find(e => e.id === eventInfo.event.id)
     if (!event) return null
 
-    const { currentBookings, capacity, productType, status, paymentStatus } = event.extendedProps
+    const { currentBookings, capacity, productType, status, subscriberCount, subscriberDelta } = event.extendedProps
+    const isSubscription = productType === 'SUBSCRIPTION' || productType === 'IGNITE'
     const spotsLeft = capacity ? capacity - (currentBookings || 0) : 0
     const utilizationPercent = capacity ? Math.round(((currentBookings || 0) / capacity) * 100) : 0
-    const colors = PRODUCT_TYPE_COLORS[productType as keyof typeof PRODUCT_TYPE_COLORS] || PRODUCT_TYPE_COLORS.UNKNOWN
+    
+    // Use event's own colors if available (for Ignite program type colors), otherwise use product type colors
+    const colors = event.backgroundColor ? {
+      bg: event.borderColor || '#22C55E',
+      border: event.borderColor || '#16A34A',
+      light: event.backgroundColor || '#F0FDF4',
+      text: event.textColor || '#166534',
+      label: 'Ignite'
+    } : (PRODUCT_TYPE_COLORS[productType as keyof typeof PRODUCT_TYPE_COLORS] || PRODUCT_TYPE_COLORS.UNKNOWN)
 
     if (currentView === 'dayGridMonth') {
+      if (isSubscription) {
+        const count = subscriberCount || currentBookings || 0
+        return (
+          <div 
+            className="px-1.5 py-1 rounded transition-all hover:shadow-sm cursor-pointer border-l-2 text-[11px]"
+            style={{ 
+              backgroundColor: colors.light,
+              borderLeftColor: colors.border,
+            }}
+          >
+            <div className="flex items-center justify-between gap-1">
+              <span className="font-medium truncate" style={{ color: colors.text }}>
+                {eventInfo.event.title}
+              </span>
+              {count > 0 && (
+                <span 
+                  className="flex-shrink-0 text-[10px] font-bold px-1 rounded"
+                  style={{ backgroundColor: colors.border, color: 'white' }}
+                >
+                  {count}
+                </span>
+              )}
+            </div>
+          </div>
+        )
+      }
+
       return (
         <div 
           className="px-2 py-1.5 rounded-md transition-all hover:shadow-md cursor-pointer border-l-4"
@@ -168,31 +241,70 @@ export default function AdminCalendar({
             borderLeftColor: colors.border,
           }}
         >
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start justify-between gap-1">
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-xs truncate" style={{ color: colors.text }}>
                 {eventInfo.event.title}
               </div>
-              <div className="flex items-center gap-1.5 mt-1">
+              <div className="flex items-center gap-1 mt-0.5">
                 <span className="text-xs text-gray-600 font-medium">
                   {currentBookings || 0}/{capacity || 0}
                 </span>
-                <div 
-                  className={clsx(
-                    'px-1.5 py-0.5 rounded text-xs font-bold',
-                    utilizationPercent >= 100 ? 'bg-red-500 text-white' :
-                    utilizationPercent >= 80 ? 'bg-amber-500 text-white' :
-                    utilizationPercent >= 60 ? 'bg-blue-500 text-white' :
-                    'bg-green-500 text-white'
-                  )}
-                >
-                  {utilizationPercent}%
-                </div>
+                {utilizationPercent >= 80 && (
+                  <span 
+                    className={clsx(
+                      'text-xs font-semibold px-1 rounded',
+                      utilizationPercent >= 100 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                    )}
+                  >
+                    {utilizationPercent >= 100 ? 'Full' : 'Almost full'}
+                  </span>
+                )}
               </div>
             </div>
             {status === BookingStatus.CONFIRMED && (
-              <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 mt-0.5" />
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0 mt-1" />
             )}
+          </div>
+        </div>
+      )
+    }
+
+    if (isSubscription) {
+      return (
+        <div 
+          className="p-2 rounded-md h-full border-l-4"
+          style={{ 
+            backgroundColor: colors.light,
+            borderLeftColor: colors.border,
+          }}
+        >
+          <div className="font-semibold text-sm mb-2" style={{ color: colors.text }}>
+            {eventInfo.event.title}
+          </div>
+          <div className="text-xs space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600">Students:</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold" style={{ color: colors.text }}>
+                  {subscriberCount || currentBookings || 0}
+                </span>
+                {subscriberDelta !== undefined && subscriberDelta !== 0 && (
+                  <span 
+                    className={clsx(
+                      'text-xs font-bold px-1.5 py-0.5 rounded',
+                      subscriberDelta > 0 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'
+                    )}
+                  >
+                    {subscriberDelta > 0 ? '+' : ''}{subscriberDelta}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600">Capacity:</span>
+              <span className="font-medium text-gray-900">{subscriberCount || currentBookings || 0}/{capacity || 20}</span>
+            </div>
           </div>
         </div>
       )
@@ -206,16 +318,16 @@ export default function AdminCalendar({
           borderLeftColor: colors.border,
         }}
       >
-        <div className="font-semibold text-sm mb-1" style={{ color: colors.text }}>
+        <div className="font-semibold text-sm mb-1.5" style={{ color: colors.text }}>
           {eventInfo.event.title}
         </div>
         <div className="text-xs space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-gray-700 font-medium">Capacity:</span>
+            <span className="text-gray-600">Capacity:</span>
             <span className="font-bold text-gray-900">{currentBookings || 0}/{capacity || 0}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-700">Available:</span>
+            <span className="text-gray-600">Available:</span>
             <span className={clsx(
               'font-bold',
               spotsLeft === 0 ? 'text-red-600' : 
@@ -225,12 +337,12 @@ export default function AdminCalendar({
               {spotsLeft}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-300">
+          <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-gray-200">
             <div 
               className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ backgroundColor: getBookingStatusColor(status) }}
             />
-            <span className="capitalize text-gray-700 text-xs">{status?.toLowerCase()}</span>
+            <span className="capitalize text-gray-600 text-xs">{status?.toLowerCase()}</span>
           </div>
         </div>
       </div>
@@ -278,28 +390,31 @@ export default function AdminCalendar({
         )}
       />
 
-      <div className="p-6">
+      <CalendarLegend />
+
+      <div className="p-4 sm:p-6">
         <style>{`
           .fc {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           }
           .fc-toolbar-title {
-            font-size: 1.5rem !important;
-            font-weight: 700 !important;
+            font-size: 1.25rem !important;
+            font-weight: 600 !important;
             color: #111827 !important;
           }
           .fc-button {
             background-color: white !important;
-            border: 1px solid #D1D5DB !important;
+            border: 1px solid #E5E7EB !important;
             color: #374151 !important;
-            font-weight: 600 !important;
-            padding: 0.5rem 1rem !important;
-            border-radius: 0.5rem !important;
-            transition: all 0.2s !important;
+            font-weight: 500 !important;
+            font-size: 0.875rem !important;
+            padding: 0.375rem 0.75rem !important;
+            border-radius: 0.375rem !important;
+            transition: all 0.15s !important;
           }
           .fc-button:hover {
-            background-color: #F3F4F6 !important;
-            border-color: #9CA3AF !important;
+            background-color: #F9FAFB !important;
+            border-color: #D1D5DB !important;
           }
           .fc-button-active {
             background-color: #0066cc !important;
@@ -310,23 +425,24 @@ export default function AdminCalendar({
             background-color: #0052a3 !important;
           }
           .fc-day-today {
-            background-color: #EFF6FF !important;
+            background-color: #FAFBFC !important;
           }
           .fc-daygrid-day-number {
-            font-weight: 600 !important;
-            color: #111827 !important;
-            padding: 0.5rem !important;
+            font-weight: 500 !important;
+            font-size: 0.875rem !important;
+            color: #374151 !important;
+            padding: 0.375rem 0.5rem !important;
           }
           .fc-col-header-cell {
-            background-color: #F9FAFB !important;
+            background-color: #FAFBFC !important;
             border: none !important;
-            padding: 1rem 0.5rem !important;
+            padding: 0.75rem 0.5rem !important;
           }
           .fc-col-header-cell-cushion {
-            font-weight: 700 !important;
+            font-weight: 600 !important;
             color: #6B7280 !important;
             text-transform: uppercase !important;
-            font-size: 0.75rem !important;
+            font-size: 0.6875rem !important;
             letter-spacing: 0.05em !important;
           }
           .fc-scrollgrid {
@@ -335,30 +451,55 @@ export default function AdminCalendar({
             overflow: hidden !important;
           }
           .fc-daygrid-day {
-            border: 1px solid #E5E7EB !important;
+            border: 1px solid #F3F4F6 !important;
           }
           .fc-daygrid-day:hover {
-            background-color: #F9FAFB !important;
+            background-color: #FAFBFC !important;
           }
           .fc-event {
             border: none !important;
-            margin: 2px !important;
+            margin: 1px 2px !important;
             padding: 0 !important;
+            background: transparent !important;
+          }
+          .fc-daygrid-event-harness {
+            margin-bottom: 1px !important;
           }
           .fc-timegrid-slot {
-            height: 3rem !important;
+            height: 2.5rem !important;
           }
           .fc-timegrid-slot-label {
-            font-weight: 600 !important;
-            color: #6B7280 !important;
+            font-weight: 500 !important;
+            font-size: 0.75rem !important;
+            color: #9CA3AF !important;
           }
           .fc-more-link {
-            color: #0066cc !important;
-            font-weight: 600 !important;
+            color: #6B7280 !important;
+            font-weight: 500 !important;
+            font-size: 0.75rem !important;
+            padding: 2px 4px !important;
+          }
+          .fc-more-link:hover {
+            color: #374151 !important;
+            background-color: #F3F4F6 !important;
+            border-radius: 4px !important;
           }
           .fc-popover {
             border-radius: 0.5rem !important;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+            border: 1px solid #E5E7EB !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+          }
+          .fc-popover-header {
+            background-color: #F9FAFB !important;
+            padding: 0.5rem 0.75rem !important;
+            font-weight: 600 !important;
+            font-size: 0.875rem !important;
+          }
+          .fc-daygrid-day-frame {
+            min-height: 100px !important;
+          }
+          .fc-daygrid-day-events {
+            margin-bottom: 0 !important;
           }
         `}</style>
         <FullCalendar

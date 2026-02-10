@@ -228,8 +228,12 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
         const warnings: CartValidation['warnings'] = [];
 
         items.forEach(item => {
+          // Skip Ignite subscriptions - student info already collected in wizard
+          const isIgniteSubscription = item.product.isSubscription || item.product.category === 'ignite'
+          
           // Check if students are assigned for items that require them
-          if (item.quantity > item.students.length && 
+          if (!isIgniteSubscription &&
+              item.quantity > item.students.length && 
               (item.product.category === 'camps' || item.product.category === 'birthdays')) {
             errors.push({
               itemId: item.id,

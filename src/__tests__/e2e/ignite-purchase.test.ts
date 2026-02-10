@@ -1,6 +1,7 @@
 import { test, expect, Page } from '@playwright/test'
 
-// All 12 Ignite products with their Stripe price IDs
+// All 12 Ignite products with their Stripe TEST price IDs
+// Note: These are Stripe TEST mode IDs, not production. Production IDs are in IgniteWeekCalendarStep.tsx
 const IGNITE_PRODUCTS = {
   // In-School (green)
   'ignite-balgowlah-wed': {

@@ -3,36 +3,46 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ${REPO_NAME}-${NODE_ENV}
-  annotations:
-    external-dns.alpha.kubernetes.io/hostname: ${DOMAIN}
+  namespace: default
+  labels:
+    app: ${REPO_NAME}
+    environment: ${NODE_ENV}
 spec:
   type: ClusterIP
   ports:
-    - port: 443
-      name: https
-      targetPort: next-http
     - port: 80
       name: http
       targetPort: next-http
+      protocol: TCP
   selector:
-    name: ${REPO_NAME}-${NODE_ENV}
+    app: ${REPO_NAME}
+    environment: ${NODE_ENV}
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ${REPO_NAME}-${NODE_ENV}
+  namespace: default
+  labels:
+    app: ${REPO_NAME}
+    environment: ${NODE_ENV}
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
-    external-dns.alpha.kubernetes.io/hostname: ${DOMAIN}
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # AWS Load Balancer Controller annotations
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    # Certificate (update with your ACM certificate ARN)
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:REGION:ACCOUNT:certificate/CERT_ID
+    # Health check
+    alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '30'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
 spec:
-  ingressClassName: nginx
-  tls:
-  - hosts:
-    - ${DOMAIN}
-    secretName: ${REPO_NAME}-tls
+  ingressClassName: alb
   rules:
   - host: ${DOMAIN}
     http:
@@ -50,27 +60,48 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ${REPO_NAME}-${NODE_ENV}
+  namespace: default
+  labels:
+    app: ${REPO_NAME}
+    environment: ${NODE_ENV}
 spec:
-  replicas: 1
+  replicas: 2  # Increased for HA
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0  # Ensure zero-downtime deployments
   selector:
     matchLabels:
-      name: ${REPO_NAME}-${NODE_ENV}
+      app: ${REPO_NAME}
+      environment: ${NODE_ENV}
   template:
     metadata:
       labels:
-        name: ${REPO_NAME}-${NODE_ENV}
-        service: ${REPO_NAME}-${NODE_ENV}
+        app: ${REPO_NAME}
+        environment: ${NODE_ENV}
     spec:
-      hostname: ${REPO_NAME}-${NODE_ENV}
-      subdomain: ${REPO_NAME}-${NODE_ENV}
-      nodeSelector:
-        kubernetes.io/arch: arm64
+      # Allow scheduling on both managed and Karpenter nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - ${REPO_NAME}
+              topologyKey: kubernetes.io/hostname
       containers:
-        - name: ${REPO_NAME}-${NODE_ENV}
+        - name: ${REPO_NAME}
           image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${REPO_NAME}:${GITHUB_SHA}
+          imagePullPolicy: Always
           ports:
             - name: next-http
               containerPort: 3000
+              protocol: TCP
           env:
             - name: NODE_ENV
               value: "production"
@@ -95,19 +126,32 @@ spec:
           resources:
             requests:
               memory: "512Mi"
-              cpu: "250m"
+              cpu: "500m"  # Increased for better performance
             limits:
               memory: "1Gi"
-              cpu: "500m"
+              cpu: "1000m"
           livenessProbe:
             httpGet:
               path: /
               port: 3000
-            initialDelaySeconds: 30
+              scheme: HTTP
+            initialDelaySeconds: 60  # Longer for Next.js startup
             periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /
               port: 3000
-            initialDelaySeconds: 10
+              scheme: HTTP
+            initialDelaySeconds: 30
             periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          # Graceful shutdown
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 15"]

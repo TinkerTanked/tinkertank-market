@@ -4,7 +4,7 @@ import type { CatalogProduct } from '@/lib/productCatalog'
 export type Product = CatalogProduct
 export type { CatalogProduct }
 
-export type ProductCategory = 'camps' | 'birthdays' | 'subscriptions'
+export type ProductCategory = 'camps' | 'birthdays' | 'subscriptions' | 'ignite'
 
 export interface AddOn {
   id: string

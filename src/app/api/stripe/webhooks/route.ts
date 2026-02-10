@@ -6,6 +6,8 @@ import { eventService } from '@/lib/events';
 import { sendBookingConfirmationEmail } from '@/lib/email';
 import { ErrorHandler, ErrorCategory, ErrorSeverity, withErrorHandling } from '@/lib/error-handling';
 import { notificationService } from '@/lib/notifications';
+import { IGNITE_SESSIONS } from '@/config/igniteProducts';
+import { getSubscriptionStartTerm, getTermDatesForDayOfWeek, DAY_NAME_TO_NUMBER } from '@/config/schoolTerms';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -107,40 +109,49 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
     // Only process if payment was successful and order is still pending
     if (session.payment_status === 'paid' && order.status === 'PENDING') {
-      await prisma.$transaction(async (tx) => {
-        // Update order status to PAID
-        await tx.order.update({
-          where: { id: order.id },
-          data: { status: 'PAID' },
-        });
+      // Check if this is a subscription
+      const isSubscription = session.metadata?.isSubscription === 'true'
+      
+      if (isSubscription) {
+        // Handle Ignite subscription
+        await handleIgniteSubscription(session, order)
+      } else {
+        // Handle regular camp/birthday bookings
+        await prisma.$transaction(async (tx) => {
+          // Update order status to PAID
+          await tx.order.update({
+            where: { id: order.id },
+            data: { status: 'PAID' },
+          });
 
-        // Create bookings for each order item (camps and birthdays)
-        for (const orderItem of order.orderItems) {
-          if (orderItem.product.type === 'CAMP' || orderItem.product.type === 'BIRTHDAY') {
-            const defaultLocation = await tx.location.findFirst({
-              where: { isActive: true },
-            });
+          // Create bookings for each order item (camps and birthdays)
+          for (const orderItem of order.orderItems) {
+            if (orderItem.product.type === 'CAMP' || orderItem.product.type === 'BIRTHDAY') {
+              const defaultLocation = await tx.location.findFirst({
+                where: { isActive: true },
+              });
 
-            if (!defaultLocation) {
-              console.error('No active location found for booking');
-              continue;
+              if (!defaultLocation) {
+                console.error('No active location found for booking');
+                continue;
+              }
+
+              await tx.booking.create({
+                data: {
+                  studentId: orderItem.studentId,
+                  productId: orderItem.productId,
+                  locationId: defaultLocation.id,
+                  startDate: orderItem.bookingDate,
+                  endDate: new Date(orderItem.bookingDate.getTime() + (orderItem.product.duration || 60) * 60 * 1000),
+                  status: 'CONFIRMED',
+                  totalPrice: orderItem.price,
+                  notes: `Checkout session completed - Order: ${order.id}`,
+                },
+              });
             }
-
-            await tx.booking.create({
-              data: {
-                studentId: orderItem.studentId,
-                productId: orderItem.productId,
-                locationId: defaultLocation.id,
-                startDate: orderItem.bookingDate,
-                endDate: new Date(orderItem.bookingDate.getTime() + (orderItem.product.duration || 60) * 60 * 1000),
-                status: 'CONFIRMED',
-                totalPrice: orderItem.price,
-                notes: `Checkout session completed - Order: ${order.id}`,
-              },
-            });
           }
-        }
-      });
+        });
+      }
 
       // Create calendar events with retry logic
       const calendarEvents = await withErrorHandling(
@@ -396,4 +407,142 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
   } catch (error) {
     console.error('Error handling dispute created webhook:', error);
   }
+}
+
+/**
+ * Handle Ignite subscription creation
+ * Creates recurring events for the current/next school term
+ */
+async function handleIgniteSubscription(
+  session: Stripe.Checkout.Session,
+  order: { id: string; customerEmail: string; customerName: string }
+) {
+  console.log('Processing Ignite subscription for order:', order.id);
+
+  const subscriptionProductId = session.metadata?.subscriptionProductId;
+  
+  if (!subscriptionProductId) {
+    console.error('No subscriptionProductId in session metadata');
+    return;
+  }
+
+  // Find the Ignite session config
+  const igniteSession = IGNITE_SESSIONS.find(s => s.id === subscriptionProductId);
+  
+  if (!igniteSession) {
+    console.error('Ignite session not found:', subscriptionProductId);
+    return;
+  }
+
+  // Get the term to schedule for
+  const term = getSubscriptionStartTerm(new Date());
+  
+  if (!term) {
+    console.error('No school term found for subscription scheduling');
+    return;
+  }
+
+  console.log(`Scheduling Ignite subscription for ${term.name}`);
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Update order status
+      await tx.order.update({
+        where: { id: order.id },
+        data: { status: 'PAID' },
+      });
+
+      // Find or create location
+      let location = await tx.location.findFirst({
+        where: { 
+          name: { contains: igniteSession.location },
+          isActive: true 
+        },
+      });
+
+      if (!location) {
+        // Use default location or create one
+        location = await tx.location.findFirst({
+          where: { isActive: true },
+        });
+      }
+
+      if (!location) {
+        console.error('No location found for Ignite session');
+        return;
+      }
+
+      // Create a recurring template
+      const recurringTemplate = await tx.recurringTemplate.create({
+        data: {
+          name: `${igniteSession.name} - ${order.customerName}`,
+          description: `Ignite subscription for ${order.customerEmail}`,
+          type: 'RECURRING_SESSION',
+          startTime: igniteSession.startTime,
+          endTime: igniteSession.endTime,
+          duration: calculateDurationMinutes(igniteSession.startTime, igniteSession.endTime),
+          daysOfWeek: igniteSession.dayOfWeek.map(d => DAY_NAME_TO_NUMBER[d.toLowerCase()]),
+          startDate: term.startDate,
+          endDate: term.endDate,
+          maxCapacity: 20,
+          locationId: location.id,
+          isActive: true,
+        },
+      });
+
+      console.log('Created recurring template:', recurringTemplate.id);
+
+      // Create events for each day of week in the term
+      const eventsToCreate = [];
+      
+      for (const dayName of igniteSession.dayOfWeek) {
+        const dayNumber = DAY_NAME_TO_NUMBER[dayName.toLowerCase()];
+        const dates = getTermDatesForDayOfWeek(term, dayNumber);
+        
+        for (const date of dates) {
+          const [startHour, startMin] = igniteSession.startTime.split(':').map(Number);
+          const [endHour, endMin] = igniteSession.endTime.split(':').map(Number);
+          
+          const startDateTime = new Date(date);
+          startDateTime.setHours(startHour, startMin, 0, 0);
+          
+          const endDateTime = new Date(date);
+          endDateTime.setHours(endHour, endMin, 0, 0);
+          
+          eventsToCreate.push({
+            title: `Ignite - ${igniteSession.location}`,
+            description: `${igniteSession.name}`,
+            type: 'RECURRING_SESSION' as const,
+            status: 'SCHEDULED' as const,
+            startDateTime,
+            endDateTime,
+            isRecurring: true,
+            maxCapacity: 20,
+            currentCount: 1, // This subscriber
+            locationId: location.id,
+            recurringTemplateId: recurringTemplate.id,
+          });
+        }
+      }
+
+      // Create all events
+      if (eventsToCreate.length > 0) {
+        await tx.event.createMany({
+          data: eventsToCreate,
+        });
+        console.log(`Created ${eventsToCreate.length} Ignite events for ${term.name}`);
+      }
+    });
+
+    console.log('Ignite subscription processed successfully for order:', order.id);
+  } catch (error) {
+    console.error('Error processing Ignite subscription:', error);
+    throw error;
+  }
+}
+
+function calculateDurationMinutes(startTime: string, endTime: string): number {
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+  return (endHour * 60 + endMin) - (startHour * 60 + startMin);
 }
