@@ -65,12 +65,12 @@ metadata:
     app: ${REPO_NAME}
     environment: ${NODE_ENV}
 spec:
-  replicas: 2  # Increased for HA
+  replicas: 1  # Single replica to fit within node limits
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
-      maxUnavailable: 0  # Ensure zero-downtime deployments
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: ${REPO_NAME}
@@ -125,11 +125,11 @@ spec:
               value: "${ADMIN_PASSWORD}"
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "500m"  # Increased for better performance
+              memory: "256Mi"
+              cpu: "100m"
             limits:
-              memory: "1Gi"
-              cpu: "1000m"
+              memory: "512Mi"
+              cpu: "500m"
           livenessProbe:
             httpGet:
               path: /
