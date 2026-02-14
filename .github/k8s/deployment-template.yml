@@ -127,6 +127,8 @@ spec:
               value: "${ADMIN_USERNAME}"
             - name: ADMIN_PASSWORD
               value: "${ADMIN_PASSWORD}"
+            - name: NEXT_PUBLIC_STRIPE_MODE
+              value: "production"
           resources:
             requests:
               memory: "256Mi"
