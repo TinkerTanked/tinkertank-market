@@ -28,6 +28,10 @@ metadata:
     app: ${REPO_NAME}
     environment: ${NODE_ENV}
   annotations:
+    # Shared ALB Group - all apps with this group share one ALB
+    alb.ingress.kubernetes.io/group.name: shared-alb
+    alb.ingress.kubernetes.io/group.order: '10'
+    
     # AWS Load Balancer Controller annotations
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
