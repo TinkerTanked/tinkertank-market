@@ -1,132 +1,134 @@
+# =============================================================================
+# TinkerTank Market EKS Deployment Workflow
+# Builds Docker image, pushes to ECR, and deploys to EKS
+# =============================================================================
+
 name: Deploy TinkerTank Market
 
 on:
   push:
     branches:
       - main
-      - feature/eks-deployment
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-        - production
-        - staging
 
 env:
+  AWS_REGION: ${{ secrets.AWS_REGION || 'ap-southeast-2' }}
   DOMAIN: tinkertank.rocks
   NODE_ENV: production
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  EKS_CLUSTER_NAME: tinkertank-dev  # New EKS cluster
   REPO_NAME: tinkertank-market
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_REGION: ${{ secrets.AWS_REGION }}
+  EKS_CLUSTER_NAME: tinkertank-dev
+
+# Required for OIDC authentication with AWS (if configured)
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
-  build-and-deploy:
+  # ---------------------------------------------------------------------------
+  # Type Check Job (runs on x86)
+  # ---------------------------------------------------------------------------
+  typecheck:
+    name: Type Check
     runs-on: ubuntu-latest
-    # TODO: Switch back to self-hosted when runners are deployed on EKS
-    # runs-on: [self-hosted, arm64, linux]
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y curl gettext jq unzip openssl libssl-dev
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run type-check
+
+  # ---------------------------------------------------------------------------
+  # Build and Deploy Job (runs on native ARM64)
+  # ---------------------------------------------------------------------------
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-24.04-arm
+    needs: typecheck
+    
+    steps:
+      # -----------------------------------------------------------------------
+      # Checkout and Setup
+      # -----------------------------------------------------------------------
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Download envsubst utility
+      # -----------------------------------------------------------------------
       - name: Download envsubst
         run: |
-          ARCH=$(uname -m)
-          if [ "$ARCH" = "aarch64" ]; then
-            curl -L "https://github.com/a8m/envsubst/releases/download/v1.4.2/envsubst-Linux-arm64" -o "envsubst"
-          else
-            curl -L "https://github.com/a8m/envsubst/releases/download/v1.4.2/envsubst-Linux-x86_64" -o "envsubst"
-          fi
+          curl -L "https://github.com/a8m/envsubst/releases/download/v1.4.2/envsubst-Linux-arm64" -o "envsubst"
           chmod +x envsubst
 
-      - name: Install AWS CLI
-        run: |
-          ARCH=$(uname -m)
-          if [ "$ARCH" = "aarch64" ]; then
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
-          else
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          fi
-          unzip -q awscliv2.zip
-          sudo ./aws/install --update
-          aws --version
-
-      - name: Configure AWS Credentials
+      # -----------------------------------------------------------------------
+      # AWS Authentication
+      # -----------------------------------------------------------------------
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      
+
+      # -----------------------------------------------------------------------
+      # ECR Login and Repository Setup
+      # -----------------------------------------------------------------------
       - name: Login to Amazon ECR
         id: login-ecr
-        run: |
-          aws --version
-          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Create ECR Repository if not exists
         run: |
           aws ecr describe-repositories --repository-names ${{ env.REPO_NAME }} --region ${{ env.AWS_REGION }} || \
           aws ecr create-repository --repository-name ${{ env.REPO_NAME }} --region ${{ env.AWS_REGION }}
 
-      - name: Install kubectl
-        run: |
-          ARCH=$(uname -m)
-          if [ "$ARCH" = "aarch64" ]; then
-            curl -LO "https://dl.k8s.io/release/v1.32.0/bin/linux/arm64/kubectl"
-          else
-            curl -LO "https://dl.k8s.io/release/v1.32.0/bin/linux/amd64/kubectl"
-          fi
-          chmod +x ./kubectl
-          sudo mv ./kubectl /usr/local/bin/kubectl
-          kubectl version --client
-
-      - name: Configure kubectl for EKS
-        run: |
-          aws eks update-kubeconfig --name ${EKS_CLUSTER_NAME} --region ${AWS_REGION}
-          kubectl cluster-info
-          kubectl get nodes
-
-      - name: Set up QEMU for cross-platform builds
-        uses: docker/setup-qemu-action@v3
-
+      # -----------------------------------------------------------------------
+      # Docker Build and Push (native ARM64)
+      # -----------------------------------------------------------------------
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker-container
 
-      - name: Build and Push Docker Image for ARM
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
-          platforms: linux/arm64
           push: true
-          provenance: false
-          tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.REPO_NAME }}:${{ github.sha }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.REPO_NAME }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.REPO_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/arm64
+
+      # -----------------------------------------------------------------------
+      # EKS Deployment
+      # -----------------------------------------------------------------------
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER_NAME }}
 
       - name: Substitute Environment Variables in K8s Template
         env:
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
@@ -150,14 +152,6 @@ jobs:
           echo "Waiting for deployment to be ready..."
           kubectl --namespace=default rollout status deployment/${REPO_NAME}-${NODE_ENV} --timeout=5m
 
-      - name: Verify Deployment
-        run: |
-          echo "Verifying deployment..."
-          kubectl --namespace=default get deployment ${REPO_NAME}-${NODE_ENV}
-          kubectl --namespace=default get pods -l app=${REPO_NAME}
-          kubectl --namespace=default get svc ${REPO_NAME}-${NODE_ENV}
-          kubectl --namespace=default get ingress ${REPO_NAME}-${NODE_ENV}
-
       - name: Run Database Migrations
         run: |
           echo "Running database migrations..."
@@ -166,11 +160,16 @@ jobs:
           echo "Running migrations in pod: $POD_NAME"
           kubectl --namespace=default exec $POD_NAME -c ${REPO_NAME} -- npx prisma@6.15.0 migrate deploy
 
-      # Seed Locations - Only needed for first deployment (already seeded)
-      # - name: Seed Locations
-      #   run: |
-      #     echo "Seeding locations..."
-      #     POD_NAME=$(./kubectl --kubeconfig=./platform --namespace=default get pods -l name=${REPO_NAME}-${NODE_ENV} -o jsonpath='{.items[0].metadata.name}')
-      #     echo "Running location seed in pod: $POD_NAME"
-      #     ./kubectl --kubeconfig=./platform --namespace=default exec $POD_NAME -c ${REPO_NAME}-${NODE_ENV} -- npx tsx scripts/seed-locations.ts
-      #   continue-on-error: true
+      - name: Verify Deployment
+        run: |
+          echo "Deployment Status:"
+          kubectl --namespace=default get deployment ${REPO_NAME}-${NODE_ENV}
+          echo ""
+          echo "Pod Status:"
+          kubectl --namespace=default get pods -l app=${REPO_NAME}
+          echo ""
+          echo "Service Status:"
+          kubectl --namespace=default get svc ${REPO_NAME}-${NODE_ENV}
+          echo ""
+          echo "Ingress Status:"
+          kubectl --namespace=default get ingress ${REPO_NAME}-${NODE_ENV}
