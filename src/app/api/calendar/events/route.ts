@@ -3,8 +3,11 @@ import { prisma } from '@/lib/prisma'
 import { CalendarEvent, AdminCalendarEvent } from '@/types/booking'
 import { prismaBookingToCalendarEvent } from '@/lib/calendar-utils'
 import { startOfMonth, endOfMonth, parseISO, subWeeks, addDays, format } from 'date-fns'
+import { toZonedTime } from 'date-fns-tz'
 import { isClosureDate, getClosureInfo } from '@/types'
 import { IGNITE_SESSIONS, type IgniteSessionConfig } from '@/config/igniteProducts'
+
+const SYDNEY_TZ = 'Australia/Sydney'
 
 // Map day names to day numbers (0 = Sunday, 1 = Monday, etc.)
 const DAY_NAME_TO_NUMBER: Record<string, number> = {
@@ -196,7 +199,8 @@ export async function GET(request: NextRequest) {
 
       // Build subscriber counts keyed by session and date
       subscriptionBookings.forEach((booking) => {
-        const dateKey = format(booking.startDate, 'yyyy-MM-dd')
+        const sydneyTime = toZonedTime(booking.startDate, SYDNEY_TZ)
+        const dateKey = format(sydneyTime, 'yyyy-MM-dd')
         const locationName = booking.location?.name || ''
 
         // Find matching Ignite session by location and time
@@ -204,8 +208,8 @@ export async function GET(request: NextRequest) {
           const shortLoc = LOCATION_SHORT_NAMES[session.location] || session.location
           if (locationName.includes(session.location.split(' ')[0]) || locationName.includes(shortLoc)) {
             const [startHour, startMin] = session.startTime.split(':').map(Number)
-            const bookingHour = booking.startDate.getHours()
-            const bookingMin = booking.startDate.getMinutes()
+            const bookingHour = sydneyTime.getHours()
+            const bookingMin = sydneyTime.getMinutes()
 
             if (bookingHour === startHour && Math.abs(bookingMin - startMin) < 30) {
               const key = `${session.id}-${dateKey}`

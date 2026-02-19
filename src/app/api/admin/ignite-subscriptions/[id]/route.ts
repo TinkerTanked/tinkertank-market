@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { IGNITE_SESSIONS } from '@/config/igniteProducts'
 import { getSubscriptionStartTerm, getTermDatesForDayOfWeek, DAY_NAME_TO_NUMBER } from '@/config/schoolTerms'
+import { format, parse } from 'date-fns'
+import { toZonedTime, fromZonedTime } from 'date-fns-tz'
+
+const SYDNEY_TZ = 'Australia/Sydney'
 
 interface StudentInfo {
   id?: string
@@ -186,14 +190,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                 for (const date of dates) {
                   if (date < new Date()) continue
 
-                  const [startHour, startMin] = igniteSession.startTime.split(':').map(Number)
-                  const [endHour, endMin] = igniteSession.endTime.split(':').map(Number)
+                  const dateStr = format(date, 'yyyy-MM-dd')
+                  const startTimeStr = `${dateStr}T${igniteSession.startTime}:00`
+                  const endTimeStr = `${dateStr}T${igniteSession.endTime}:00`
 
-                  const startDateTime = new Date(date)
-                  startDateTime.setHours(startHour, startMin, 0, 0)
+                  const startDateTime = fromZonedTime(startTimeStr, SYDNEY_TZ)
+                  const endDateTime = fromZonedTime(endTimeStr, SYDNEY_TZ)
 
-                  const endDateTime = new Date(date)
-                  endDateTime.setHours(endHour, endMin, 0, 0)
+                  console.log(`Creating event for ${dateStr}: ${igniteSession.startTime} - ${igniteSession.endTime} (UTC: ${startDateTime.toISOString()})`)
 
                   const existingEvent = await tx.event.findFirst({
                     where: {
