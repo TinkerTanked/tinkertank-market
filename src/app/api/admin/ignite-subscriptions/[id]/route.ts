@@ -106,13 +106,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         linkedStudents.push({ id: student.id, name: fullName })
       }
 
+      console.log('Creating bookings - igniteSessionId:', subscription.igniteSessionId, 'linkedStudents:', linkedStudents.length)
+
       if (subscription.igniteSessionId && linkedStudents.length > 0) {
         const igniteSession = IGNITE_SESSIONS.find(s => s.id === subscription.igniteSessionId)
+        console.log('Found igniteSession:', igniteSession?.id, igniteSession?.name)
 
         if (igniteSession) {
           const subscriptionProduct = await tx.product.findFirst({
             where: { type: 'SUBSCRIPTION', isActive: true }
           })
+          console.log('subscriptionProduct:', subscriptionProduct?.id, subscriptionProduct?.name)
 
           let location = await tx.location.findFirst({
             where: {
@@ -120,15 +124,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
               isActive: true
             }
           })
+          console.log('location (first try):', location?.id, location?.name)
 
           if (!location) {
             location = await tx.location.findFirst({
               where: { isActive: true }
             })
+            console.log('location (fallback):', location?.id, location?.name)
           }
 
           if (subscriptionProduct && location) {
             const term = getSubscriptionStartTerm(new Date())
+            console.log('term:', term?.name)
 
             if (term) {
               const eventsToCreate: Array<{
@@ -187,6 +194,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                 }
               }
 
+              console.log('eventsToCreate:', eventsToCreate.length)
+
               let createdEvents: { id: string; startDateTime: Date; endDateTime: Date; locationId: string }[] = []
               if (eventsToCreate.length > 0) {
                 await tx.event.createMany({ data: eventsToCreate })
@@ -198,6 +207,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                   },
                   select: { id: true, startDateTime: true, endDateTime: true, locationId: true }
                 })
+                console.log('Created events, found:', createdEvents.length)
               } else {
                 createdEvents = await tx.event.findMany({
                   where: {
@@ -208,8 +218,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                   },
                   select: { id: true, startDateTime: true, endDateTime: true, locationId: true }
                 })
+                console.log('Using existing events:', createdEvents.length)
               }
 
+              let bookingsCreated = 0
               for (const student of linkedStudents) {
                 for (const event of createdEvents) {
                   const existingBooking = await tx.booking.findFirst({
@@ -232,9 +244,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                         totalPrice: 0
                       }
                     })
+                    bookingsCreated++
                   }
                 }
               }
+              console.log('Bookings created:', bookingsCreated)
             }
           }
         }

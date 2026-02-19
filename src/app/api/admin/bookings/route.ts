@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { BookingStatus } from '@/types/booking';
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from 'date-fns';
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { BookingStatus } from '@/types/booking'
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from 'date-fns'
 
 export async function GET(request: Request) {
   try {
@@ -149,5 +149,80 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Bookings API error:', error);
     return NextResponse.json({ error: 'Failed to fetch bookings' }, { status: 500 });
+  }
+}
+
+interface CreateBookingBody {
+  studentId: string
+  productId: string
+  locationId: string
+  eventId?: string
+  startDate: string
+  endDate: string
+  status?: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
+  totalPrice?: number
+  notes?: string
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body: CreateBookingBody = await request.json()
+
+    if (!body.studentId || !body.productId || !body.locationId) {
+      return NextResponse.json(
+        { error: 'studentId, productId, and locationId are required' },
+        { status: 400 }
+      )
+    }
+
+    if (!body.startDate || !body.endDate) {
+      return NextResponse.json(
+        { error: 'startDate and endDate are required' },
+        { status: 400 }
+      )
+    }
+
+    const [student, product, location] = await Promise.all([
+      prisma.student.findUnique({ where: { id: body.studentId } }),
+      prisma.product.findUnique({ where: { id: body.productId } }),
+      prisma.location.findUnique({ where: { id: body.locationId } })
+    ])
+
+    if (!student) {
+      return NextResponse.json({ error: 'Student not found' }, { status: 404 })
+    }
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+    }
+    if (!location) {
+      return NextResponse.json({ error: 'Location not found' }, { status: 404 })
+    }
+
+    const booking = await prisma.booking.create({
+      data: {
+        studentId: body.studentId,
+        productId: body.productId,
+        locationId: body.locationId,
+        eventId: body.eventId || null,
+        startDate: new Date(body.startDate),
+        endDate: new Date(body.endDate),
+        status: body.status || 'CONFIRMED',
+        totalPrice: body.totalPrice ?? Number(product.price),
+        notes: body.notes || null
+      },
+      include: {
+        student: true,
+        product: true,
+        location: true
+      }
+    })
+
+    return NextResponse.json({
+      ...booking,
+      totalPrice: Number(booking.totalPrice)
+    }, { status: 201 })
+  } catch (error) {
+    console.error('Error creating booking:', error)
+    return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 })
   }
 }
