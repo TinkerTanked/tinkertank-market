@@ -1,4 +1,11 @@
-import 'dotenv/config'
+// Only load dotenv in development
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    require('dotenv/config')
+  } catch {
+    // dotenv not available in production, that's fine
+  }
+}
 import Stripe from 'stripe'
 import { PrismaClient } from '@prisma/client'
 import { IGNITE_SESSIONS } from '../src/config/igniteProducts'
