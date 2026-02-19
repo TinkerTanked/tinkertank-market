@@ -454,7 +454,17 @@ async function handleIgniteSubscription(
   console.log(`Scheduling Ignite subscription for ${term.name}`);
 
   // Parse student info from metadata
-  let studentInfo: Array<{ firstName: string; lastName: string; age: number; allergies: string }> = [];
+  let studentInfo: Array<{
+    firstName: string
+    lastName: string
+    dateOfBirth?: string
+    age?: number
+    school?: string
+    allergies?: string
+    medicalNotes?: string
+    emergencyContactName?: string
+    emergencyContactPhone?: string
+  }> = [];
   if (session.metadata?.studentInfo) {
     try {
       studentInfo = JSON.parse(session.metadata.studentInfo);
@@ -475,12 +485,24 @@ async function handleIgniteSubscription(
       // Create students from the subscription
       const createdStudentIds: string[] = [];
       for (const student of studentInfo) {
-        const birthYear = new Date().getFullYear() - student.age;
+        let birthdate: Date;
+        if (student.dateOfBirth) {
+          birthdate = new Date(student.dateOfBirth);
+        } else if (student.age) {
+          const birthYear = new Date().getFullYear() - student.age;
+          birthdate = new Date(birthYear, 0, 1);
+        } else {
+          birthdate = new Date(2015, 0, 1);
+        }
         const createdStudent = await tx.student.create({
           data: {
             name: `${student.firstName} ${student.lastName}`,
-            birthdate: new Date(birthYear, 0, 1),
+            birthdate,
             allergies: student.allergies || null,
+            school: student.school || null,
+            medicalNotes: student.medicalNotes || null,
+            emergencyContactName: student.emergencyContactName || null,
+            emergencyContactPhone: student.emergencyContactPhone || null
           }
         });
         createdStudentIds.push(createdStudent.id);

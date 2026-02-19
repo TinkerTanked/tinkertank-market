@@ -7,9 +7,23 @@ import { clsx } from 'clsx'
 interface StudentInfo {
   firstName: string
   lastName: string
-  age?: number
-  grade?: string
+  dateOfBirth?: string
+  school?: string
   allergies?: string
+  medicalNotes?: string
+  emergencyContactName?: string
+  emergencyContactPhone?: string
+}
+
+interface LinkedStudent {
+  id: string
+  name: string
+  birthdate: string
+  allergies: string | null
+  school: string | null
+  medicalNotes: string | null
+  emergencyContactName: string | null
+  emergencyContactPhone: string | null
 }
 
 interface IgniteSubscription {
@@ -26,6 +40,7 @@ interface IgniteSubscription {
   sessionTime: string
   cancelAtPeriodEnd: boolean
   studentNames: StudentInfo[] | null
+  linkedStudents: LinkedStudent[]
 }
 
 interface SubscriptionStats {
@@ -54,25 +69,47 @@ function StudentModal({
   onSave: (students: StudentInfo[]) => void
   saving: boolean
 }) {
-  const [students, setStudents] = useState<StudentInfo[]>(
-    subscription.studentNames || []
-  )
+  const [students, setStudents] = useState<StudentInfo[]>(() => {
+    if (subscription.linkedStudents && subscription.linkedStudents.length > 0) {
+      return subscription.linkedStudents.map(s => {
+        const nameParts = s.name.split(' ')
+        const firstName = nameParts[0] || ''
+        const lastName = nameParts.slice(1).join(' ') || ''
+        return {
+          firstName,
+          lastName,
+          dateOfBirth: s.birthdate ? s.birthdate.split('T')[0] : '',
+          school: s.school || '',
+          allergies: s.allergies || '',
+          medicalNotes: s.medicalNotes || '',
+          emergencyContactName: s.emergencyContactName || '',
+          emergencyContactPhone: s.emergencyContactPhone || ''
+        }
+      })
+    }
+    return subscription.studentNames || []
+  })
 
   const addStudent = () => {
-    setStudents([...students, { firstName: '', lastName: '', age: undefined, grade: '', allergies: '' }])
+    setStudents([...students, {
+      firstName: '',
+      lastName: '',
+      dateOfBirth: '',
+      school: '',
+      allergies: '',
+      medicalNotes: '',
+      emergencyContactName: '',
+      emergencyContactPhone: ''
+    }])
   }
 
   const removeStudent = (index: number) => {
     setStudents(students.filter((_, i) => i !== index))
   }
 
-  const updateStudent = (index: number, field: keyof StudentInfo, value: string | number) => {
+  const updateStudent = (index: number, field: keyof StudentInfo, value: string) => {
     const updated = [...students]
-    if (field === 'age') {
-      updated[index] = { ...updated[index], [field]: value === '' ? undefined : Number(value) }
-    } else {
-      updated[index] = { ...updated[index], [field]: value }
-    }
+    updated[index] = { ...updated[index], [field]: value }
     setStudents(updated)
   }
 
@@ -137,35 +174,72 @@ function StudentModal({
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">Age</label>
+                        <label className="block text-xs text-gray-500 mb-1">Date of Birth *</label>
                         <input
-                          type="number"
-                          min="1"
-                          max="18"
-                          value={student.age ?? ''}
-                          onChange={(e) => updateStudent(index, 'age', e.target.value)}
+                          type="date"
+                          value={student.dateOfBirth || ''}
+                          onChange={(e) => updateStudent(index, 'dateOfBirth', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          required
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">Grade</label>
+                        <label className="block text-xs text-gray-500 mb-1">School</label>
                         <input
                           type="text"
-                          value={student.grade || ''}
-                          onChange={(e) => updateStudent(index, 'grade', e.target.value)}
+                          value={student.school || ''}
+                          onChange={(e) => updateStudent(index, 'school', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          placeholder="e.g., Year 3"
+                          placeholder="Current school"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Allergies / Medical Notes</label>
-                      <textarea
+                      <label className="block text-xs text-gray-500 mb-1">Allergies</label>
+                      <input
+                        type="text"
                         value={student.allergies || ''}
                         onChange={(e) => updateStudent(index, 'allergies', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        rows={2}
+                        placeholder="Any allergies or dietary restrictions"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Medical Information</label>
+                      <textarea
+                        value={student.medicalNotes || ''}
+                        onChange={(e) => updateStudent(index, 'medicalNotes', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        rows={2}
+                        placeholder="Any medical conditions we should know about"
+                      />
+                    </div>
+                    <div className="border-t pt-3 mt-3">
+                      <p className="text-xs font-medium text-gray-700 mb-2">Emergency Contact</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Contact Name *</label>
+                          <input
+                            type="text"
+                            value={student.emergencyContactName || ''}
+                            onChange={(e) => updateStudent(index, 'emergencyContactName', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="Emergency contact name"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Contact Phone *</label>
+                          <input
+                            type="tel"
+                            value={student.emergencyContactPhone || ''}
+                            onChange={(e) => updateStudent(index, 'emergencyContactPhone', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="Emergency contact phone"
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -241,9 +315,16 @@ export default function IgniteSubscriptionsPage() {
       })
 
       if (response.ok) {
+        const data = await response.json()
         setSubscriptions(subs =>
           subs.map(s =>
-            s.id === editingSubscription.id ? { ...s, studentNames: students } : s
+            s.id === editingSubscription.id
+              ? {
+                  ...s,
+                  studentNames: students,
+                  linkedStudents: data.subscription.students || []
+                }
+              : s
           )
         )
         setEditingSubscription(null)
@@ -405,12 +486,23 @@ export default function IgniteSubscriptionsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {sub.studentNames && sub.studentNames.length > 0 ? (
+                      {sub.linkedStudents && sub.linkedStudents.length > 0 ? (
+                        <div className="space-y-1">
+                          {sub.linkedStudents.map((student) => (
+                            <div key={student.id} className="text-sm text-gray-900">
+                              {student.name}
+                              {student.allergies && (
+                                <span className="text-xs text-orange-500 ml-1" title={student.allergies}>⚠️</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : sub.studentNames && sub.studentNames.length > 0 ? (
                         <div className="space-y-1">
                           {sub.studentNames.map((student, i) => (
-                            <div key={i} className="text-sm text-gray-900">
+                            <div key={i} className="text-sm text-gray-500 italic">
                               {student.firstName} {student.lastName}
-                              {student.age && <span className="text-gray-500 ml-1">({student.age})</span>}
+                              <span className="text-xs text-yellow-600 ml-1">(not linked)</span>
                             </div>
                           ))}
                         </div>

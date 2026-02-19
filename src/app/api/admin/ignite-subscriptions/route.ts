@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { IGNITE_SESSIONS } from '@/config/igniteProducts'
-import { IgniteSubscription, IgniteSubscriptionStatus } from '@prisma/client'
+import { IgniteSubscriptionStatus } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,18 +13,33 @@ export async function GET(request: NextRequest) {
     const subscriptions = await prisma.igniteSubscription.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      include: {
+        students: {
+          include: { student: true }
+        }
+      }
     })
 
-    const enrichedSubscriptions = subscriptions.map((sub: IgniteSubscription) => {
+    const enrichedSubscriptions = subscriptions.map((sub) => {
       const igniteSession = IGNITE_SESSIONS.find(s => s.id === sub.igniteSessionId)
       return {
         ...sub,
         weeklyAmount: Number(sub.weeklyAmount),
-        studentNames: sub.studentNames as string[] | null,
+        studentNames: sub.studentNames as Array<{ firstName: string; lastName: string; age?: number; grade?: string; allergies?: string }> | null,
         sessionName: igniteSession?.name || 'Unknown session',
         sessionLocation: igniteSession?.location || 'Unknown location',
         sessionDays: igniteSession?.dayOfWeek || [],
         sessionTime: igniteSession ? `${igniteSession.startTime} - ${igniteSession.endTime}` : '',
+        linkedStudents: sub.students.map(link => ({
+          id: link.student.id,
+          name: link.student.name,
+          birthdate: link.student.birthdate,
+          allergies: link.student.allergies,
+          school: link.student.school,
+          medicalNotes: link.student.medicalNotes,
+          emergencyContactName: link.student.emergencyContactName,
+          emergencyContactPhone: link.student.emergencyContactPhone
+        }))
       }
     })
 
@@ -32,12 +47,12 @@ export async function GET(request: NextRequest) {
       subscriptions: enrichedSubscriptions,
       total: enrichedSubscriptions.length,
       stats: {
-        active: subscriptions.filter((s: IgniteSubscription) => s.status === 'ACTIVE').length,
-        paused: subscriptions.filter((s: IgniteSubscription) => s.status === 'PAUSED').length,
-        canceled: subscriptions.filter((s: IgniteSubscription) => s.status === 'CANCELED').length,
+        active: subscriptions.filter((s) => s.status === 'ACTIVE').length,
+        paused: subscriptions.filter((s) => s.status === 'PAUSED').length,
+        canceled: subscriptions.filter((s) => s.status === 'CANCELED').length,
         weeklyRevenue: subscriptions
-          .filter((s: IgniteSubscription) => s.status === 'ACTIVE')
-          .reduce((sum: number, s: IgniteSubscription) => sum + Number(s.weeklyAmount), 0),
+          .filter((s) => s.status === 'ACTIVE')
+          .reduce((sum: number, s) => sum + Number(s.weeklyAmount), 0),
       },
     })
   } catch (error) {
