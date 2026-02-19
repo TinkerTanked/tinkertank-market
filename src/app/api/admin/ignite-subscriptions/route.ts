@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
       return {
         ...sub,
         weeklyAmount: Number(sub.weeklyAmount),
+        studentNames: sub.studentNames as string[] | null,
         sessionName: igniteSession?.name || 'Unknown session',
         sessionLocation: igniteSession?.location || 'Unknown location',
         sessionDays: igniteSession?.dayOfWeek || [],

@@ -582,6 +582,19 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
 
     const igniteSession = IGNITE_SESSIONS.find(s => s.stripePriceId === priceItem.price.id);
 
+    // Skip non-Ignite subscriptions
+    if (!igniteSession) {
+      console.log('Skipping non-Ignite subscription:', subscription.id);
+      return;
+    }
+
+    // Extract student names from metadata if available
+    const studentNames = subscription.metadata?.student_names
+      ? JSON.parse(subscription.metadata.student_names)
+      : subscription.metadata?.studentNames
+        ? JSON.parse(subscription.metadata.studentNames)
+        : null;
+
     const statusMap: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED' | 'PAST_DUE' | 'TRIALING'> = {
       active: 'ACTIVE',
       paused: 'PAUSED',
@@ -601,7 +614,8 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         stripePriceId: priceItem.price.id,
         customerEmail: customer.email || '',
         customerName: customer.name || undefined,
-        igniteSessionId: igniteSession?.id || null,
+        igniteSessionId: igniteSession.id,
+        studentNames,
         status: statusMap[subscription.status] || 'ACTIVE',
         currentPeriodStart: new Date(subscription.current_period_start * 1000),
         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
@@ -613,7 +627,8 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         stripePriceId: priceItem.price.id,
         customerEmail: customer.email || '',
         customerName: customer.name || undefined,
-        igniteSessionId: igniteSession?.id || null,
+        igniteSessionId: igniteSession.id,
+        studentNames,
         status: statusMap[subscription.status] || 'ACTIVE',
         currentPeriodStart: new Date(subscription.current_period_start * 1000),
         currentPeriodEnd: new Date(subscription.current_period_end * 1000),

@@ -61,12 +61,25 @@ export async function POST(request: Request) {
             continue
           }
 
+          // Only import Ignite subscriptions (match by price ID)
+          const igniteSession = IGNITE_SESSIONS.find(s => s.stripePriceId === priceItem.price.id)
+          if (!igniteSession) {
+            results.push(`⏭️ Skipped ${subscription.id} - not an Ignite subscription`)
+            skipped++
+            continue
+          }
+
           const price = await stripe.prices.retrieve(priceItem.price.id)
           const weeklyAmount = price.recurring?.interval === 'week'
             ? (price.unit_amount || 0) / 100
             : 0
 
-          const igniteSession = IGNITE_SESSIONS.find(s => s.stripePriceId === priceItem.price.id)
+          // Extract student names from metadata if available
+          const studentNames = subscription.metadata?.student_names
+            ? JSON.parse(subscription.metadata.student_names)
+            : subscription.metadata?.studentNames
+              ? JSON.parse(subscription.metadata.studentNames)
+              : null
 
           await prisma.igniteSubscription.upsert({
             where: { stripeSubscriptionId: subscription.id },
@@ -76,7 +89,8 @@ export async function POST(request: Request) {
               stripePriceId: priceItem.price.id,
               customerEmail: customer.email || '',
               customerName: customer.name || null,
-              igniteSessionId: igniteSession?.id || null,
+              igniteSessionId: igniteSession.id,
+              studentNames,
               status: statusMap[subscription.status] || 'ACTIVE',
               currentPeriodStart: new Date(subscription.current_period_start * 1000),
               currentPeriodEnd: new Date(subscription.current_period_end * 1000),
@@ -88,7 +102,8 @@ export async function POST(request: Request) {
               stripePriceId: priceItem.price.id,
               customerEmail: customer.email || '',
               customerName: customer.name || null,
-              igniteSessionId: igniteSession?.id || null,
+              igniteSessionId: igniteSession.id,
+              studentNames,
               status: statusMap[subscription.status] || 'ACTIVE',
               currentPeriodStart: new Date(subscription.current_period_start * 1000),
               currentPeriodEnd: new Date(subscription.current_period_end * 1000),

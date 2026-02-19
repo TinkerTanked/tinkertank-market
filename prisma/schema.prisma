@@ -197,6 +197,7 @@ model IgniteSubscription {
   customerEmail         String
   customerName          String?
   igniteSessionId       String?
+  studentNames          Json?
   status                IgniteSubscriptionStatus @default(ACTIVE)
   currentPeriodStart    DateTime?
   currentPeriodEnd      DateTime?
