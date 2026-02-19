@@ -62,6 +62,13 @@ export async function POST(request: NextRequest) {
     const orderItems = []
 
     // Handle subscription items (Ignite) - use Stripe price ID directly
+    const subscriptionStudents: Array<{
+      firstName: string
+      lastName: string
+      age: number
+      allergies?: string | string[]
+    }> = []
+    
     for (const item of subscriptionItems) {
       const unitPrice = item.productPrice || 0
       subtotal += unitPrice * item.quantity
@@ -72,8 +79,10 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
       })
 
-      // Note: For subscriptions, we don't create order items in the same way
-      // The webhook will handle subscription creation
+      // Collect student info for subscriptions
+      for (const student of item.students) {
+        subscriptionStudents.push(student)
+      }
     }
 
     // Handle regular items (camps, birthdays)
@@ -174,6 +183,15 @@ export async function POST(request: NextRequest) {
       metadata.isSubscription = 'true'
       metadata.subscriptionProductId = subscriptionItems[0].productId
       metadata.subscriptionPriceId = subscriptionItems[0].stripePriceId || ''
+      // Store student info as JSON in metadata (Stripe allows up to 500 chars per value)
+      if (subscriptionStudents.length > 0) {
+        metadata.studentInfo = JSON.stringify(subscriptionStudents.map(s => ({
+          firstName: s.firstName,
+          lastName: s.lastName,
+          age: s.age,
+          allergies: Array.isArray(s.allergies) ? s.allergies.join(', ') : s.allergies || ''
+        })))
+      }
     }
 
     const session = await stripe.checkout.sessions.create({

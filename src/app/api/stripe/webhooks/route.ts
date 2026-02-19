@@ -453,6 +453,17 @@ async function handleIgniteSubscription(
 
   console.log(`Scheduling Ignite subscription for ${term.name}`);
 
+  // Parse student info from metadata
+  let studentInfo: Array<{ firstName: string; lastName: string; age: number; allergies: string }> = [];
+  if (session.metadata?.studentInfo) {
+    try {
+      studentInfo = JSON.parse(session.metadata.studentInfo);
+      console.log('Student info from metadata:', studentInfo);
+    } catch (e) {
+      console.error('Failed to parse student info:', e);
+    }
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       // Update order status
@@ -460,6 +471,21 @@ async function handleIgniteSubscription(
         where: { id: order.id },
         data: { status: 'PAID' },
       });
+
+      // Create students from the subscription
+      const createdStudentIds: string[] = [];
+      for (const student of studentInfo) {
+        const birthYear = new Date().getFullYear() - student.age;
+        const createdStudent = await tx.student.create({
+          data: {
+            name: `${student.firstName} ${student.lastName}`,
+            birthdate: new Date(birthYear, 0, 1),
+            allergies: student.allergies || null,
+          }
+        });
+        createdStudentIds.push(createdStudent.id);
+        console.log(`Created student: ${createdStudent.name} (${createdStudent.id})`);
+      }
 
       // Find or create location
       let location = await tx.location.findFirst({
