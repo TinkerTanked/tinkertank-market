@@ -5,6 +5,7 @@ import { FireIcon, UserGroupIcon, CurrencyDollarIcon, ArrowPathIcon, PencilIcon,
 import { clsx } from 'clsx'
 
 interface StudentInfo {
+  id?: string
   firstName: string
   lastName: string
   dateOfBirth?: string
@@ -76,6 +77,7 @@ function StudentModal({
         const firstName = nameParts[0] || ''
         const lastName = nameParts.slice(1).join(' ') || ''
         return {
+          id: s.id,
           firstName,
           lastName,
           dateOfBirth: s.birthdate ? s.birthdate.split('T')[0] : '',

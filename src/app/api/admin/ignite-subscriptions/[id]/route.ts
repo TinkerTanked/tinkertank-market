@@ -47,36 +47,61 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      await tx.igniteSubscriptionStudent.deleteMany({
-        where: { igniteSubscriptionId: id }
-      })
+      const existingStudentIds = subscription.students.map(s => s.studentId)
+      const incomingStudentIds = body.studentNames.filter(s => s.id).map(s => s.id!)
 
-      const createdStudents: { id: string; name: string }[] = []
+      const studentsToRemove = existingStudentIds.filter(id => !incomingStudentIds.includes(id))
+      if (studentsToRemove.length > 0) {
+        await tx.igniteSubscriptionStudent.deleteMany({
+          where: {
+            igniteSubscriptionId: id,
+            studentId: { in: studentsToRemove }
+          }
+        })
+      }
+
+      const linkedStudents: { id: string; name: string }[] = []
 
       for (const studentInfo of body.studentNames) {
         const fullName = `${studentInfo.firstName} ${studentInfo.lastName}`.trim()
         const birthdate = studentInfo.dateOfBirth ? new Date(studentInfo.dateOfBirth) : new Date(2015, 0, 1)
 
-        const student = await tx.student.create({
-          data: {
-            name: fullName,
-            birthdate,
-            allergies: studentInfo.allergies || null,
-            school: studentInfo.school || null,
-            medicalNotes: studentInfo.medicalNotes || null,
-            emergencyContactName: studentInfo.emergencyContactName || null,
-            emergencyContactPhone: studentInfo.emergencyContactPhone || null
-          }
-        })
+        let student
+        if (studentInfo.id) {
+          student = await tx.student.update({
+            where: { id: studentInfo.id },
+            data: {
+              name: fullName,
+              birthdate,
+              allergies: studentInfo.allergies || null,
+              school: studentInfo.school || null,
+              medicalNotes: studentInfo.medicalNotes || null,
+              emergencyContactName: studentInfo.emergencyContactName || null,
+              emergencyContactPhone: studentInfo.emergencyContactPhone || null
+            }
+          })
+        } else {
+          student = await tx.student.create({
+            data: {
+              name: fullName,
+              birthdate,
+              allergies: studentInfo.allergies || null,
+              school: studentInfo.school || null,
+              medicalNotes: studentInfo.medicalNotes || null,
+              emergencyContactName: studentInfo.emergencyContactName || null,
+              emergencyContactPhone: studentInfo.emergencyContactPhone || null
+            }
+          })
 
-        await tx.igniteSubscriptionStudent.create({
-          data: {
-            igniteSubscriptionId: id,
-            studentId: student.id
-          }
-        })
+          await tx.igniteSubscriptionStudent.create({
+            data: {
+              igniteSubscriptionId: id,
+              studentId: student.id
+            }
+          })
+        }
 
-        createdStudents.push({ id: student.id, name: fullName })
+        linkedStudents.push({ id: student.id, name: fullName })
       }
 
       if (subscription.igniteSessionId) {
@@ -102,7 +127,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           })
 
           if (subscriptionProduct && futureEvents.length > 0) {
-            for (const student of createdStudents) {
+            for (const student of linkedStudents) {
               for (const event of futureEvents) {
                 const existingBooking = await tx.booking.findFirst({
                   where: {
