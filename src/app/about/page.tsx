@@ -184,60 +184,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className='py-20'>
-        <div className='container-custom'>
-          <div className='text-center space-y-4 mb-16'>
-            <h2 className='text-3xl md:text-4xl font-display font-bold text-gray-900'>
-              Meet Our Team
-            </h2>
-            <p className='text-xl text-gray-600'>
-              Passionate educators and STEAM professionals who love inspiring young minds
-            </p>
-          </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-            <div className='text-center space-y-4'>
-              <div className='w-32 h-32 bg-gradient-to-br from-primary-100 to-accent-100 rounded-full flex items-center justify-center mx-auto'>
-                <span className='text-4xl'>👨‍🔬</span>
-              </div>
-              <div>
-                <h3 className='font-display font-semibold text-xl text-gray-900'>Dr. Alex Chen</h3>
-                <p className='text-primary-600 font-medium'>Founder & Lead Educator</p>
-                <p className='text-gray-600 text-sm mt-2'>
-                  PhD in Robotics Engineering with 10+ years of experience making STEAM accessible to children
-                </p>
-              </div>
-            </div>
-
-            <div className='text-center space-y-4'>
-              <div className='w-32 h-32 bg-gradient-to-br from-green-100 to-blue-100 rounded-full flex items-center justify-center mx-auto'>
-                <span className='text-4xl'>👩‍💻</span>
-              </div>
-              <div>
-                <h3 className='font-display font-semibold text-xl text-gray-900'>Sarah Johnson</h3>
-                <p className='text-primary-600 font-medium'>Program Director</p>
-                <p className='text-gray-600 text-sm mt-2'>
-                  Former software engineer turned educator, passionate about coding education for kids
-                </p>
-              </div>
-            </div>
-
-            <div className='text-center space-y-4'>
-              <div className='w-32 h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto'>
-                <span className='text-4xl'>👨‍🎓</span>
-              </div>
-              <div>
-                <h3 className='font-display font-semibold text-xl text-gray-900'>Michael Torres</h3>
-                <p className='text-primary-600 font-medium'>Science Specialist</p>
-                <p className='text-gray-600 text-sm mt-2'>
-                  Chemistry teacher and science communicator who makes experiments safe and exciting
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* CTA */}
       <section className='py-20 bg-gradient-to-r from-primary-500 to-primary-600 text-white'>

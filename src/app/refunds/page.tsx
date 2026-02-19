@@ -30,7 +30,7 @@ export default function RefundsPage() {
 
         <div className='space-y-4 mb-12'>
           <h1 className='text-4xl md:text-5xl font-display font-bold text-gray-900'>Refund & Cancellation Policy</h1>
-          <p className='text-gray-500'>Last updated: 14 February 2025</p>
+          <p className='text-gray-500'>Last updated: 15 February 2026</p>
         </div>
 
         <div className='bg-primary-50 border border-primary-200 rounded-xl p-6 mb-12'>
@@ -130,9 +130,9 @@ export default function RefundsPage() {
 
             <h3 className='text-xl font-display font-semibold text-gray-900 mt-8 mb-3'>Guest Count Changes</h3>
             <ul className='list-disc pl-6 space-y-2'>
-              <li>Final guest count must be confirmed 7 days before the party</li>
+              <li><strong>Final guest count must be confirmed 48 hours before the party</strong></li>
               <li>Guest count increases are subject to availability and additional charges</li>
-              <li>Guest count decreases after the 7-day deadline are not refundable</li>
+              <li>Guest count decreases after the 48-hour deadline are not refundable</li>
             </ul>
           </section>
 
@@ -141,7 +141,7 @@ export default function RefundsPage() {
             
             <h3 className='text-xl font-display font-semibold text-gray-900 mt-8 mb-3'>Cancellation</h3>
             <ul className='list-disc pl-6 space-y-2'>
-              <li>You may cancel your Ignite subscription at any time</li>
+              <li><strong>We require 2 weeks notice</strong> for cancellations due to booking space and staffing needs</li>
               <li>Cancellation takes effect at the end of your current billing period</li>
               <li>You will continue to have access until the end of the paid period</li>
               <li>No refunds for partial billing periods</li>
@@ -149,9 +149,9 @@ export default function RefundsPage() {
 
             <h3 className='text-xl font-display font-semibold text-gray-900 mt-8 mb-3'>Pausing</h3>
             <ul className='list-disc pl-6 space-y-2'>
-              <li>You may pause your subscription for up to 2 months per year</li>
-              <li>Pausing must be requested at least 7 days before your next billing date</li>
-              <li>Billing will automatically resume after the pause period</li>
+              <li>You may pause your subscription for up to <strong>3 months</strong> or until the following term</li>
+              <li><strong>We require 2 weeks notice</strong> for pausing your subscription</li>
+              <li>Billing will automatically resume after the pause period ends</li>
             </ul>
 
             <h3 className='text-xl font-display font-semibold text-gray-900 mt-8 mb-3'>Missed Sessions</h3>
@@ -195,7 +195,7 @@ export default function RefundsPage() {
               To request a cancellation or refund:
             </p>
             <ol className='list-decimal pl-6 space-y-2'>
-              <li>Email us at <a href='mailto:bookings@tinkertank.rocks' className='text-primary-600 hover:underline'>bookings@tinkertank.rocks</a></li>
+              <li>Email us at <a href='mailto:hello@tinkertank.rocks' className='text-primary-600 hover:underline'>hello@tinkertank.rocks</a></li>
               <li>Include your booking reference number</li>
               <li>Specify whether you prefer a refund or credit (where applicable)</li>
             </ol>
@@ -209,7 +209,8 @@ export default function RefundsPage() {
             <h2 className='text-2xl font-display font-bold text-gray-900 mt-12 mb-4'>7. Credits</h2>
             <ul className='list-disc pl-6 space-y-2'>
               <li>Credits are valid for 12 months from the date of issue</li>
-              <li>Credits can be applied to any TinkerTank program</li>
+              <li>Credits can only be applied to the same program type (e.g., camp credits for camps)</li>
+              <li>Credits cannot be transferred between different program types</li>
               <li>Credits are non-transferable and cannot be redeemed for cash</li>
               <li>Credits cannot be combined with other promotions unless specified</li>
             </ul>
@@ -240,7 +241,7 @@ export default function RefundsPage() {
             <div className='bg-gray-50 rounded-xl p-6 mt-4'>
               <p className='font-semibold'>TinkerTank Pty Ltd</p>
               <p>Neutral Bay, NSW 2089, Australia</p>
-              <p>Email: <a href='mailto:bookings@tinkertank.rocks' className='text-primary-600 hover:underline'>bookings@tinkertank.rocks</a></p>
+              <p>Email: <a href='mailto:hello@tinkertank.rocks' className='text-primary-600 hover:underline'>hello@tinkertank.rocks</a></p>
               <p>Website: <a href='https://tinkertank.rocks' className='text-primary-600 hover:underline'>tinkertank.rocks</a></p>
             </div>
           </section>
