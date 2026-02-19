@@ -42,7 +42,8 @@ const LOCATION_SHORT_NAMES: Record<string, string> = {
 function generateIgniteEvents(
   start: Date,
   end: Date,
-  subscriberCounts: Map<string, number>
+  subscriberCounts: Map<string, number>,
+  subscriberDetails?: Map<string, Array<{ studentName: string; studentId: string }>>
 ): AdminCalendarEvent[] {
   const events: AdminCalendarEvent[] = []
   const current = new Date(start)
@@ -79,13 +80,14 @@ function generateIgniteEvents(
         const dateKey = format(current, 'yyyy-MM-dd')
         const subscriberKey = `${session.id}-${dateKey}`
         const subscriberCount = subscriberCounts.get(subscriberKey) || 0
+        const students = subscriberDetails?.get(subscriberKey) || []
 
         const colors = IGNITE_COLORS[session.programType]
         const shortLocation = LOCATION_SHORT_NAMES[session.location] || session.location
 
         events.push({
           id: `ignite-${session.id}-${dateKey}`,
-          title: shortLocation,
+          title: subscriberCount > 0 ? `${shortLocation} (${subscriberCount})` : shortLocation,
           start: eventStart,
           end: eventEnd,
           backgroundColor: colors.bg,
@@ -106,12 +108,15 @@ function generateIgniteEvents(
               programType: session.programType,
               priceWeekly: session.priceWeekly,
             } as any,
-            bookings: [] as any,
+            bookings: students.map(s => ({
+              studentName: s.studentName,
+              studentId: s.studentId
+            })) as any,
             availableSpots: 20 - subscriberCount,
             subscriberCount,
             subscriberDelta: 0,
             previousWeekCount: 0,
-          },
+          } as any,
         })
       }
     })
@@ -172,15 +177,57 @@ export async function GET(request: NextRequest) {
       const eventsMap = new Map<string, AdminCalendarEvent>()
 
       // For Ignite sessions, we want to show ALL configured sessions
-      // First, build a map of subscriber counts from actual bookings/subscriptions
+      // First, build a map of subscriber counts from actual bookings
       const subscriberCounts = new Map<string, number>()
-      
-      // TODO: In the future, query actual Ignite subscriptions from the Subscription table
-      // For now, subscriber counts will be 0 until we have real subscription data
-      
+      const subscriberDetails = new Map<string, Array<{ studentName: string; studentId: string }>>()
+
+      // Query bookings for SUBSCRIPTION products to get real subscriber counts
+      const subscriptionBookings = await prisma.booking.findMany({
+        where: {
+          startDate: { gte: start, lte: end },
+          product: { type: 'SUBSCRIPTION' },
+          status: { in: ['CONFIRMED', 'PENDING'] }
+        },
+        include: {
+          student: { select: { id: true, name: true } },
+          location: true
+        }
+      })
+
+      // Build subscriber counts keyed by session and date
+      subscriptionBookings.forEach((booking) => {
+        const dateKey = format(booking.startDate, 'yyyy-MM-dd')
+        const locationName = booking.location?.name || ''
+
+        // Find matching Ignite session by location and time
+        IGNITE_SESSIONS.forEach((session) => {
+          const shortLoc = LOCATION_SHORT_NAMES[session.location] || session.location
+          if (locationName.includes(session.location.split(' ')[0]) || locationName.includes(shortLoc)) {
+            const [startHour, startMin] = session.startTime.split(':').map(Number)
+            const bookingHour = booking.startDate.getHours()
+            const bookingMin = booking.startDate.getMinutes()
+
+            if (bookingHour === startHour && Math.abs(bookingMin - startMin) < 30) {
+              const key = `${session.id}-${dateKey}`
+              subscriberCounts.set(key, (subscriberCounts.get(key) || 0) + 1)
+
+              if (!subscriberDetails.has(key)) {
+                subscriberDetails.set(key, [])
+              }
+              subscriberDetails.get(key)!.push({
+                studentName: booking.student?.name || 'Unknown',
+                studentId: booking.student?.id || ''
+              })
+            }
+          }
+        })
+      })
+
+      console.log('Subscriber counts for calendar:', Object.fromEntries(subscriberCounts))
+
       // Generate Ignite events for all configured sessions (even without subscribers)
       if (!productType || productType.toUpperCase() === 'IGNITE' || productType.toUpperCase() === 'SUBSCRIPTION') {
-        const igniteEvents = generateIgniteEvents(start, end, subscriberCounts)
+        const igniteEvents = generateIgniteEvents(start, end, subscriberCounts, subscriberDetails)
         igniteEvents.forEach(event => {
           eventsMap.set(event.id, event)
         })
