@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { IGNITE_SESSIONS } from '@/config/igniteProducts'
+import { getSubscriptionStartTerm, getTermDatesForDayOfWeek, DAY_NAME_TO_NUMBER } from '@/config/schoolTerms'
 
 interface StudentInfo {
   id?: string
@@ -104,51 +106,133 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         linkedStudents.push({ id: student.id, name: fullName })
       }
 
-      if (subscription.igniteSessionId) {
-        const recurringTemplate = await tx.recurringTemplate.findFirst({
-          where: {
-            name: { contains: subscription.igniteSessionId },
-            isActive: true
-          }
-        })
+      if (subscription.igniteSessionId && linkedStudents.length > 0) {
+        const igniteSession = IGNITE_SESSIONS.find(s => s.id === subscription.igniteSessionId)
 
-        if (recurringTemplate) {
-          const now = new Date()
-          const futureEvents = await tx.event.findMany({
-            where: {
-              recurringTemplateId: recurringTemplate.id,
-              startDateTime: { gte: now },
-              status: { not: 'CANCELLED' }
-            }
-          })
-
+        if (igniteSession) {
           const subscriptionProduct = await tx.product.findFirst({
             where: { type: 'SUBSCRIPTION', isActive: true }
           })
 
-          if (subscriptionProduct && futureEvents.length > 0) {
-            for (const student of linkedStudents) {
-              for (const event of futureEvents) {
-                const existingBooking = await tx.booking.findFirst({
-                  where: {
-                    studentId: student.id,
-                    eventId: event.id
-                  }
-                })
+          let location = await tx.location.findFirst({
+            where: {
+              name: { contains: igniteSession.location.split(' ')[0] },
+              isActive: true
+            }
+          })
 
-                if (!existingBooking) {
-                  await tx.booking.create({
-                    data: {
-                      studentId: student.id,
-                      productId: subscriptionProduct.id,
-                      locationId: event.locationId,
-                      eventId: event.id,
-                      startDate: event.startDateTime,
-                      endDate: event.endDateTime,
-                      status: 'CONFIRMED',
-                      totalPrice: 0
+          if (!location) {
+            location = await tx.location.findFirst({
+              where: { isActive: true }
+            })
+          }
+
+          if (subscriptionProduct && location) {
+            const term = getSubscriptionStartTerm(new Date())
+
+            if (term) {
+              const eventsToCreate: Array<{
+                title: string
+                description: string
+                type: 'RECURRING_SESSION'
+                status: 'SCHEDULED'
+                startDateTime: Date
+                endDateTime: Date
+                isRecurring: boolean
+                maxCapacity: number
+                currentCount: number
+                locationId: string
+              }> = []
+
+              for (const dayName of igniteSession.dayOfWeek) {
+                const dayNumber = DAY_NAME_TO_NUMBER[dayName.toLowerCase()]
+                if (dayNumber === undefined) continue
+
+                const dates = getTermDatesForDayOfWeek(term, dayNumber)
+
+                for (const date of dates) {
+                  if (date < new Date()) continue
+
+                  const [startHour, startMin] = igniteSession.startTime.split(':').map(Number)
+                  const [endHour, endMin] = igniteSession.endTime.split(':').map(Number)
+
+                  const startDateTime = new Date(date)
+                  startDateTime.setHours(startHour, startMin, 0, 0)
+
+                  const endDateTime = new Date(date)
+                  endDateTime.setHours(endHour, endMin, 0, 0)
+
+                  const existingEvent = await tx.event.findFirst({
+                    where: {
+                      locationId: location.id,
+                      startDateTime,
+                      type: 'RECURRING_SESSION'
                     }
                   })
+
+                  if (!existingEvent) {
+                    eventsToCreate.push({
+                      title: `Ignite - ${igniteSession.location}`,
+                      description: igniteSession.name,
+                      type: 'RECURRING_SESSION',
+                      status: 'SCHEDULED',
+                      startDateTime,
+                      endDateTime,
+                      isRecurring: true,
+                      maxCapacity: 20,
+                      currentCount: linkedStudents.length,
+                      locationId: location.id
+                    })
+                  }
+                }
+              }
+
+              let createdEvents: { id: string; startDateTime: Date; endDateTime: Date; locationId: string }[] = []
+              if (eventsToCreate.length > 0) {
+                await tx.event.createMany({ data: eventsToCreate })
+                createdEvents = await tx.event.findMany({
+                  where: {
+                    locationId: location.id,
+                    type: 'RECURRING_SESSION',
+                    startDateTime: { gte: new Date() }
+                  },
+                  select: { id: true, startDateTime: true, endDateTime: true, locationId: true }
+                })
+              } else {
+                createdEvents = await tx.event.findMany({
+                  where: {
+                    locationId: location.id,
+                    type: 'RECURRING_SESSION',
+                    startDateTime: { gte: new Date() },
+                    status: { not: 'CANCELLED' }
+                  },
+                  select: { id: true, startDateTime: true, endDateTime: true, locationId: true }
+                })
+              }
+
+              for (const student of linkedStudents) {
+                for (const event of createdEvents) {
+                  const existingBooking = await tx.booking.findFirst({
+                    where: {
+                      studentId: student.id,
+                      eventId: event.id
+                    }
+                  })
+
+                  if (!existingBooking) {
+                    await tx.booking.create({
+                      data: {
+                        studentId: student.id,
+                        productId: subscriptionProduct.id,
+                        locationId: event.locationId,
+                        eventId: event.id,
+                        startDate: event.startDateTime,
+                        endDate: event.endDateTime,
+                        status: 'CONFIRMED',
+                        totalPrice: 0
+                      }
+                    })
+                  }
                 }
               }
             }
