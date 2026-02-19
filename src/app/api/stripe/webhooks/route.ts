@@ -63,6 +63,15 @@ export async function POST(request: NextRequest) {
         await handleDisputeCreated(event.data.object as Stripe.Dispute);
         break;
 
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpsert(event.data.object as Stripe.Subscription);
+        break;
+
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        break;
+
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
@@ -545,4 +554,104 @@ function calculateDurationMinutes(startTime: string, endTime: string): number {
   const [startHour, startMin] = startTime.split(':').map(Number);
   const [endHour, endMin] = endTime.split(':').map(Number);
   return (endHour * 60 + endMin) - (startHour * 60 + startMin);
+}
+
+/**
+ * Handle subscription creation or update from Stripe webhook
+ */
+async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
+  console.log('Processing subscription upsert:', subscription.id, 'status:', subscription.status);
+
+  try {
+    const customer = await stripe.customers.retrieve(subscription.customer as string);
+    if (customer.deleted) {
+      console.error('Customer is deleted:', subscription.customer);
+      return;
+    }
+
+    const priceItem = subscription.items.data[0];
+    if (!priceItem) {
+      console.error('No price item found in subscription:', subscription.id);
+      return;
+    }
+
+    const price = await stripe.prices.retrieve(priceItem.price.id);
+    const weeklyAmount = price.recurring?.interval === 'week' 
+      ? (price.unit_amount || 0) / 100 
+      : 0;
+
+    const igniteSession = IGNITE_SESSIONS.find(s => s.stripePriceId === priceItem.price.id);
+
+    const statusMap: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED' | 'PAST_DUE' | 'TRIALING'> = {
+      active: 'ACTIVE',
+      paused: 'PAUSED',
+      canceled: 'CANCELED',
+      past_due: 'PAST_DUE',
+      trialing: 'TRIALING',
+      incomplete: 'PAST_DUE',
+      incomplete_expired: 'CANCELED',
+      unpaid: 'PAST_DUE',
+    };
+
+    await prisma.igniteSubscription.upsert({
+      where: { stripeSubscriptionId: subscription.id },
+      create: {
+        stripeSubscriptionId: subscription.id,
+        stripeCustomerId: subscription.customer as string,
+        stripePriceId: priceItem.price.id,
+        customerEmail: customer.email || '',
+        customerName: customer.name || undefined,
+        igniteSessionId: igniteSession?.id || null,
+        status: statusMap[subscription.status] || 'ACTIVE',
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        weeklyAmount,
+      },
+      update: {
+        stripePriceId: priceItem.price.id,
+        customerEmail: customer.email || '',
+        customerName: customer.name || undefined,
+        igniteSessionId: igniteSession?.id || null,
+        status: statusMap[subscription.status] || 'ACTIVE',
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        weeklyAmount,
+      },
+    });
+
+    console.log('Subscription synced to database:', subscription.id);
+  } catch (error) {
+    console.error('Error processing subscription upsert:', error);
+    throw error;
+  }
+}
+
+/**
+ * Handle subscription deletion from Stripe webhook
+ */
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  console.log('Processing subscription deletion:', subscription.id);
+
+  try {
+    await prisma.igniteSubscription.update({
+      where: { stripeSubscriptionId: subscription.id },
+      data: {
+        status: 'CANCELED',
+        canceledAt: new Date(),
+      },
+    });
+
+    console.log('Subscription marked as canceled:', subscription.id);
+  } catch (error) {
+    if ((error as any).code === 'P2025') {
+      console.log('Subscription not found in database (may not have been synced):', subscription.id);
+      return;
+    }
+    console.error('Error processing subscription deletion:', error);
+    throw error;
+  }
 }

@@ -10,6 +10,7 @@ import {
   Cog6ToothIcon,
   DocumentTextIcon,
   CurrencyDollarIcon,
+  FireIcon,
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 
@@ -17,6 +18,7 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Calendar', href: '/admin/calendar', icon: CalendarIcon },
   { name: 'Bookings', href: '/admin/bookings', icon: DocumentTextIcon },
+  { name: 'Ignite Subscriptions', href: '/admin/ignite-subscriptions', icon: FireIcon },
   { name: 'Students', href: '/admin/students', icon: UserGroupIcon },
   { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
   { name: 'Revenue', href: '/admin/revenue', icon: CurrencyDollarIcon },

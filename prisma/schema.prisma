@@ -188,3 +188,31 @@ enum EventStatus {
   CANCELLED
   NO_SHOW
 }
+
+model IgniteSubscription {
+  id                    String                   @id @default(cuid())
+  stripeSubscriptionId  String                   @unique
+  stripeCustomerId      String
+  stripePriceId         String
+  customerEmail         String
+  customerName          String?
+  igniteSessionId       String?
+  status                IgniteSubscriptionStatus @default(ACTIVE)
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  canceledAt            DateTime?
+  cancelAtPeriodEnd     Boolean                  @default(false)
+  weeklyAmount          Decimal                  @db.Money
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  @@map("ignite_subscriptions")
+}
+
+enum IgniteSubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELED
+  PAST_DUE
+  TRIALING
+}

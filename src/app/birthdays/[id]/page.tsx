@@ -3,25 +3,20 @@
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   ClockIcon, 
   UserGroupIcon, 
   MapPinIcon, 
   CheckIcon,
   CalendarIcon,
-  ShoppingCartIcon,
-  GiftIcon,
-  CakeIcon
+  GiftIcon
 } from '@heroicons/react/24/outline'
 import { getProductById } from '@/data/products'
-import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
-import DateTimeSelector from '@/components/booking/DateTimeSelector'
+import BirthdayBookingWizard from '@/components/booking/BirthdayBookingWizard'
 
 export default function BirthdayDetailPage() {
   const params = useParams()
-  const { addItem } = useEnhancedCartStore()
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
   const [isBookingOpen, setIsBookingOpen] = useState(false)
 
   const product = getProductById(params.id as string)
@@ -31,7 +26,7 @@ export default function BirthdayDetailPage() {
       <div className='py-20'>
         <div className='container-custom text-center'>
           <h1 className='text-2xl font-bold text-gray-900 mb-4'>Party Package Not Found</h1>
-          <p className='text-gray-600 mb-8'>The party package you're looking for doesn't exist.</p>
+          <p className='text-gray-600 mb-8'>The party package you&apos;re looking for doesn&apos;t exist.</p>
           <Link href='/birthdays' className='btn-primary'>
             Back to Birthday Parties
           </Link>
@@ -48,26 +43,8 @@ export default function BirthdayDetailPage() {
     }).format(price)
   }
 
-  const handleAddToCart = () => {
-    if (!selectedDate || !selectedTimeSlot) {
-      setIsBookingOpen(true)
-      return
-    }
-
-    addItem(product, {
-      selectedDate,
-      selectedTimeSlot: selectedTimeSlot as any, // TODO: Fix TimeSlot type mismatch
-      quantity: 1
-    })
-
-    setSelectedDate(null)
-    setSelectedTimeSlot(null)
-    setIsBookingOpen(false)
-  }
-
   return (
     <div>
-      {/* Hero Section */}
       <section className='py-16 bg-gradient-to-br from-purple-50 via-pink-50 to-accent-50'>
         <div className='container-custom'>
           <div className='grid lg:grid-cols-2 gap-12 items-center'>
@@ -128,14 +105,14 @@ export default function BirthdayDetailPage() {
               </div>
             </div>
 
-            {/* Image */}
             <div className='relative'>
-              <div className='bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl h-96 flex items-center justify-center'>
+              <div className='bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl h-96 flex items-center justify-center overflow-hidden'>
                 {product.images && product.images.length > 0 ? (
-                  <img
+                  <Image
                     src={product.images[0]}
                     alt={product.name}
-                    className='w-full h-full object-cover rounded-2xl'
+                    fill
+                    className='object-cover rounded-2xl'
                   />
                 ) : (
                   <div className='text-8xl'>🎉</div>
@@ -146,14 +123,12 @@ export default function BirthdayDetailPage() {
         </div>
       </section>
 
-      {/* Features & What's Included */}
       <section className='py-20'>
         <div className='container-custom'>
           <div className='grid lg:grid-cols-2 gap-16'>
-            {/* What's Included */}
             <div className='space-y-6'>
               <h2 className='text-3xl font-display font-bold text-gray-900'>
-                What's Included
+                What&apos;s Included
               </h2>
               <div className='space-y-4'>
                 {product.features?.map((feature, index) => (
@@ -164,7 +139,6 @@ export default function BirthdayDetailPage() {
                 ))}
               </div>
 
-              {/* Add-ons */}
               {product.addOns && product.addOns.length > 0 && (
                 <div className='space-y-4 pt-6 border-t border-gray-200'>
                   <h3 className='text-xl font-display font-semibold text-gray-900'>
@@ -190,7 +164,6 @@ export default function BirthdayDetailPage() {
               )}
             </div>
 
-            {/* Party Timeline */}
             <div className='space-y-6'>
               <h2 className='text-3xl font-display font-bold text-gray-900'>
                 Party Timeline
@@ -251,74 +224,11 @@ export default function BirthdayDetailPage() {
         </div>
       </section>
 
-      {/* Booking Modal */}
-      {isBookingOpen && (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
-          <div className='bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto'>
-            <div className='p-6 border-b border-gray-200'>
-              <div className='flex items-center justify-between'>
-                <h2 className='text-2xl font-display font-bold text-gray-900'>
-                  Book {product.name}
-                </h2>
-                <button
-                  onClick={() => setIsBookingOpen(false)}
-                  className='text-gray-400 hover:text-gray-600 text-2xl'
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-
-            <div className='p-6'>
-              <DateTimeSelector
-                productId={product.id}
-                onDateSelect={(date, timeSlot) => {
-                  setSelectedDate(date)
-                  setSelectedTimeSlot(timeSlot)
-                }}
-                selectedDate={selectedDate}
-                selectedTimeSlot={selectedTimeSlot}
-              />
-
-              {selectedDate && selectedTimeSlot && (
-                <div className='mt-8 p-6 bg-purple-50 rounded-xl'>
-                  <h3 className='font-medium text-gray-900 mb-4'>Party Booking Summary</h3>
-                  <div className='space-y-2 text-sm'>
-                    <div className='flex justify-between'>
-                      <span>Party Theme:</span>
-                      <span className='font-medium'>{product.name}</span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span>Date:</span>
-                      <span className='font-medium'>{selectedDate.toLocaleDateString()}</span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span>Time:</span>
-                      <span className='font-medium'>{selectedTimeSlot}</span>
-                    </div>
-                    <div className='flex justify-between'>
-                      <span>Duration:</span>
-                      <span className='font-medium'>{product.duration}</span>
-                    </div>
-                    <div className='flex justify-between font-bold text-lg pt-2 border-t'>
-                      <span>Total:</span>
-                      <span>{formatPrice(product.price)}</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleAddToCart}
-                    className='bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center w-full mt-6'
-                  >
-                    <ShoppingCartIcon className='w-5 h-5 mr-2' />
-                    Add Party to Cart
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <BirthdayBookingWizard 
+        product={product}
+        isOpen={isBookingOpen} 
+        onClose={() => setIsBookingOpen(false)} 
+      />
     </div>
   )
 }
