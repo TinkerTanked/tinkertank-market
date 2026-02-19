@@ -3,7 +3,12 @@
     "lib": [
       "dom",
       "dom.iterable",
-      "es6"
+      "ES2017"
+    ],
+    "types": [
+      "node",
+      "react",
+      "react-dom"
     ],
     "allowJs": true,
     "skipLibCheck": true,
@@ -44,6 +49,7 @@
     "**/*.spec.tsx",
     "src/test/**/*",
     "src/__tests__/**/*",
-    "scripts/**/*"
+    "scripts/**/*",
+    "playwright.config.ts"
   ]
 }
