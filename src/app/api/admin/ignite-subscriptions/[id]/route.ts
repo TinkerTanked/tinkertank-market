@@ -254,10 +254,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
               let bookingsCreated = 0
               for (const student of linkedStudents) {
                 for (const event of createdEvents) {
+                  const eventDateStart = new Date(event.startDateTime)
+                  eventDateStart.setHours(0, 0, 0, 0)
+                  const eventDateEnd = new Date(event.startDateTime)
+                  eventDateEnd.setHours(23, 59, 59, 999)
+
                   const existingBooking = await tx.booking.findFirst({
                     where: {
                       studentId: student.id,
-                      eventId: event.id
+                      startDate: {
+                        gte: eventDateStart,
+                        lte: eventDateEnd
+                      },
+                      product: { type: 'SUBSCRIPTION' }
                     }
                   })
 
@@ -275,6 +284,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                       }
                     })
                     bookingsCreated++
+                  } else {
+                    await tx.booking.update({
+                      where: { id: existingBooking.id },
+                      data: {
+                        eventId: event.id,
+                        startDate: event.startDateTime,
+                        endDate: event.endDateTime,
+                        locationId: event.locationId
+                      }
+                    })
                   }
                 }
               }
