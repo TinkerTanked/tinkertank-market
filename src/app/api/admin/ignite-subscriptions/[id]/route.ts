@@ -114,22 +114,33 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
         if (igniteSession) {
           let subscriptionProduct = await tx.product.findFirst({
-            where: { type: 'SUBSCRIPTION', isActive: true }
+            where: {
+              type: 'SUBSCRIPTION',
+              name: { contains: igniteSession.name.split(' - ')[0] },
+              isActive: true
+            }
           })
 
           if (!subscriptionProduct) {
+            subscriptionProduct = await tx.product.findFirst({
+              where: { type: 'SUBSCRIPTION', isActive: true }
+            })
+          }
+
+          if (!subscriptionProduct) {
+            const productName = igniteSession.name.split(' - ')[0] || 'Ignite Sessions'
             subscriptionProduct = await tx.product.create({
               data: {
-                name: 'Ignite Weekly Sessions',
+                name: productName,
                 type: 'SUBSCRIPTION',
-                price: 0,
-                description: 'Weekly Ignite subscription sessions',
+                price: igniteSession.priceWeekly,
+                description: `Weekly ${productName} subscription`,
                 ageMin: 5,
                 ageMax: 14,
                 isActive: true
               }
             })
-            console.log('Created subscription product:', subscriptionProduct.id)
+            console.log('Created subscription product:', subscriptionProduct.id, subscriptionProduct.name)
           }
           console.log('subscriptionProduct:', subscriptionProduct?.id, subscriptionProduct?.name)
 
