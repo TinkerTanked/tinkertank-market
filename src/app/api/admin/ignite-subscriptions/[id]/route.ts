@@ -113,9 +113,24 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         console.log('Found igniteSession:', igniteSession?.id, igniteSession?.name)
 
         if (igniteSession) {
-          const subscriptionProduct = await tx.product.findFirst({
+          let subscriptionProduct = await tx.product.findFirst({
             where: { type: 'SUBSCRIPTION', isActive: true }
           })
+
+          if (!subscriptionProduct) {
+            subscriptionProduct = await tx.product.create({
+              data: {
+                name: 'Ignite Weekly Sessions',
+                type: 'SUBSCRIPTION',
+                price: 0,
+                description: 'Weekly Ignite subscription sessions',
+                ageMin: 5,
+                ageMax: 14,
+                isActive: true
+              }
+            })
+            console.log('Created subscription product:', subscriptionProduct.id)
+          }
           console.log('subscriptionProduct:', subscriptionProduct?.id, subscriptionProduct?.name)
 
           let location = await tx.location.findFirst({
