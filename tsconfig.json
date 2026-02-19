@@ -45,6 +45,8 @@
     "src/test/**/*",
     "src/__tests__/**/*",
     "scripts/**/*",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "vitest.config.ts",
+    "tailwind.config.ts"
   ]
 }
