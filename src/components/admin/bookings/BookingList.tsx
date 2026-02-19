@@ -34,6 +34,7 @@ export default function BookingList({ filters }: BookingListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalBookings, setTotalBookings] = useState(0);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const pageSize = 20;
 
@@ -94,6 +95,31 @@ export default function BookingList({ filters }: BookingListProps) {
       age--;
     }
     return age;
+  };
+
+  const handleDelete = async (booking: Booking) => {
+    if (!confirm(`Are you sure you want to delete this booking for ${booking.student.name}? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(booking.id);
+    try {
+      const response = await fetch(`/api/admin/bookings/${booking.id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        fetchBookings();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to delete booking');
+      }
+    } catch (error) {
+      console.error('Failed to delete booking:', error);
+      alert('Failed to delete booking');
+    } finally {
+      setDeleting(null);
+    }
   };
 
   if (loading) {
@@ -227,15 +253,16 @@ export default function BookingList({ filters }: BookingListProps) {
                         <PencilIcon className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to cancel this booking?')) {
-                            // Handle booking cancellation
-                          }
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                        title="Cancel booking"
+                        onClick={() => handleDelete(booking)}
+                        disabled={deleting === booking.id}
+                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                        title="Delete booking"
                       >
-                        <TrashIcon className="w-4 h-4" />
+                        {deleting === booking.id ? (
+                          <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <TrashIcon className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </td>
