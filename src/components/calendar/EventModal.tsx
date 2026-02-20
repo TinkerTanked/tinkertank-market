@@ -350,69 +350,103 @@ export default function EventModal({
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
-                            {bookings.map((booking: any) => (
-                              <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold">
-                                      {(booking.student?.name || 'U')[0].toUpperCase()}
-                                    </div>
-                                    <div>
-                                      <div className="text-sm font-semibold text-gray-900">
-                                        {booking.student?.name || 'Unknown Student'}
+                            {bookings.map((booking: any, index: number) => {
+                              // Handle both regular bookings (with nested student) and Ignite subscriptions (flat format)
+                              const studentName = booking.student?.name || booking.studentName || booking.name || 'Unknown Student'
+                              const studentId = booking.id || booking.studentId || `booking-${index}`
+                              const isIgniteSubscription = productType === 'IGNITE' || !booking.student
+                              
+                              return (
+                                <tr key={studentId} className="hover:bg-gray-50 transition-colors">
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold">
+                                        {studentName[0].toUpperCase()}
                                       </div>
-                                      {booking.specialRequests && (
-                                        <div className="text-xs text-gray-500 mt-1">
-                                          Note: {booking.specialRequests}
+                                      <div>
+                                        <div className="text-sm font-semibold text-gray-900">
+                                          {studentName}
                                         </div>
-                                      )}
+                                        {isIgniteSubscription && (
+                                          <div className="text-xs text-green-600 mt-0.5">
+                                            Ignite Subscriber
+                                          </div>
+                                        )}
+                                        {booking.specialRequests && (
+                                          <div className="text-xs text-gray-500 mt-1">
+                                            Note: {booking.specialRequests}
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <select
-                                    value={booking.status}
-                                    onChange={(e) => handleStatusChange(booking.id, e.target.value as BookingStatus)}
-                                    className="text-xs px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium"
-                                  >
-                                    {Object.values(BookingStatus).map((status) => (
-                                      <option key={status} value={status}>
-                                        {status.toLowerCase().replace('_', ' ')}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <select
-                                    value={booking.paymentStatus}
-                                    onChange={(e) => handlePaymentStatusChange(booking.id, e.target.value as PaymentStatus)}
-                                    className="text-xs px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium"
-                                  >
-                                    {Object.values(PaymentStatus).map((status) => (
-                                      <option key={status} value={status}>
-                                        {status.toLowerCase().replace('_', ' ')}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm font-bold text-gray-900">
-                                    ${Number(booking.totalPrice || 0).toFixed(2)}
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    of ${Number(booking.totalAmount || 0).toFixed(2)}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                  <button className="text-primary-600 hover:text-primary-800 font-medium mr-3">
-                                    View
-                                  </button>
-                                  <button className="text-red-600 hover:text-red-800 font-medium">
-                                    Remove
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {isIgniteSubscription ? (
+                                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Active
+                                      </span>
+                                    ) : (
+                                      <select
+                                        value={booking.status}
+                                        onChange={(e) => handleStatusChange(booking.id, e.target.value as BookingStatus)}
+                                        className="text-xs px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium"
+                                      >
+                                        {Object.values(BookingStatus).map((status) => (
+                                          <option key={status} value={status}>
+                                            {status.toLowerCase().replace('_', ' ')}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {isIgniteSubscription ? (
+                                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Subscription
+                                      </span>
+                                    ) : (
+                                      <select
+                                        value={booking.paymentStatus}
+                                        onChange={(e) => handlePaymentStatusChange(booking.id, e.target.value as PaymentStatus)}
+                                        className="text-xs px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium"
+                                      >
+                                        {Object.values(PaymentStatus).map((status) => (
+                                          <option key={status} value={status}>
+                                            {status.toLowerCase().replace('_', ' ')}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {isIgniteSubscription ? (
+                                      <div className="text-sm text-gray-500">
+                                        —
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <div className="text-sm font-bold text-gray-900">
+                                          ${Number(booking.totalPrice || 0).toFixed(2)}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                          of ${Number(booking.totalAmount || 0).toFixed(2)}
+                                        </div>
+                                      </>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    <button className="text-primary-600 hover:text-primary-800 font-medium mr-3">
+                                      View
+                                    </button>
+                                    {!isIgniteSubscription && (
+                                      <button className="text-red-600 hover:text-red-800 font-medium">
+                                        Remove
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              )
+                            })}
                           </tbody>
                         </table>
                       </div>

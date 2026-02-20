@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { CalendarEvent, AdminCalendarEvent } from '@/types/booking'
 import { prismaBookingToCalendarEvent } from '@/lib/calendar-utils'
 import { startOfMonth, endOfMonth, parseISO, subWeeks, addDays, format } from 'date-fns'
-import { toZonedTime } from 'date-fns-tz'
+import { toZonedTime, fromZonedTime } from 'date-fns-tz'
 import { isClosureDate, getClosureInfo } from '@/types'
 import { IGNITE_SESSIONS, type IgniteSessionConfig } from '@/config/igniteProducts'
 
@@ -71,16 +71,14 @@ function generateIgniteEvents(
           return
         }
 
-        const [startHour, startMin] = session.startTime.split(':').map(Number)
-        const [endHour, endMin] = session.endTime.split(':').map(Number)
-
-        const eventStart = new Date(current)
-        eventStart.setHours(startHour, startMin, 0, 0)
-
-        const eventEnd = new Date(current)
-        eventEnd.setHours(endHour, endMin, 0, 0)
-
+        // Create Sydney-local time strings and convert to UTC
         const dateKey = format(current, 'yyyy-MM-dd')
+        const startTimeStr = `${dateKey}T${session.startTime}:00`
+        const endTimeStr = `${dateKey}T${session.endTime}:00`
+
+        const eventStart = fromZonedTime(startTimeStr, SYDNEY_TZ)
+        const eventEnd = fromZonedTime(endTimeStr, SYDNEY_TZ)
+
         const subscriberKey = `${session.id}-${dateKey}`
         const subscriberCount = subscriberCounts.get(subscriberKey) || 0
         const students = subscriberDetails?.get(subscriberKey) || []
@@ -180,54 +178,77 @@ export async function GET(request: NextRequest) {
       const eventsMap = new Map<string, AdminCalendarEvent>()
 
       // For Ignite sessions, we want to show ALL configured sessions
-      // First, build a map of subscriber counts from actual bookings
+      // Build subscriber counts from IgniteSubscription records (the source of truth)
       const subscriberCounts = new Map<string, number>()
       const subscriberDetails = new Map<string, Array<{ studentName: string; studentId: string }>>()
 
-      // Query bookings for SUBSCRIPTION products to get real subscriber counts
-      const subscriptionBookings = await prisma.booking.findMany({
+      // Query active Ignite subscriptions with their linked students
+      const activeSubscriptions = await prisma.igniteSubscription.findMany({
         where: {
-          startDate: { gte: start, lte: end },
-          product: { type: 'SUBSCRIPTION' },
-          status: { in: ['CONFIRMED', 'PENDING'] }
+          status: { in: ['ACTIVE', 'TRIALING'] },
+          igniteSessionId: { not: null }
         },
         include: {
-          student: { select: { id: true, name: true } },
-          location: true
+          students: {
+            include: { student: { select: { id: true, name: true } } }
+          }
         }
       })
 
-      // Build subscriber counts keyed by session and date
-      subscriptionBookings.forEach((booking) => {
-        const sydneyTime = toZonedTime(booking.startDate, SYDNEY_TZ)
-        const dateKey = format(sydneyTime, 'yyyy-MM-dd')
-        const locationName = booking.location?.name || ''
+      // For each subscription, add students to all matching session days in the date range
+      activeSubscriptions.forEach((subscription) => {
+        const session = IGNITE_SESSIONS.find(s => s.id === subscription.igniteSessionId)
+        if (!session) return
 
-        // Find matching Ignite session by location and time
-        IGNITE_SESSIONS.forEach((session) => {
-          const shortLoc = LOCATION_SHORT_NAMES[session.location] || session.location
-          if (locationName.includes(session.location.split(' ')[0]) || locationName.includes(shortLoc)) {
-            const [startHour, startMin] = session.startTime.split(':').map(Number)
-            const bookingHour = sydneyTime.getHours()
-            const bookingMin = sydneyTime.getMinutes()
+        // Get students from linked IgniteSubscriptionStudent records
+        const students = subscription.students.map(link => ({
+          studentName: link.student.name,
+          studentId: link.student.id
+        }))
 
-            if (bookingHour === startHour && Math.abs(bookingMin - startMin) < 30) {
-              const key = `${session.id}-${dateKey}`
+        // If no linked students, try to parse from studentNames JSON (legacy data)
+        if (students.length === 0 && subscription.studentNames) {
+          const names = subscription.studentNames as Array<{ firstName?: string; lastName?: string; name?: string }>
+          names.forEach((n, idx) => {
+            const name = n.name || `${n.firstName || ''} ${n.lastName || ''}`.trim()
+            if (name) {
+              students.push({ studentName: name, studentId: `legacy-${subscription.id}-${idx}` })
+            }
+          })
+        }
+
+        if (students.length === 0) return
+
+        // Generate dates for this session within the date range
+        const current = new Date(start)
+        while (current <= end) {
+          const dayOfWeek = current.getDay()
+          const dayName = Object.keys(DAY_NAME_TO_NUMBER).find(
+            name => DAY_NAME_TO_NUMBER[name] === dayOfWeek
+          )
+
+          if (dayName && session.dayOfWeek.includes(dayName)) {
+            const dateKey = format(current, 'yyyy-MM-dd')
+            const key = `${session.id}-${dateKey}`
+
+            // Add each student to this session date
+            students.forEach(student => {
               subscriberCounts.set(key, (subscriberCounts.get(key) || 0) + 1)
-
               if (!subscriberDetails.has(key)) {
                 subscriberDetails.set(key, [])
               }
-              subscriberDetails.get(key)!.push({
-                studentName: booking.student?.name || 'Unknown',
-                studentId: booking.student?.id || ''
-              })
-            }
+              // Avoid duplicates
+              const existing = subscriberDetails.get(key)!
+              if (!existing.find(s => s.studentId === student.studentId)) {
+                existing.push(student)
+              }
+            })
           }
-        })
+          current.setDate(current.getDate() + 1)
+        }
       })
 
-      console.log('Subscriber counts for calendar:', Object.fromEntries(subscriberCounts))
+      console.log('Ignite subscriber counts for calendar:', Object.fromEntries(subscriberCounts))
 
       // Generate Ignite events for all configured sessions (even without subscribers)
       if (!productType || productType.toUpperCase() === 'IGNITE' || productType.toUpperCase() === 'SUBSCRIPTION') {
