@@ -2,7 +2,7 @@ export interface LocationAvailability {
   locationId: string
   locationName: string
   availableCampTypes: ('day' | 'allday')[]
-  availableDates?: Date[]
+  availableDates?: string[]
 }
 
 export const LOCATION_AVAILABILITY: LocationAvailability[] = [
@@ -15,24 +15,22 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
     locationId: 'manly-library',
     locationName: 'Manly Library',
     availableCampTypes: ['day', 'allday'],
-    availableDates: [
-      new Date('2026-04-14'),
-      new Date('2026-04-15'),
-      new Date('2026-04-16'),
-    ]
+    availableDates: ['2026-04-14', '2026-04-15', '2026-04-16']
   },
   {
     locationId: 'reddam-house',
     locationName: 'Reddam House',
     availableCampTypes: ['day', 'allday'],
-    availableDates: [
-      new Date('2026-04-20'),
-      new Date('2026-04-21'),
-      new Date('2026-04-22'),
-      new Date('2026-04-23'),
-    ]
+    availableDates: ['2026-04-20', '2026-04-21', '2026-04-22', '2026-04-23']
   }
 ]
+
+function toLocalDateString(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 export function getLocationAvailability(locationName: string): LocationAvailability | undefined {
   return LOCATION_AVAILABILITY.find(loc => 
@@ -49,10 +47,8 @@ export function isDateAvailableForLocation(date: Date, locationName: string): bo
   
   if (!availability.availableDates) return true
   
-  const dateStr = date.toISOString().split('T')[0]
-  return availability.availableDates.some(availDate => 
-    availDate.toISOString().split('T')[0] === dateStr
-  )
+  const dateStr = toLocalDateString(date)
+  return availability.availableDates.includes(dateStr)
 }
 
 export function getAvailableCampTypes(locationName: string): ('day' | 'allday')[] {
