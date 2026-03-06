@@ -5,11 +5,13 @@ import { getAvailableCampTypes } from '@/data/locationAvailability'
 
 interface CampType {
   id: string
-  type: 'day' | 'allday'
+  type: 'day' | 'allday' | 'day-bundle' | 'allday-bundle'
   name: string
   price: number
   duration: string
   time: string
+  isBundle?: boolean
+  bundleDays?: number
 }
 
 interface CampTypeStepProps {
@@ -38,9 +40,37 @@ const CAMP_TYPES: CampType[] = [
   }
 ]
 
+const REDDAM_BUNDLE_TYPES: CampType[] = [
+  {
+    id: 'day-camp-3day-bundle',
+    type: 'day-bundle',
+    name: 'Day Camp 3-Day Bundle',
+    price: 299.99,
+    duration: '6 hours/day',
+    time: '9:00 AM - 3:00 PM',
+    isBundle: true,
+    bundleDays: 3
+  },
+  {
+    id: 'all-day-camp-3day-bundle',
+    type: 'allday-bundle',
+    name: 'All Day Camp 3-Day Bundle',
+    price: 399.99,
+    duration: '8 hours/day',
+    time: '9:00 AM - 5:00 PM',
+    isBundle: true,
+    bundleDays: 3
+  }
+]
+
 export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date, location }: CampTypeStepProps) {
   const availableTypes = location ? getAvailableCampTypes(location.name) : ['day', 'allday']
-  const filteredCampTypes = CAMP_TYPES.filter(camp => availableTypes.includes(camp.type))
+  const isReddamHouse = location?.id === 'reddam-house'
+  
+  const filteredCampTypes = [
+    ...CAMP_TYPES.filter(camp => availableTypes.includes(camp.type)),
+    ...(isReddamHouse ? REDDAM_BUNDLE_TYPES : [])
+  ]
   
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-AU', {
@@ -88,12 +118,29 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
               </div>
             )}
 
+            {/* Bundle Badge */}
+            {campType.isBundle && (
+              <div className="absolute -top-2 left-6">
+                <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1">
+                  <SparklesIcon className="w-3 h-3" />
+                  <span>BEST VALUE</span>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               {/* Header */}
               <div className="text-center">
                 <h4 className="text-xl font-bold text-gray-900 mb-2">{campType.name}</h4>
                 <div className="text-3xl font-bold text-primary-600">${campType.price}</div>
-                <div className="text-sm text-gray-500">per child</div>
+                <div className="text-sm text-gray-500">
+                  {campType.isBundle ? `for ${campType.bundleDays} days` : 'per child'}
+                </div>
+                {campType.isBundle && (
+                  <div className="text-xs text-green-600 font-medium mt-1">
+                    Save ${((campType.type === 'day-bundle' ? 109.99 : 149.99) * 3 - campType.price).toFixed(2)}!
+                  </div>
+                )}
               </div>
 
               {/* Time Info */}
@@ -121,13 +168,13 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span className="text-sm text-gray-700">Expert instructor guidance</span>
                   </div>
-                  {campType.type === 'day' && (
+                  {(campType.type === 'day' || campType.type === 'day-bundle') && (
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       <span className="text-sm text-gray-700">Morning tea included</span>
                     </div>
                   )}
-                  {campType.type === 'allday' && (
+                  {(campType.type === 'allday' || campType.type === 'allday-bundle') && (
                     <>
                       <div className="flex items-center space-x-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -143,6 +190,12 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
                       </div>
                     </>
                   )}
+                  {campType.isBundle && (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm text-gray-700">Choose any {campType.bundleDays} days</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -151,13 +204,19 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
                 <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
                   Best For
                 </div>
-                {campType.type === 'day' ? (
+                {campType.type === 'day' && (
                   <p className="text-sm text-gray-600">
                     Perfect for first-time campers or kids who prefer shorter programs
                   </p>
-                ) : (
+                )}
+                {campType.type === 'allday' && (
                   <p className="text-sm text-gray-600">
                     Ideal for working parents and kids who love extended learning and play
+                  </p>
+                )}
+                {campType.isBundle && (
+                  <p className="text-sm text-gray-600">
+                    Best value for families booking multiple days - pick any {campType.bundleDays} days!
                   </p>
                 )}
               </div>
