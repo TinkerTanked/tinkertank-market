@@ -14,14 +14,22 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
   {
     locationId: 'manly-library',
     locationName: 'Manly Library',
-    availableCampTypes: ['day'],
+    availableCampTypes: ['day', 'allday'],
     availableDates: [
-      new Date('2026-01-13'),
-      new Date('2026-01-14'),
-      new Date('2026-01-15'),
-      new Date('2026-01-20'),
-      new Date('2026-01-21'),
-      new Date('2026-01-22'),
+      new Date('2026-04-14'),
+      new Date('2026-04-15'),
+      new Date('2026-04-16'),
+    ]
+  },
+  {
+    locationId: 'reddam-house',
+    locationName: 'Reddam House',
+    availableCampTypes: ['day', 'allday'],
+    availableDates: [
+      new Date('2026-04-20'),
+      new Date('2026-04-21'),
+      new Date('2026-04-22'),
+      new Date('2026-04-23'),
     ]
   }
 ]

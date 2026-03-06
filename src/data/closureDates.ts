@@ -83,13 +83,70 @@ export const RECURRING_CLOSURE_DATES: ClosureDate[] = [
  * Add any special closure dates here (e.g., facility maintenance, special events)
  */
 export const SPECIFIC_CLOSURE_DATES: ClosureDate[] = [
-  // Example:
-  // {
-  //   name: 'Facility Maintenance',
-  //   description: 'Annual maintenance day',
-  //   recurring: false,
-  //   specificDate: new Date('2025-07-15')
-  // }
+  // 2026 NSW Public Holidays
+  {
+    name: 'Good Friday',
+    description: 'TinkerTank is closed for Good Friday',
+    recurring: false,
+    specificDate: new Date('2026-04-03'),
+    year: 2026
+  },
+  {
+    name: 'Easter Saturday',
+    description: 'TinkerTank is closed for Easter Saturday',
+    recurring: false,
+    specificDate: new Date('2026-04-04'),
+    year: 2026
+  },
+  {
+    name: 'Easter Sunday',
+    description: 'TinkerTank is closed for Easter Sunday',
+    recurring: false,
+    specificDate: new Date('2026-04-05'),
+    year: 2026
+  },
+  {
+    name: 'Easter Monday',
+    description: 'TinkerTank is closed for Easter Monday',
+    recurring: false,
+    specificDate: new Date('2026-04-06'),
+    year: 2026
+  },
+  {
+    name: 'ANZAC Day',
+    description: 'TinkerTank is closed for ANZAC Day',
+    recurring: false,
+    specificDate: new Date('2026-04-25'),
+    year: 2026
+  },
+  {
+    name: "King's Birthday",
+    description: "TinkerTank is closed for King's Birthday",
+    recurring: false,
+    specificDate: new Date('2026-06-08'),
+    year: 2026
+  },
+  {
+    name: 'Bank Holiday',
+    description: 'TinkerTank is closed for Bank Holiday',
+    recurring: false,
+    specificDate: new Date('2026-08-03'),
+    year: 2026
+  },
+  {
+    name: 'Labour Day',
+    description: 'TinkerTank is closed for Labour Day',
+    recurring: false,
+    specificDate: new Date('2026-10-05'),
+    year: 2026
+  },
+  {
+    name: 'Boxing Day (Observed)',
+    description: 'TinkerTank is closed for Boxing Day public holiday',
+    recurring: false,
+    specificDate: new Date('2026-12-28'),
+    year: 2026
+  }
 ]
 
 /**
