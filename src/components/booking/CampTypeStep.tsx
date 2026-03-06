@@ -19,6 +19,7 @@ interface CampTypeStepProps {
   onCampTypeSelect: (campType: CampType) => void
   date: Date | null
   location?: { id: string; name: string; address: string } | null
+  selectedDateCount?: number
 }
 
 const CAMP_TYPES: CampType[] = [
@@ -63,13 +64,14 @@ const REDDAM_BUNDLE_TYPES: CampType[] = [
   }
 ]
 
-export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date, location }: CampTypeStepProps) {
+export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date, location, selectedDateCount = 1 }: CampTypeStepProps) {
   const availableTypes = location ? getAvailableCampTypes(location.name) : ['day', 'allday']
   const isReddamHouse = location?.id === 'reddam-house'
   
-  // Reddam House only offers bundle options
+  // Reddam House: 3 days = bundles only, 1-2 days = regular camps
+  // Other locations: regular camps only
   const filteredCampTypes = isReddamHouse 
-    ? REDDAM_BUNDLE_TYPES
+    ? (selectedDateCount === 3 ? REDDAM_BUNDLE_TYPES : CAMP_TYPES.filter(camp => availableTypes.includes(camp.type)))
     : CAMP_TYPES.filter(camp => availableTypes.includes(camp.type))
   
   const formatDate = (date: Date) => {

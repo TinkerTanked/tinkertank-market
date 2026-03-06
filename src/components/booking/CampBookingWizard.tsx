@@ -51,17 +51,12 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
   if (!isOpen) return null
 
   const isReddamHouse = bookingData.location?.id === 'reddam-house'
-  const requiredDateCount = isReddamHouse ? 3 : undefined
 
   const canProceed = () => {
     switch (currentStep) {
       case 1:
         return bookingData.location !== null
       case 2:
-        // Reddam House requires exactly 3 dates for bundles
-        if (isReddamHouse) {
-          return bookingData.dates.length === 3
-        }
         return bookingData.dates.length > 0
       case 3:
         return bookingData.campType !== null
@@ -137,7 +132,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
             onDatesSelect={(dates) => updateBookingData('dates', dates)}
             location={bookingData.location}
             enableMultiSelect={true}
-            requiredDateCount={requiredDateCount}
+            maxDateCount={isReddamHouse ? 3 : undefined}
           />
         )
       case 3:
@@ -147,6 +142,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
             onCampTypeSelect={(campType) => updateBookingData('campType', campType)}
             date={bookingData.date}
             location={bookingData.location}
+            selectedDateCount={bookingData.dates.length}
           />
         )
       case 4:
