@@ -3,6 +3,8 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   serverExternalPackages: ['@prisma/client'],
+  // Disable trailing slash redirect for API routes (Stripe webhooks don't follow redirects)
+  skipTrailingSlashRedirect: true,
   images: {
     formats: ['image/webp', 'image/avif'],
     remotePatterns: [
