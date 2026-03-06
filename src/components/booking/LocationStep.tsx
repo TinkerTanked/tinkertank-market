@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { MapPinIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { LOCATION_AVAILABILITY } from '@/data/locationAvailability'
 
 interface Location {
   id: string
@@ -14,45 +14,18 @@ interface LocationStepProps {
   onLocationSelect: (location: Location) => void
 }
 
-export default function LocationStep({ selectedLocation, onLocationSelect }: LocationStepProps) {
-  const [locations, setLocations] = useState<Location[]>([])
-  const [loading, setLoading] = useState(true)
+const LOCATION_ADDRESSES: Record<string, string> = {
+  'neutral-bay': '206 Military Road, Neutral Bay NSW 2089',
+  'manly-library': 'Market Place, Manly NSW 2095',
+  'reddam-house': 'Woollahra Campus, Sydney NSW'
+}
 
-  useEffect(() => {
-    async function fetchLocations() {
-      try {
-        const response = await fetch('/api/admin/locations')
-        const data = await response.json()
-        if (data.success) {
-          const HIDDEN_LOCATIONS = ['manly', 'manly library', 'manly-library']
-          setLocations(
-            data.locations
-              .filter((loc: any) => !HIDDEN_LOCATIONS.some(hidden => loc.name.toLowerCase().includes(hidden)))
-              .map((loc: any) => ({
-                id: loc.id,
-                name: loc.name,
-                address: loc.address
-              }))
-          )
-        }
-      } catch (error) {
-        console.error('Failed to fetch locations:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchLocations()
-  }, [])
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-600">Loading locations...</p>
-        </div>
-      </div>
-    )
-  }
+export default function LocationStep({ selectedLocation, onLocationSelect }: LocationStepProps) {
+  const locations: Location[] = LOCATION_AVAILABILITY.map(loc => ({
+    id: loc.locationId,
+    name: loc.locationName,
+    address: LOCATION_ADDRESSES[loc.locationId] || ''
+  }))
 
   return (
     <div className="space-y-6">
