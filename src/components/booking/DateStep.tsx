@@ -33,6 +33,7 @@ interface DateStepProps {
   onDatesSelect?: (dates: Date[]) => void
   location: Location | null
   enableMultiSelect?: boolean
+  requiredDateCount?: number
 }
 
 export default function DateStep({ 
@@ -41,7 +42,8 @@ export default function DateStep({
   onDateSelect, 
   onDatesSelect,
   location,
-  enableMultiSelect = true
+  enableMultiSelect = true,
+  requiredDateCount
 }: DateStepProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [internalSelectedDates, setInternalSelectedDates] = useState<Date[]>(selectedDates)
@@ -78,6 +80,10 @@ export default function DateStep({
         if (isDateSelected(date)) {
           newSelectedDates = internalSelectedDates.filter(d => !isSameDay(d, date))
         } else {
+          // If requiredDateCount is set and we've reached the limit, don't add more
+          if (requiredDateCount && internalSelectedDates.length >= requiredDateCount) {
+            return
+          }
           newSelectedDates = [...internalSelectedDates, date].sort((a, b) => a.getTime() - b.getTime())
         }
         
@@ -149,14 +155,29 @@ export default function DateStep({
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-bold text-gray-900">
-          {enableMultiSelect ? 'Choose Your Dates' : 'Choose Your Date'}
+          {requiredDateCount 
+            ? `Choose ${requiredDateCount} Dates` 
+            : enableMultiSelect 
+              ? 'Choose Your Dates' 
+              : 'Choose Your Date'}
         </h3>
         <p className="text-gray-600">
-          {enableMultiSelect 
-            ? `Select one or more weekdays for your STEAM camp at ${location?.name || 'your chosen location'}`
-: `Select a weekday for your STEAM camp at ${location?.name || 'your chosen location'}`
+          {requiredDateCount 
+            ? `Select exactly ${requiredDateCount} days for your bundle at ${location?.name || 'your chosen location'}`
+            : enableMultiSelect 
+              ? `Select one or more weekdays for your STEAM camp at ${location?.name || 'your chosen location'}`
+              : `Select a weekday for your STEAM camp at ${location?.name || 'your chosen location'}`
           }
         </p>
+        {requiredDateCount && (
+          <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+            internalSelectedDates.length === requiredDateCount 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-amber-100 text-amber-800'
+          }`}>
+            {internalSelectedDates.length} of {requiredDateCount} dates selected
+          </div>
+        )}
       </div>
 
       {enableMultiSelect && internalSelectedDates.length > 0 && (

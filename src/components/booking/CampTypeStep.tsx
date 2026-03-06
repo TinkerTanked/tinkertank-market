@@ -67,10 +67,10 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
   const availableTypes = location ? getAvailableCampTypes(location.name) : ['day', 'allday']
   const isReddamHouse = location?.id === 'reddam-house'
   
-  const filteredCampTypes = [
-    ...CAMP_TYPES.filter(camp => availableTypes.includes(camp.type)),
-    ...(isReddamHouse ? REDDAM_BUNDLE_TYPES : [])
-  ]
+  // Reddam House only offers bundle options
+  const filteredCampTypes = isReddamHouse 
+    ? REDDAM_BUNDLE_TYPES
+    : CAMP_TYPES.filter(camp => availableTypes.includes(camp.type))
   
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-AU', {
