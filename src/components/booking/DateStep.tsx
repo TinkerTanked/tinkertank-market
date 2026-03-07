@@ -45,13 +45,28 @@ export default function DateStep({
   enableMultiSelect = true,
   maxDateCount
 }: DateStepProps) {
-  const [currentMonth, setCurrentMonth] = useState(new Date())
+  // Start calendar in April for locations with April-only availability
+  const getInitialMonth = () => {
+    if (location?.id === 'reddam-house' || location?.id === 'manly-library') {
+      return new Date(2026, 3, 1) // April 2026
+    }
+    return new Date()
+  }
+  
+  const [currentMonth, setCurrentMonth] = useState(getInitialMonth())
   const [internalSelectedDates, setInternalSelectedDates] = useState<Date[]>(selectedDates)
   const today = startOfDay(new Date())
 
   useEffect(() => {
     setInternalSelectedDates(selectedDates)
   }, [selectedDates])
+  
+  // Update calendar month when location changes
+  useEffect(() => {
+    if (location?.id === 'reddam-house' || location?.id === 'manly-library') {
+      setCurrentMonth(new Date(2026, 3, 1))
+    }
+  }, [location?.id])
 
   const goToPreviousMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1))
