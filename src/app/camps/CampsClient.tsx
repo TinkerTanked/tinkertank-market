@@ -79,13 +79,13 @@ export default function CampsClient() {
 
             <div className='bg-white rounded-xl p-8 text-center shadow-lg'>
               <div className='w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                <span className='text-3xl'>👥</span>
+                <span className='text-3xl'>🚀</span>
               </div>
               <h3 className='font-display font-semibold text-xl text-gray-900 mb-3'>
-                Small Groups
+                Project Learning
               </h3>
               <p className='text-gray-600'>
-                Maximum 12 kids per camp ensures personalized attention and meaningful interactions with instructors.
+                Student-driven project-based learning where kids choose, design, and build their own creations.
               </p>
             </div>
 
