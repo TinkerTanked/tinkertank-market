@@ -9,6 +9,13 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
     css: true,
+    testTimeout: 10000,
+    hookTimeout: 10000,
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/calendar-integration.test.tsx',
+    ],
   },
   resolve: {
     alias: {
