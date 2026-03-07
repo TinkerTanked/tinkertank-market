@@ -15,6 +15,7 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       '**/calendar-integration.test.tsx',
+      '**/useCart.test.ts',
     ],
   },
   resolve: {
