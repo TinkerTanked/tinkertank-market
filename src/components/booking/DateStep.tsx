@@ -47,7 +47,7 @@ export default function DateStep({
 }: DateStepProps) {
   // Start calendar in April for locations with April-only availability
   const getInitialMonth = () => {
-    if (location?.id === 'reddam-house' || location?.id === 'manly-library') {
+    if (location?.id === 'manly-library') {
       return new Date(2026, 3, 1) // April 2026
     }
     return new Date()
@@ -63,7 +63,7 @@ export default function DateStep({
   
   // Update calendar month when location changes
   useEffect(() => {
-    if (location?.id === 'reddam-house' || location?.id === 'manly-library') {
+    if (location?.id === 'manly-library') {
       setCurrentMonth(new Date(2026, 3, 1))
     }
   }, [location?.id])

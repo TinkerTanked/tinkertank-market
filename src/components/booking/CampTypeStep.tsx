@@ -1,7 +1,7 @@
 'use client'
 
 import { ClockIcon, CheckIcon, SparklesIcon } from '@heroicons/react/24/outline'
-import { getAvailableCampTypes } from '@/data/locationAvailability'
+import { getAvailableCampTypes, BUNDLE_AVAILABLE_DATES } from '@/data/locationAvailability'
 
 interface CampType {
   id: string
@@ -20,6 +20,7 @@ interface CampTypeStepProps {
   date: Date | null
   location?: { id: string; name: string; address: string } | null
   selectedDateCount?: number
+  selectedDates?: Date[]
 }
 
 const CAMP_TYPES: CampType[] = [
@@ -41,7 +42,7 @@ const CAMP_TYPES: CampType[] = [
   }
 ]
 
-const REDDAM_BUNDLE_TYPES: CampType[] = [
+const BUNDLE_TYPES: CampType[] = [
   {
     id: 'day-camp-3day-bundle',
     type: 'day-bundle',
@@ -64,14 +65,28 @@ const REDDAM_BUNDLE_TYPES: CampType[] = [
   }
 ]
 
-export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date, location, selectedDateCount = 1 }: CampTypeStepProps) {
+export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date, location, selectedDateCount = 1, selectedDates = [] }: CampTypeStepProps) {
   const availableTypes = location ? getAvailableCampTypes(location.name) : ['day', 'allday']
-  const isReddamHouse = location?.id === 'reddam-house'
   
-  // Reddam House: 3 days = bundles only, 1-2 days = regular camps
-  // Other locations: regular camps only
-  const filteredCampTypes = isReddamHouse 
-    ? (selectedDateCount === 3 ? REDDAM_BUNDLE_TYPES : CAMP_TYPES.filter(camp => availableTypes.includes(camp.type)))
+  // Helper to convert Date to YYYY-MM-DD string
+  const toDateString = (d: Date) => {
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  
+  // Check if all selected dates are bundle-eligible dates (April 20-23)
+  const allDatesAreBundleEligible = selectedDates.length === 3 && 
+    selectedDates.every(d => BUNDLE_AVAILABLE_DATES.includes(toDateString(d)))
+  
+  // Neutral Bay with 3 bundle-eligible dates: show bundles only
+  // Otherwise: show regular camps
+  const isNeutralBay = location?.id === 'neutral-bay'
+  const showBundles = isNeutralBay && allDatesAreBundleEligible
+  
+  const filteredCampTypes = showBundles 
+    ? BUNDLE_TYPES
     : CAMP_TYPES.filter(camp => availableTypes.includes(camp.type))
   
   const formatDate = (date: Date) => {

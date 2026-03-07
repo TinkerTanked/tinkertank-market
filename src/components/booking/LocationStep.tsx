@@ -16,8 +16,7 @@ interface LocationStepProps {
 
 const LOCATION_ADDRESSES: Record<string, string> = {
   'neutral-bay': '50 Yeo St, Neutral Bay NSW 2089',
-  'manly-library': 'Market Place, Manly NSW 2095',
-  'reddam-house': 'Woollahra Campus, Sydney NSW'
+  'manly-library': 'Market Place, Manly NSW 2095'
 }
 
 export default function LocationStep({ selectedLocation, onLocationSelect }: LocationStepProps) {

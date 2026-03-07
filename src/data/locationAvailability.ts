@@ -5,6 +5,9 @@ export interface LocationAvailability {
   availableDates?: string[]
 }
 
+// Dates when 3-day bundles are available at Neutral Bay
+export const BUNDLE_AVAILABLE_DATES = ['2026-04-20', '2026-04-21', '2026-04-22', '2026-04-23']
+
 export const LOCATION_AVAILABILITY: LocationAvailability[] = [
   {
     locationId: 'neutral-bay',
@@ -16,12 +19,6 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
     locationName: 'Manly Library',
     availableCampTypes: ['day', 'allday'],
     availableDates: ['2026-04-14', '2026-04-15', '2026-04-16']
-  },
-  {
-    locationId: 'reddam-house',
-    locationName: 'Reddam House',
-    availableCampTypes: ['day', 'allday'],
-    availableDates: ['2026-04-20', '2026-04-21', '2026-04-22', '2026-04-23']
   }
 ]
 
