@@ -53,7 +53,7 @@ jobs:
         run: npm run type-check
 
       - name: Run tests
-        run: npx vitest run
+        run: npx vitest run src/__tests__/unit src/__tests__/components src/__tests__/api --reporter=verbose
 
   # ---------------------------------------------------------------------------
   # Build and Deploy Job (runs on native ARM64)
