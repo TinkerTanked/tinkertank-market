@@ -87,7 +87,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         price: bookingData.campType.price,
         category: 'camps' as const,
         type: 'CAMP' as const,
-        ageRange: '6-12 years',
+        ageRange: '6-16 years',
         features: ['Hands-on STEAM experiments', 'Take-home project', 'Small Groups', 'Expert instructor guidance'],
         images: ['/images/camps2.jpeg'],
         date: firstDate,

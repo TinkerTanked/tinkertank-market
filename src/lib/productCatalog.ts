@@ -50,7 +50,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
     shortDescription: 'Daily tech adventures for young innovators',
     price: 109.99,
     category: 'camps',
-    ageRange: '6-12 years',
+    ageRange: '6-16 years',
     duration: '6 hours',
     location: 'Neutral Bay',
     availability: {
@@ -79,7 +79,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
     shortDescription: 'Extended tech learning with advanced projects',
     price: 149.99,
     category: 'camps',
-    ageRange: '6-12 years',
+    ageRange: '6-16 years',
     duration: '8 hours',
     location: 'Neutral Bay',
     availability: {
