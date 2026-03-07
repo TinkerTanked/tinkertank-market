@@ -120,6 +120,13 @@ export const SPECIFIC_CLOSURE_DATES: ClosureDate[] = [
     year: 2026
   },
   {
+    name: 'ANZAC Day (Observed)',
+    description: 'TinkerTank is closed for ANZAC Day public holiday (observed Monday)',
+    recurring: false,
+    specificDate: new Date('2026-04-27'),
+    year: 2026
+  },
+  {
     name: "King's Birthday",
     description: "TinkerTank is closed for King's Birthday",
     recurring: false,
