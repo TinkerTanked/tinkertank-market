@@ -11,8 +11,12 @@ import {
 import { generateId } from '@/utils/generateId';
 
 const calculateItemPrice = (product: Product, quantity: number, addOns?: { addOn: AddOn; quantity: number }[], dateCount: number = 1) => {
-  const basePrice = product.price * quantity * dateCount;
-  const addOnPrice = addOns?.reduce((sum, { addOn, quantity }) => sum + (addOn.price * quantity * dateCount), 0) || 0;
+  // Bundle products have price for all days included, don't multiply by dateCount
+  const isBundle = product.id?.includes('bundle') || product.name?.toLowerCase().includes('bundle');
+  const effectiveDateCount = isBundle ? 1 : dateCount;
+  
+  const basePrice = product.price * quantity * effectiveDateCount;
+  const addOnPrice = addOns?.reduce((sum, { addOn, quantity }) => sum + (addOn.price * quantity * effectiveDateCount), 0) || 0;
   return basePrice + addOnPrice;
 };
 
