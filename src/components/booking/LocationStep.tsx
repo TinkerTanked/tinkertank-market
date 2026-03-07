@@ -15,7 +15,7 @@ interface LocationStepProps {
 }
 
 const LOCATION_ADDRESSES: Record<string, string> = {
-  'neutral-bay': '206 Military Road, Neutral Bay NSW 2089',
+  'neutral-bay': '50 Yeo St, Neutral Bay NSW 2089',
   'manly-library': 'Market Place, Manly NSW 2095',
   'reddam-house': 'Woollahra Campus, Sydney NSW'
 }
