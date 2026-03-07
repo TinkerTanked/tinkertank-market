@@ -52,6 +52,9 @@ jobs:
       - name: Run type check
         run: npm run type-check
 
+      - name: Run tests
+        run: npm run test -- --run
+
   # ---------------------------------------------------------------------------
   # Build and Deploy Job (runs on native ARM64)
   # ---------------------------------------------------------------------------
