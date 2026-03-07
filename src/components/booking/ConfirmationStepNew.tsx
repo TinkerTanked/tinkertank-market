@@ -4,11 +4,13 @@ import { CalendarIcon, MapPinIcon, ClockIcon, UserGroupIcon, CheckIcon } from '@
 
 interface CampType {
   id: string
-  type: 'day' | 'allday'
+  type: 'day' | 'allday' | 'day-bundle' | 'allday-bundle'
   name: string
   price: number
   duration: string
   time: string
+  isBundle?: boolean
+  bundleDays?: number
 }
 
 interface ConfirmationStepProps {
@@ -35,7 +37,10 @@ export default function ConfirmationStepNew({ location, dates, campType, onAddTo
     )
   }
 
-  const totalPrice = Number((campType.price * dates.length).toFixed(2))
+  // For bundles, price is already the total. For regular camps, multiply by days.
+  const totalPrice = campType.isBundle 
+    ? campType.price 
+    : Number((campType.price * dates.length).toFixed(2))
 
   return (
     <div className="space-y-6">
@@ -51,9 +56,11 @@ export default function ConfirmationStepNew({ location, dates, campType, onAddTo
           <h4 className="text-xl font-bold text-gray-900">{campType.name}</h4>
           <div className="text-right">
             <div className="text-2xl font-bold text-primary-600">${totalPrice.toFixed(2)}</div>
-            {dates.length > 1 && (
+            {campType.isBundle ? (
+              <div className="text-xs text-gray-600">{campType.bundleDays}-day bundle</div>
+            ) : dates.length > 1 ? (
               <div className="text-xs text-gray-600">{dates.length} days × ${campType.price.toFixed(2)}</div>
-            )}
+            ) : null}
           </div>
         </div>
 
