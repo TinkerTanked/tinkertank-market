@@ -213,7 +213,7 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
           <div>
             <h4 className="font-medium text-blue-900 mb-2">Before You Book</h4>
             <ul className="text-blue-800 text-sm space-y-1">
-              <li>• Suitable for ages 5-16 years</li>
+              <li>• Suitable for ages 6-16 years</li>
               <li>• Maximum 12 children per camp</li>
               
               <li>• Student details required at checkout</li>

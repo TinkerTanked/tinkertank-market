@@ -259,7 +259,7 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
             <h4 className="font-medium text-blue-900 mb-1">What's Included</h4>
             <ul className="text-blue-800 text-sm space-y-1">
               <li>• All materials and equipment provided</li>
-              <li>• Age-appropriate activities (5-16 years)</li>
+              <li>• Age-appropriate activities (6-16 years)</li>
               <li>• Progress photos shared with parents</li>
               <li>• Certificate of completion</li>
             </ul>

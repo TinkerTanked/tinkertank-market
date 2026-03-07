@@ -7,7 +7,7 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 export const metadata: Metadata = {
   title: 'STEAM Adventure Camps for Kids',
   description:
-    'Join TinkerTank STEAM camps in Sydney! Day camps and extended programs for ages 5-16. Hands-on science, technology, engineering, and math activities. School holiday programs available.',
+    'Join TinkerTank STEAM camps in Sydney! Day camps and extended programs for ages 6-16. Hands-on science, technology, engineering, and math activities. School holiday programs available.',
   keywords: [
     'kids camps Sydney',
     'STEAM camps',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'STEAM Adventure Camps for Kids | TinkerTank Sydney',
-    description: 'Hands-on STEAM camps for ages 5-16. Day camps and extended programs during school holidays.',
+    description: 'Hands-on STEAM camps for ages 6-16. Day camps and extended programs during school holidays.',
     url: `${baseUrl}/camps`,
     type: 'website',
     images: [

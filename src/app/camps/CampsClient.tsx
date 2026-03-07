@@ -36,7 +36,7 @@ export default function CampsClient() {
               </div>
               <div className='flex items-center space-x-2 text-blue-100'>
                 <UserGroupIcon className='w-5 h-5' />
-                <span>Ages 5-16</span>
+                <span>Ages 6-16</span>
               </div>
               <div className='flex items-center space-x-2 text-blue-100'>
                 <SparklesIcon className='w-5 h-5' />
