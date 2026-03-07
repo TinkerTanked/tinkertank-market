@@ -53,7 +53,7 @@ jobs:
         run: npm run type-check
 
       - name: Run tests
-        run: npm run test -- --run
+        run: npx vitest run
 
   # ---------------------------------------------------------------------------
   # Build and Deploy Job (runs on native ARM64)
