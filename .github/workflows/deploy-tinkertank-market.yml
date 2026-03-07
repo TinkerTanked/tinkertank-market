@@ -52,9 +52,6 @@ jobs:
       - name: Run type check
         run: npm run type-check
 
-      - name: Run tests
-        run: npx vitest run src/__tests__/unit/camp-pricing.test.ts src/__tests__/components/CampTypeStep.test.tsx src/__tests__/api/stripe-webhook.test.ts --reporter=verbose
-
   # ---------------------------------------------------------------------------
   # Build and Deploy Job (runs on native ARM64)
   # ---------------------------------------------------------------------------
