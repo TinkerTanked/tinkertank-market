@@ -89,9 +89,11 @@ export async function POST(request: NextRequest) {
     for (const item of regularItems) {
       const product = products.find(p => p.id === item.productId)!
       const unitPrice = Number(product.price)
+      const isBundle = item.productId.includes('bundle')
       const numberOfDays = item.selectedDates?.length || 1
       const numberOfStudents = item.students.length
-      const quantity = numberOfDays * numberOfStudents
+      // For bundles, don't multiply by days - the bundle price already includes all days
+      const quantity = isBundle ? numberOfStudents : numberOfDays * numberOfStudents
       
       subtotal += unitPrice * quantity
 
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
         price_data: {
           currency: 'aud',
           product_data: {
-            name: numberOfDays > 1 ? `${product.name} (${numberOfDays} days)` : product.name,
+            name: isBundle ? product.name : (numberOfDays > 1 ? `${product.name} (${numberOfDays} days)` : product.name),
             description: product.description,
           },
           unit_amount: Math.round(unitPrice * 100),
