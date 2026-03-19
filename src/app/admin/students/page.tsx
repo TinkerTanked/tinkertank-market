@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { clsx } from 'clsx'
 
@@ -352,7 +353,12 @@ export default function AdminStudents() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-medium text-gray-900">{student.name}</h3>
+                          <Link
+                            href={`/admin/students/${student.id}`}
+                            className="text-lg font-medium text-orange-600 hover:text-orange-800 hover:underline"
+                          >
+                            {student.name}
+                          </Link>
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {student._count.bookings} {student._count.bookings === 1 ? 'booking' : 'bookings'}
                           </span>

@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatDistance } from 'date-fns';
 import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 
 interface Booking {
   id: string;
+  studentId: string;
   student: { name: string; birthdate: string };
-  product: { name: string; type: string };
+  product: { name: string; type: string; duration?: number };
   location: { name: string };
   startDate: string;
   endDate: string;
@@ -95,6 +96,17 @@ export default function BookingList({ filters }: BookingListProps) {
       age--;
     }
     return age;
+  };
+
+  const getDisplayTimes = (productName: string): { start: string; end: string } => {
+    const lowerName = productName.toLowerCase();
+    if (lowerName.includes('all day')) {
+      return { start: '9:00 AM', end: '5:00 PM' };
+    }
+    if (lowerName.includes('day camp') || lowerName.includes('day-camp')) {
+      return { start: '9:00 AM', end: '3:00 PM' };
+    }
+    return { start: '9:00 AM', end: '3:00 PM' };
   };
 
   const handleDelete = async (booking: Booking) => {
@@ -196,9 +208,12 @@ export default function BookingList({ filters }: BookingListProps) {
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <Link
+                          href={`/admin/students/${booking.studentId}`}
+                          className="text-sm font-medium text-orange-600 hover:text-orange-800 hover:underline"
+                        >
                           {booking.student.name}
-                        </div>
+                        </Link>
                         <div className="text-sm text-gray-500">
                           Age {calculateAge(booking.student.birthdate)}
                         </div>
@@ -221,13 +236,10 @@ export default function BookingList({ filters }: BookingListProps) {
                       {new Date(booking.startDate).toLocaleDateString('en-AU')}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {new Date(booking.startDate).toLocaleTimeString('en-AU', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })} - {new Date(booking.endDate).toLocaleTimeString('en-AU', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {(() => {
+                        const times = getDisplayTimes(booking.product.name);
+                        return `${times.start} - ${times.end}`;
+                      })()}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

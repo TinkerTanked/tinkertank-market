@@ -16,13 +16,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           },
           orderBy: { startDate: 'desc' }
         },
+        orderItems: {
+          include: {
+            order: true,
+            product: true
+          },
+          orderBy: { createdAt: 'desc' }
+        },
         igniteSubscriptions: {
           include: {
             igniteSubscription: true
           }
         },
         _count: {
-          select: { bookings: true }
+          select: { bookings: true, orderItems: true }
         }
       }
     })
@@ -31,7 +38,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Student not found' }, { status: 404 })
     }
 
-    return NextResponse.json(student)
+    const totalSpend = student.orderItems
+      .filter(item => item.order.status === 'PAID')
+      .reduce((sum, item) => sum + Number(item.price), 0)
+
+    const parentContact = student.orderItems.length > 0
+      ? {
+          name: student.orderItems[0].order.customerName,
+          email: student.orderItems[0].order.customerEmail,
+          phone: null as string | null
+        }
+      : null
+
+    return NextResponse.json({
+      ...student,
+      totalSpend,
+      parentContact
+    })
   } catch (error) {
     console.error('Error fetching student:', error)
     return NextResponse.json({ error: 'Failed to fetch student' }, { status: 500 })

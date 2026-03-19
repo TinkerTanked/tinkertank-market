@@ -107,6 +107,7 @@ export async function GET(request: Request) {
       include: {
         student: {
           select: {
+            id: true,
             name: true,
             birthdate: true,
             allergies: true,
@@ -116,6 +117,7 @@ export async function GET(request: Request) {
           select: {
             name: true,
             type: true,
+            duration: true,
           },
         },
         location: {
@@ -128,6 +130,7 @@ export async function GET(request: Request) {
 
     const formattedBookings = bookings.map((booking) => ({
       id: booking.id,
+      studentId: booking.studentId,
       student: booking.student,
       product: booking.product,
       location: booking.location,
