@@ -145,13 +145,20 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                 continue;
               }
 
+              // Set proper camp times: Day Camp 9am-3pm, All Day Camp 9am-5pm
+              const isAllDay = orderItem.product.name.toLowerCase().includes('all day')
+              const startDate = new Date(orderItem.bookingDate)
+              startDate.setHours(9, 0, 0, 0)
+              const endDate = new Date(orderItem.bookingDate)
+              endDate.setHours(isAllDay ? 17 : 15, 0, 0, 0)
+
               await tx.booking.create({
                 data: {
                   studentId: orderItem.studentId,
                   productId: orderItem.productId,
                   locationId: defaultLocation.id,
-                  startDate: orderItem.bookingDate,
-                  endDate: new Date(orderItem.bookingDate.getTime() + (orderItem.product.duration || 60) * 60 * 1000),
+                  startDate,
+                  endDate,
                   status: 'CONFIRMED',
                   totalPrice: orderItem.price,
                   notes: `Checkout session completed - Order: ${order.id}`,

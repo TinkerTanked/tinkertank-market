@@ -118,27 +118,36 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        let bookingDate: Date
-        if (item.selectedDate && item.selectedDate !== 'undefined') {
-          bookingDate = item.selectedDate.includes('T') 
+        // Get all booking dates
+        let bookingDates: Date[] = []
+        if (item.selectedDates && item.selectedDates.length > 0) {
+          bookingDates = item.selectedDates
+            .filter(d => d && d !== 'undefined')
+            .map(d => d.includes('T') ? new Date(d) : new Date(d + 'T00:00:00.000Z'))
+        } else if (item.selectedDate && item.selectedDate !== 'undefined') {
+          const date = item.selectedDate.includes('T') 
             ? new Date(item.selectedDate)
             : new Date(item.selectedDate + 'T00:00:00.000Z')
-        } else if (item.selectedDates && item.selectedDates.length > 0 && item.selectedDates[0] !== 'undefined') {
-          const firstDate = item.selectedDates[0]
-          bookingDate = firstDate.includes('T')
-            ? new Date(firstDate)
-            : new Date(firstDate + 'T00:00:00.000Z')
-        } else {
+          bookingDates = [date]
+        }
+        
+        if (bookingDates.length === 0) {
           console.error('No valid date provided for booking:', { selectedDate: item.selectedDate, selectedDates: item.selectedDates })
           throw new Error('Valid booking date is required')
         }
+
+        // For bundles, create an order item for EACH date
+        // For regular camps, create one order item per date selected
+        const pricePerDay = isBundle ? unitPrice / bookingDates.length : unitPrice
         
-        orderItems.push({
-          productId: product.id,
-          studentId: createdStudent.id,
-          bookingDate,
-          price: unitPrice,
-        })
+        for (const bookingDate of bookingDates) {
+          orderItems.push({
+            productId: product.id,
+            studentId: createdStudent.id,
+            bookingDate,
+            price: pricePerDay,
+          })
+        }
       }
     }
 
