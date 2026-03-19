@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CalendarDaysIcon, PlusIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import { format } from 'date-fns'
+import { CalendarDaysIcon, PlusIcon, CheckCircleIcon, ExclamationTriangleIcon, SparklesIcon } from '@heroicons/react/24/outline'
+import { format, addDays } from 'date-fns'
 
 interface BundleOrder {
   orderId: string
@@ -22,6 +22,7 @@ export default function BundleBookingsPage() {
   const [selectedBundle, setSelectedBundle] = useState<BundleOrder | null>(null)
   const [newDate, setNewDate] = useState('')
   const [adding, setAdding] = useState(false)
+  const [autoFilling, setAutoFilling] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const fetchBundles = async () => {
@@ -78,6 +79,55 @@ export default function BundleBookingsPage() {
     }
   }
 
+  const handleAutoFillAll = async () => {
+    setAutoFilling(true)
+    setError(null)
+    
+    let successCount = 0
+    let errorCount = 0
+
+    for (const bundle of bundles) {
+      try {
+        const response = await fetch('/api/admin/bookings/bundles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: bundle.orderId,
+            studentId: bundle.studentId,
+            productId: bundle.productId,
+            autoFill: true
+          })
+        })
+
+        if (response.ok) {
+          successCount++
+        } else {
+          errorCount++
+        }
+      } catch {
+        errorCount++
+      }
+    }
+
+    await fetchBundles()
+    setAutoFilling(false)
+
+    if (successCount > 0) {
+      setSuccessMessage(`Auto-filled ${successCount} bundle(s) with consecutive dates`)
+      setTimeout(() => setSuccessMessage(null), 5000)
+    }
+    if (errorCount > 0) {
+      setError(`Failed to auto-fill ${errorCount} bundle(s)`)
+    }
+  }
+
+  const getConsecutiveDatesPreview = (bundle: BundleOrder) => {
+    if (bundle.bookingDates.length === 0) return 'No first date'
+    const firstDate = new Date(bundle.bookingDates[0])
+    const dates = [firstDate, addDays(firstDate, 1), addDays(firstDate, 2)]
+    return dates.map(d => format(d, 'MMM d')).join(', ')
+  }
+
   const getMissingDatesCount = (bundle: BundleOrder) => 3 - bundle.bookingDates.length
 
   const getCampTimes = (productName: string) => {
@@ -94,13 +144,34 @@ export default function BundleBookingsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Bundle Booking Management</h1>
           <p className="mt-1 text-sm text-gray-500">Manage incomplete 3-day bundle bookings</p>
         </div>
-        <button
-          onClick={fetchBundles}
-          className="flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-        >
-          Refresh
-        </button>
+        <div className="flex items-center space-x-3">
+          {bundles.length > 0 && (
+            <button
+              onClick={handleAutoFillAll}
+              disabled={autoFilling}
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+            >
+              <SparklesIcon className="w-4 h-4 mr-2" />
+              {autoFilling ? 'Auto-Filling...' : `Auto-Fill All (${bundles.length})`}
+            </button>
+          )}
+          <button
+            onClick={fetchBundles}
+            className="flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
+
+      {bundles.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <p className="text-sm text-blue-800">
+            <strong>Auto-Fill:</strong> Will add consecutive days starting from each bundle's first booking date.
+            For example, if first date is Apr 19, will add Apr 20 and Apr 21.
+          </p>
+        </div>
+      )}
 
       {successMessage && (
         <div className="bg-green-50 border border-green-200 rounded-md p-4 flex items-center">
@@ -143,6 +214,7 @@ export default function BundleBookingsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Bookings</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Missing</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Auto-Fill Preview</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -177,6 +249,9 @@ export default function BundleBookingsPage() {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                       {getMissingDatesCount(bundle)} date{getMissingDatesCount(bundle) > 1 ? 's' : ''} missing
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-gray-600">{getConsecutiveDatesPreview(bundle)}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
