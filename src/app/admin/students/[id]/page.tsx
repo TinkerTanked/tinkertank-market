@@ -46,6 +46,18 @@ interface OrderItem {
   }
 }
 
+interface GroupedOrder {
+  orderId: string
+  orderDate: string
+  status: string
+  customerName: string
+  customerEmail: string
+  productName: string
+  productType: string
+  bookingDates: string[]
+  totalPrice: number
+}
+
 interface IgniteSubscription {
   id: string
   igniteSubscription: {
@@ -68,6 +80,7 @@ interface StudentProfile {
   createdAt: string
   bookings: Booking[]
   orderItems: OrderItem[]
+  groupedOrders: GroupedOrder[]
   igniteSubscriptions: IgniteSubscription[]
   totalSpend: number
   parentContact: {
@@ -340,38 +353,52 @@ export default function StudentProfilePage() {
           <h2 className="text-lg font-semibold text-gray-900">Purchase History</h2>
         </div>
 
-        {student.orderItems.length > 0 ? (
+        {student.groupedOrders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchased</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Dates</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {student.orderItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
+                {student.groupedOrders.map((order) => (
+                  <tr key={`${order.orderId}-${order.bookingDates[0]}`} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDate(item.order.createdAt)}
+                      {formatDate(order.orderDate)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{item.product.name}</div>
-                      <div className="text-sm text-gray-500">{item.product.type}</div>
+                      <div className="text-sm font-medium text-gray-900">{order.productName}</div>
+                      <div className="text-sm text-gray-500">{order.productType}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDate(item.bookingDate)}
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      <div className="space-y-1">
+                        {order.bookingDates.map((date) => {
+                          const dateObj = new Date(date)
+                          const calendarDate = dateObj.toISOString().split('T')[0]
+                          return (
+                            <Link
+                              key={date}
+                              href={`/admin/calendar?date=${calendarDate}`}
+                              className="block text-orange-600 hover:text-orange-700 hover:underline"
+                            >
+                              {formatDate(date)}
+                            </Link>
+                          )
+                        })}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={clsx('px-2 py-0.5 rounded-full text-xs font-medium', getStatusColor(item.order.status))}>
-                        {item.order.status}
+                      <span className={clsx('px-2 py-0.5 rounded-full text-xs font-medium', getStatusColor(order.status))}>
+                        {order.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatCurrency(item.price)}
+                      {formatCurrency(order.totalPrice)}
                     </td>
                   </tr>
                 ))}

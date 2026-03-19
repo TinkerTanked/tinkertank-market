@@ -11,11 +11,13 @@ import {
   DocumentTextIcon,
   CurrencyDollarIcon,
   FireIcon,
+  ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
+  { name: 'Schedule', href: '/admin/schedule', icon: ClipboardDocumentListIcon },
   { name: 'Calendar', href: '/admin/calendar', icon: CalendarIcon },
   { name: 'Bookings', href: '/admin/bookings', icon: DocumentTextIcon },
   { name: 'Ignite Subscriptions', href: '/admin/ignite-subscriptions', icon: FireIcon },
