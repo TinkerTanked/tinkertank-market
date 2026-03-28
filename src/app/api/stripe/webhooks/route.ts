@@ -136,11 +136,20 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
           // Create bookings for each order item (camps and birthdays)
           for (const orderItem of order.orderItems) {
             if (orderItem.product.type === 'CAMP' || orderItem.product.type === 'BIRTHDAY') {
-              const defaultLocation = await tx.location.findFirst({
-                where: { isActive: true },
-              });
+              const locationName = session.metadata?.location
+              let bookingLocation = locationName
+                ? await tx.location.findFirst({
+                    where: { name: { contains: locationName, mode: 'insensitive' }, isActive: true },
+                  })
+                : null
 
-              if (!defaultLocation) {
+              if (!bookingLocation) {
+                bookingLocation = await tx.location.findFirst({
+                  where: { isActive: true },
+                })
+              }
+
+              if (!bookingLocation) {
                 console.error('No active location found for booking');
                 continue;
               }
@@ -156,7 +165,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                 data: {
                   studentId: orderItem.studentId,
                   productId: orderItem.productId,
-                  locationId: defaultLocation.id,
+                  locationId: bookingLocation.id,
                   startDate,
                   endDate,
                   status: 'CONFIRMED',

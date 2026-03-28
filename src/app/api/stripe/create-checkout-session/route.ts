@@ -26,6 +26,7 @@ const CreateCheckoutSessionSchema = z.object({
     stripePriceId: z.string().optional(),
     productName: z.string().optional(),
     productPrice: z.number().optional(),
+    location: z.string().optional(),
   })),
   customerInfo: z.object({
     name: z.string().min(1),
@@ -187,6 +188,7 @@ export async function POST(request: NextRequest) {
       orderId: order.id,
       customerName: validatedData.customerInfo.name,
       customerPhone: validatedData.customerInfo.phone,
+      location: validatedData.items[0]?.location || '',
     }
 
     // For subscriptions, include session details in metadata for webhook processing

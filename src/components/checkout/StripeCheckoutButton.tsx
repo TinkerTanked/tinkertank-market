@@ -43,6 +43,7 @@ export default function StripeCheckoutButton({ customerInfo }: StripeCheckoutBut
             stripePriceId: (item.product as any).stripePriceId,
             productName: item.product.name,
             productPrice: item.product.price,
+            location: (item.product as any).location || undefined,
           })),
           customerInfo,
         }),
