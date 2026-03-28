@@ -85,6 +85,12 @@ spec:
         app: ${REPO_NAME}
         environment: ${NODE_ENV}
     spec:
+      # Tolerate Karpenter controller taint so pods can schedule on Karpenter nodes
+      tolerations:
+        - key: karpenter.sh/controller
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
       # Allow scheduling on both managed and Karpenter nodes
       affinity:
         podAntiAffinity:
