@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { startOfDay, endOfDay, parseISO, startOfWeek, addDays, format } from 'date-fns';
+import { startOfDay, endOfDay, parseISO, startOfWeek, startOfMonth, endOfMonth, addDays, format } from 'date-fns';
 
 interface ScheduleItem {
   id: string;
@@ -177,6 +177,49 @@ export async function GET(request: NextRequest) {
   }
 
   const date = parseISO(dateParam);
+
+  if (mode === 'month') {
+    const monthStart = startOfMonth(date);
+    const monthEnd = endOfMonth(date);
+    // Include days from prev/next month to fill calendar grid
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const calendarEnd = endOfDay(addDays(startOfWeek(addDays(monthEnd, 7), { weekStartsOn: 1 }), -1));
+
+    const items = await fetchBookingsForRange(startOfDay(calendarStart), calendarEnd);
+    const locations = extractLocations(items);
+
+    const days: WeekDaySummary[] = [];
+    let current = calendarStart;
+    while (current <= calendarEnd) {
+      const dayStr = format(current, 'yyyy-MM-dd');
+      const dayItems = items.filter(item => item.date === dayStr);
+      const byLocation = buildLocationSummary(dayItems);
+      const totalStudents = dayItems.length;
+      const dayCampCount = dayItems.filter(i => i.productType === 'DAY_CAMP').length;
+      const allDayCampCount = dayItems.filter(i => i.productType === 'ALL_DAY_CAMP').length;
+      const mentorsNeeded = Math.ceil(totalStudents / 4);
+
+      days.push({
+        date: dayStr,
+        dayName: format(current, 'EEE'),
+        byLocation,
+        totalStudents,
+        dayCampCount,
+        allDayCampCount,
+        mentorsNeeded
+      });
+      current = addDays(current, 1);
+    }
+
+    return NextResponse.json({
+      monthStart: format(monthStart, 'yyyy-MM-dd'),
+      monthEnd: format(monthEnd, 'yyyy-MM-dd'),
+      calendarStart: format(calendarStart, 'yyyy-MM-dd'),
+      monthLabel: format(monthStart, 'MMMM yyyy'),
+      locations,
+      days
+    });
+  }
 
   if (mode === 'week') {
     const weekStart = startOfWeek(date, { weekStartsOn: 1 });

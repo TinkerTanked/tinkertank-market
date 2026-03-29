@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon, MapPinIcon } from '@heroicons/react/24/outline';
-import { format, addDays, subDays, addWeeks, subWeeks, startOfWeek, isSameDay } from 'date-fns';
+import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, startOfMonth, isSameDay, isSameMonth } from 'date-fns';
 import { clsx } from 'clsx';
 
 interface ScheduleItem {
@@ -58,7 +58,16 @@ interface WeekData {
   days: WeekDayData[];
 }
 
-type ViewMode = 'day' | 'week';
+interface MonthData {
+  monthStart: string;
+  monthEnd: string;
+  calendarStart: string;
+  monthLabel: string;
+  locations: { id: string; name: string }[];
+  days: WeekDayData[];
+}
+
+type ViewMode = 'day' | 'week' | 'month';
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
@@ -116,21 +125,28 @@ export default function AdminSchedule() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [data, setData] = useState<ScheduleData | null>(null);
   const [weekData, setWeekData] = useState<WeekData | null>(null);
+  const [monthData, setMonthData] = useState<MonthData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  const locations = viewMode === 'week'
-    ? weekData?.locations ?? []
-    : data?.locations ?? [];
+  const locations = viewMode === 'month'
+    ? monthData?.locations ?? []
+    : viewMode === 'week'
+      ? weekData?.locations ?? []
+      : data?.locations ?? [];
 
   useEffect(() => {
     async function fetchSchedule() {
       setLoading(true);
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
 
-      if (viewMode === 'week') {
+      if (viewMode === 'month') {
+        const res = await fetch(`/api/admin/schedule?mode=month&date=${dateStr}`);
+        const json = await res.json();
+        setMonthData(json);
+      } else if (viewMode === 'week') {
         const res = await fetch(`/api/admin/schedule?mode=week&date=${dateStr}`);
         const json = await res.json();
         setWeekData(json);
@@ -145,8 +161,12 @@ export default function AdminSchedule() {
   }, [selectedDate, viewMode]);
 
   const goToToday = () => setSelectedDate(new Date());
-  const goToPrev = () => setSelectedDate(viewMode === 'week' ? subWeeks(selectedDate, 1) : subDays(selectedDate, 1));
-  const goToNext = () => setSelectedDate(viewMode === 'week' ? addWeeks(selectedDate, 1) : addDays(selectedDate, 1));
+  const goToPrev = () => setSelectedDate(
+    viewMode === 'month' ? subMonths(selectedDate, 1) : viewMode === 'week' ? subWeeks(selectedDate, 1) : subDays(selectedDate, 1)
+  );
+  const goToNext = () => setSelectedDate(
+    viewMode === 'month' ? addMonths(selectedDate, 1) : viewMode === 'week' ? addWeeks(selectedDate, 1) : addDays(selectedDate, 1)
+  );
 
   const filteredItems = useMemo(() => {
     if (!data) return [];
@@ -175,7 +195,7 @@ export default function AdminSchedule() {
       {/* Header with title, view toggle, and navigation */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">
-          {viewMode === 'week' ? 'Weekly Schedule' : 'Daily Schedule'}
+          {viewMode === 'month' ? 'Monthly Schedule' : viewMode === 'week' ? 'Weekly Schedule' : 'Daily Schedule'}
         </h1>
         <div className="flex items-center space-x-4">
           {/* View mode toggle */}
@@ -201,6 +221,17 @@ export default function AdminSchedule() {
               )}
             >
               Week
+            </button>
+            <button
+              onClick={() => setViewMode('month')}
+              className={clsx(
+                'px-4 py-2 text-sm font-medium transition-colors',
+                viewMode === 'month'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              Month
             </button>
           </div>
 
@@ -262,7 +293,16 @@ export default function AdminSchedule() {
         </div>
       )}
 
-      {viewMode === 'week' ? (
+      {viewMode === 'month' ? (
+        /* Month View */
+        <MonthView
+          monthData={monthData}
+          loading={loading}
+          selectedDate={selectedDate}
+          selectedLocationId={selectedLocationId}
+          onDayClick={handleWeekDayClick}
+        />
+      ) : viewMode === 'week' ? (
         /* Week View */
         <WeekView
           weekData={weekData}
@@ -397,6 +437,106 @@ export default function AdminSchedule() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function MonthView({ monthData, loading, selectedDate, selectedLocationId, onDayClick }: {
+  monthData: MonthData | null;
+  loading: boolean;
+  selectedDate: Date;
+  selectedLocationId: string | null;
+  onDayClick: (dateStr: string) => void;
+}) {
+  if (loading) {
+    return <div className="p-8 text-center text-gray-500">Loading...</div>;
+  }
+
+  if (!monthData) {
+    return <div className="p-8 text-center text-gray-500">No data available</div>;
+  }
+
+  const currentMonth = startOfMonth(selectedDate);
+
+  // Group days into weeks of 7
+  const weeks: typeof monthData.days[] = [];
+  for (let i = 0; i < monthData.days.length; i += 7) {
+    weeks.push(monthData.days.slice(i, i + 7));
+  }
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold text-gray-700">{monthData.monthLabel}</h2>
+
+      {/* Day headers */}
+      <div className="grid grid-cols-7 gap-1">
+        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
+          <div key={d} className="text-center text-xs font-medium text-gray-500 uppercase py-2">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div className="space-y-1">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="grid grid-cols-7 gap-1">
+            {week.map(day => {
+              const dayDate = new Date(day.date + 'T00:00:00');
+              const isCurrentMonth = isSameMonth(dayDate, currentMonth);
+              const isToday = isSameDay(dayDate, new Date());
+              const isWeekend = dayDate.getDay() === 0 || dayDate.getDay() === 6;
+
+              const stats = selectedLocationId && day.byLocation[selectedLocationId]
+                ? day.byLocation[selectedLocationId]
+                : {
+                    totalStudents: day.totalStudents,
+                    dayCampCount: day.dayCampCount,
+                    allDayCampCount: day.allDayCampCount,
+                    mentorsNeeded: day.mentorsNeeded
+                  };
+
+              return (
+                <button
+                  key={day.date}
+                  onClick={() => onDayClick(day.date)}
+                  className={clsx(
+                    'rounded-lg border p-2 text-left transition-colors min-h-[90px]',
+                    'hover:border-orange-400 hover:shadow-sm',
+                    !isCurrentMonth && 'opacity-40',
+                    isWeekend && 'bg-gray-50',
+                    isToday
+                      ? 'border-orange-400 bg-orange-50 ring-1 ring-orange-400'
+                      : stats.totalStudents > 0
+                        ? 'border-gray-200 bg-white'
+                        : 'border-gray-100 bg-gray-50/50'
+                  )}
+                >
+                  <div className={clsx(
+                    'text-sm font-semibold mb-1',
+                    isToday ? 'text-orange-600' : isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                  )}>
+                    {format(dayDate, 'd')}
+                  </div>
+                  {stats.totalStudents > 0 && (
+                    <div className="space-y-0.5">
+                      <div className="text-lg font-bold text-gray-900 leading-tight">{stats.totalStudents}</div>
+                      <div className="flex items-center gap-1 text-[10px]">
+                        {stats.dayCampCount > 0 && <span className="text-blue-600">{stats.dayCampCount}d</span>}
+                        {stats.dayCampCount > 0 && stats.allDayCampCount > 0 && <span className="text-gray-300">·</span>}
+                        {stats.allDayCampCount > 0 && <span className="text-purple-600">{stats.allDayCampCount}ad</span>}
+                      </div>
+                      <div className="text-[10px] text-orange-600 font-medium">
+                        {stats.mentorsNeeded}m
+                      </div>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
