@@ -136,6 +136,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
           // Create bookings for each order item (camps and birthdays)
           for (const orderItem of order.orderItems) {
             if (orderItem.product.type === 'CAMP' || orderItem.product.type === 'BIRTHDAY') {
+              // Determine location: use metadata if provided, else default to Neutral Bay
               const locationName = session.metadata?.location
               let bookingLocation = locationName
                 ? await tx.location.findFirst({
@@ -144,7 +145,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                 : null
 
               if (!bookingLocation) {
+                // Default to Neutral Bay (canonical camp location), not alphabetical first
                 bookingLocation = await tx.location.findFirst({
+                  where: { name: 'Neutral Bay', isActive: true },
+                }) || await tx.location.findFirst({
                   where: { isActive: true },
                 })
               }
@@ -161,6 +165,23 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
               startDate.setUTCHours(9, 0, 0, 0)
               const endDate = new Date(orderItem.bookingDate)
               endDate.setUTCHours(isAllDay ? 17 : 15, 0, 0, 0)
+
+              // Prevent duplicate bookings (same student+product+date)
+              const existingBooking = await tx.booking.findFirst({
+                where: {
+                  studentId: orderItem.studentId,
+                  productId: orderItem.productId,
+                  startDate: {
+                    gte: new Date(startDate.toISOString().split('T')[0] + 'T00:00:00.000Z'),
+                    lt: new Date(startDate.toISOString().split('T')[0] + 'T23:59:59.999Z')
+                  }
+                }
+              })
+
+              if (existingBooking) {
+                console.log(`Skipping duplicate booking for student ${orderItem.studentId} on ${startDate.toISOString().split('T')[0]}`);
+                continue;
+              }
 
               await tx.booking.create({
                 data: {
