@@ -132,9 +132,9 @@ export async function POST(request: NextRequest) {
       for (const dateStr of bookingDates) {
         const date = new Date(dateStr)
         const startDate = new Date(date)
-        startDate.setHours(startHour, 0, 0, 0)
+        startDate.setUTCHours(startHour, 0, 0, 0)
         const endDate = new Date(date)
-        endDate.setHours(endHour, 0, 0, 0)
+        endDate.setUTCHours(endHour, 0, 0, 0)
 
         const orderItem = await tx.orderItem.create({
           data: {
@@ -237,9 +237,9 @@ async function handleAutoFill(orderId: string, studentId: string, productId: str
 
       for (const date of datesToAdd) {
         const startDate = new Date(date)
-        startDate.setHours(startHour, 0, 0, 0)
+        startDate.setUTCHours(startHour, 0, 0, 0)
         const endDate = new Date(date)
-        endDate.setHours(endHour, 0, 0, 0)
+        endDate.setUTCHours(endHour, 0, 0, 0)
 
         const orderItem = await tx.orderItem.create({
           data: {

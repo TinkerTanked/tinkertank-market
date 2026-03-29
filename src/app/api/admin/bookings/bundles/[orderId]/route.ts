@@ -56,9 +56,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const date = new Date(bookingDate)
     const startDate = new Date(date)
-    startDate.setHours(startHour, 0, 0, 0)
+    startDate.setUTCHours(startHour, 0, 0, 0)
     const endDate = new Date(date)
-    endDate.setHours(endHour, 0, 0, 0)
+    endDate.setUTCHours(endHour, 0, 0, 0)
 
     const result = await prisma.$transaction(async (tx) => {
       const orderItem = await tx.orderItem.create({

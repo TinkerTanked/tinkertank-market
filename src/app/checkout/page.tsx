@@ -169,12 +169,24 @@ export default function CheckoutPage() {
                           {item.product.name}
                         </h3>
                         <p className='text-gray-600'>{item.product.shortDescription}</p>
-                        {item.selectedDate && (
+                        {(item.selectedDates && item.selectedDates.length > 0) ? (
+                          <div className='flex items-center flex-wrap gap-2 mt-2 text-sm text-gray-500'>
+                            <span>📅</span>
+                            {item.selectedDates.map((d, i) => {
+                              const date = d instanceof Date ? d : new Date(d)
+                              return (
+                                <span key={i} className='inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium'>
+                                  {date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                </span>
+                              )
+                            })}
+                          </div>
+                        ) : item.selectedDate ? (
                           <div className='flex items-center space-x-4 mt-2 text-sm text-gray-500'>
                             <span>📅 {item.selectedDate instanceof Date ? item.selectedDate.toLocaleDateString() : new Date(item.selectedDate).toLocaleDateString()}</span>
                             {item.selectedTimeSlot && <span>🕒 {typeof item.selectedTimeSlot === 'string' ? item.selectedTimeSlot : `${item.selectedTimeSlot.start} - ${item.selectedTimeSlot.end}`}</span>}
                           </div>
-                        )}
+                        ) : null}
                         <div className='flex items-center justify-between mt-3'>
                           <span className='text-gray-700'>Quantity: {item.quantity}</span>
                           <span className='font-bold text-lg'>{formatPrice(item.totalPrice)}</span>

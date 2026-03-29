@@ -27,11 +27,22 @@ export default function OrderSummary() {
             <div className='flex-1'>
               <h3 className='font-medium text-gray-900'>{item.product.name}</h3>
               <p className='text-sm text-gray-600'>Qty: {item.quantity}</p>
-              {item.selectedDate && (
+              {(item.selectedDates && item.selectedDates.length > 0) ? (
+                <div className='flex flex-wrap gap-1 mt-0.5'>
+                  {item.selectedDates.map((d, i) => {
+                    const date = d instanceof Date ? d : new Date(d)
+                    return (
+                      <span key={i} className='text-xs text-gray-500'>
+                        {date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}{i < item.selectedDates!.length - 1 ? ',' : ''}
+                      </span>
+                    )
+                  })}
+                </div>
+              ) : item.selectedDate ? (
                 <p className='text-xs text-gray-500'>
                   {item.selectedDate instanceof Date ? item.selectedDate.toLocaleDateString() : new Date(item.selectedDate).toLocaleDateString()} • {item.selectedTimeSlot ? (typeof item.selectedTimeSlot === 'string' ? item.selectedTimeSlot : `${item.selectedTimeSlot.start} - ${item.selectedTimeSlot.end}`) : ''}
                 </p>
-              )}
+              ) : null}
             </div>
             <span className='font-medium text-gray-900'>
               {formatPrice(item.totalPrice)}

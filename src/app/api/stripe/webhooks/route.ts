@@ -155,11 +155,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
               }
 
               // Set proper camp times: Day Camp 9am-3pm, All Day Camp 9am-5pm
+              // IMPORTANT: Use setUTCHours to avoid server-timezone shifts that put dates on wrong day
               const isAllDay = orderItem.product.name.toLowerCase().includes('all day')
               const startDate = new Date(orderItem.bookingDate)
-              startDate.setHours(9, 0, 0, 0)
+              startDate.setUTCHours(9, 0, 0, 0)
               const endDate = new Date(orderItem.bookingDate)
-              endDate.setHours(isAllDay ? 17 : 15, 0, 0, 0)
+              endDate.setUTCHours(isAllDay ? 17 : 15, 0, 0, 0)
 
               await tx.booking.create({
                 data: {

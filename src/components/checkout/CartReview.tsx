@@ -51,12 +51,24 @@ export default function CartReview() {
                       
                       {/* Date and Time */}
                       <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500">
-                        {item.selectedDate && (
+                        {(item.selectedDates && item.selectedDates.length > 0) ? (
+                          <div className="flex items-center flex-wrap gap-2">
+                            <CalendarDaysIcon className="w-4 h-4" />
+                            {item.selectedDates.map((d, i) => {
+                              const date = d instanceof Date ? d : new Date(d)
+                              return (
+                                <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
+                                  {format(date, 'EEE, d MMM')}
+                                </span>
+                              )
+                            })}
+                          </div>
+                        ) : item.selectedDate ? (
                           <div className="flex items-center gap-1">
                             <CalendarDaysIcon className="w-4 h-4" />
                             <span>{formatDate(item.selectedDate)}</span>
                           </div>
-                        )}
+                        ) : null}
                         {item.selectedTimeSlot && (
                           <div className="flex items-center gap-1">
                             <ClockIcon className="w-4 h-4" />
