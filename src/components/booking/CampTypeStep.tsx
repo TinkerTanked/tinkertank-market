@@ -232,23 +232,25 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
         ))}
       </div>
 
-      {/* Comparison Table */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <h4 className="font-medium text-gray-900 mb-4 text-center">Quick Comparison</h4>
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div></div>
-          <div className="text-center font-medium text-gray-700">Day Camp</div>
-          <div className="text-center font-medium text-gray-700">All Day Camp</div>
-          
-          <div className="text-gray-600">Duration</div>
-          <div className="text-center text-gray-900">6 hours</div>
-          <div className="text-center text-gray-900">8 hours</div>
-          
-          <div className="text-gray-600">Price</div>
-          <div className="text-center text-green-600 font-bold">$109.99</div>
-          <div className="text-center text-green-600 font-bold">$149.99</div>
+      {/* Comparison Table - only show when multiple camp types available */}
+      {filteredCampTypes.length > 1 && (
+        <div className="bg-gray-50 rounded-lg p-6">
+          <h4 className="font-medium text-gray-900 mb-4 text-center">Quick Comparison</h4>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div></div>
+            <div className="text-center font-medium text-gray-700">Day Camp</div>
+            <div className="text-center font-medium text-gray-700">All Day Camp</div>
+            
+            <div className="text-gray-600">Duration</div>
+            <div className="text-center text-gray-900">6 hours</div>
+            <div className="text-center text-gray-900">8 hours</div>
+            
+            <div className="text-gray-600">Price</div>
+            <div className="text-center text-green-600 font-bold">$109.99</div>
+            <div className="text-center text-green-600 font-bold">$149.99</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Info Section */}
       <div className="bg-blue-50 rounded-lg p-4">
