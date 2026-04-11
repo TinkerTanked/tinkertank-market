@@ -176,22 +176,11 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
             <span>Expert instructor guidance</span>
           </div>
-          {campType.type === 'day' ? (
+          {campType.type === 'allday' && (
             <div className="flex items-center space-x-2">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-              <span>Morning tea included</span>
+              <span>Extended learning time</span>
             </div>
-          ) : (
-            <>
-              <div className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                <span>Lunch & snacks included</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                <span>Extended learning time</span>
-              </div>
-            </>
           )}
           <div className="flex items-center space-x-2">
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>

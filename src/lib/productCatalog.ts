@@ -92,7 +92,6 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Extended project time',
       'Advanced coding challenges',
       'Individual mentoring',
-      'Lunch and snacks included',
       'Flexible pickup times',
       'Portfolio building'
     ],

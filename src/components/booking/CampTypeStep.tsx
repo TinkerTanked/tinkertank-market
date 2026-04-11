@@ -185,18 +185,8 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <span className="text-sm text-gray-700">Expert instructor guidance</span>
                   </div>
-                  {(campType.type === 'day' || campType.type === 'day-bundle') && (
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700">Morning tea included</span>
-                    </div>
-                  )}
                   {(campType.type === 'allday' || campType.type === 'allday-bundle') && (
                     <>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Lunch & snacks included</span>
-                      </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                         <span className="text-sm text-gray-700">Extended project time</span>
@@ -253,10 +243,6 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
           <div className="text-gray-600">Duration</div>
           <div className="text-center text-gray-900">6 hours</div>
           <div className="text-center text-gray-900">8 hours</div>
-          
-          <div className="text-gray-600">Meals</div>
-          <div className="text-center text-gray-900">Morning tea</div>
-          <div className="text-center text-gray-900">Lunch + snacks</div>
           
           <div className="text-gray-600">Price</div>
           <div className="text-center text-green-600 font-bold">$109.99</div>

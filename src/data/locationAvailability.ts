@@ -17,7 +17,7 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
   {
     locationId: 'manly-library',
     locationName: 'Manly Library',
-    availableCampTypes: ['day', 'allday'],
+    availableCampTypes: ['day'],
     availableDates: ['2026-04-14', '2026-04-15', '2026-04-16']
   }
 ]
