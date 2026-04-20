@@ -27,7 +27,7 @@ export default function BirthdaysClient() {
               </div>
               <div className='flex items-center space-x-2 text-purple-100'>
                 <UsersIcon className='w-5 h-5' />
-                <span>Up to 12 Kids</span>
+                <span>10 Students Included</span>
               </div>
               <div className='flex items-center space-x-2 text-purple-100'>
                 <SparklesIcon className='w-5 h-5' />
@@ -114,7 +114,7 @@ export default function BirthdaysClient() {
             </p>
           </div>
 
-          <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto'>
             {birthdayProducts.map((product) => (
               <ProductCard key={product.id} product={product} showCategory={false} />
             ))}
@@ -193,16 +193,16 @@ export default function BirthdaysClient() {
                 How many children can attend?
               </h3>
               <p className='text-gray-600'>
-                Our birthday parties accommodate up to 12 children. This ensures everyone gets personalized attention and has a great time.
+                Each party includes 10 students (including the birthday child). Additional students can be added for an extra fee.
               </p>
             </div>
 
             <div className='bg-gray-50 rounded-xl p-6'>
               <h3 className='font-display font-semibold text-lg text-gray-900 mb-2'>
-                Do you provide decorations and cake?
+                Where do the parties take place?
               </h3>
               <p className='text-gray-600'>
-                We provide themed decorations that match your selected package. You're welcome to bring your own cake, or we can arrange one for an additional fee.
+                All our birthday parties are in-home or at a venue you've booked. We come to you with everything needed — just provide the space and we'll handle the rest!
               </p>
             </div>
 
@@ -211,7 +211,7 @@ export default function BirthdaysClient() {
                 What ages are suitable for birthday parties?
               </h3>
               <p className='text-gray-600'>
-                Our parties are designed for ages 5-16, with activities adapted to the birthday child's age group and interests.
+                Both our Robotics and Coding parties are designed for ages 6 and up, with activities adapted to the birthday child's age group.
               </p>
             </div>
 
@@ -220,7 +220,7 @@ export default function BirthdaysClient() {
                 How long does the party last?
               </h3>
               <p className='text-gray-600'>
-                Standard parties run for 2 hours, which includes 1.5 hours of activities plus time for cake and presents.
+                Parties run for 2 hours, which includes hands-on activities plus time for cake and presents.
               </p>
             </div>
           </div>

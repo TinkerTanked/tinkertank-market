@@ -102,15 +102,15 @@ export const createProductCatalog = (): CatalogProduct[] => [
 
   // Birthday Parties
   {
-    id: 'battle-bots-party',
-    name: 'Battle Bots Party',
-    description: 'Build, program, and battle with custom robots in this epic birthday celebration! Kids will design their own battle bots and compete in friendly tournaments.',
-    shortDescription: 'Build and battle with custom robots',
+    id: 'robotics-party',
+    name: 'Robotics Party',
+    description: 'Fantastic builds and exciting challenges! Kids will design, build and program their own robots in this hands-on birthday celebration.',
+    shortDescription: 'Fantastic builds and exciting challenges',
     price: 450,
     category: 'birthdays',
-    ageRange: '7-14 years',
+    ageRange: '6+ years',
     duration: '2 hours',
-    location: 'Any location (we come to you!)',
+    location: 'In-home or your venue',
     availability: {
       type: 'any-day',
       timeSlots: [
@@ -120,45 +120,38 @@ export const createProductCatalog = (): CatalogProduct[] => [
       ]
     },
     features: [
-      'Custom robot building kits',
-      'Programming tutorials',
-      'Battle arena setup',
-      'Tournament competition',
-      'Take-home robot',
-      'Up to 12 kids included',
-      'Party host provided'
+      'Hands-on robot building',
+      'Exciting challenges and competitions',
+      'Age-appropriate for 6+',
+      '10 students included (inc. birthday child)',
+      'We come to your home or venue',
+      'Expert party host provided',
+      'All materials included'
     ],
     images: ['/images/battle.jpg', '/images/workshop.jpg'],
-    maxCapacity: 12,
+    maxCapacity: 10,
     addOns: [
       {
         id: 'extra-kids',
         name: 'Extra Kids',
-        description: 'Add up to 8 additional kids to your party',
+        description: 'Add additional kids to your party',
         price: 225,
-        maxQuantity: 1
-      },
-      {
-        id: 'catering',
-        name: 'Party Catering',
-        description: 'Delicious food and drinks for the whole party',
-        price: 150,
         maxQuantity: 1
       }
     ],
-    tags: ['robotics', 'programming', 'competition', 'take-home']
+    tags: ['robotics', 'building', 'challenges', 'hands-on']
   },
 
   {
-    id: 'gamer-party',
-    name: 'Gamer Party',
-    description: 'Design and code your own video games in this interactive birthday party! Learn game development basics while creating playable games to share with friends.',
-    shortDescription: 'Code and play custom video games',
+    id: 'coding-party',
+    name: 'Coding Party',
+    description: 'Explore the world of AI, Minecraft and Scratch in this interactive coding birthday party! Kids will create, play and learn together.',
+    shortDescription: 'Explore AI, Minecraft and Scratch',
     price: 450,
     category: 'birthdays',
-    ageRange: '8-16 years',
+    ageRange: '6+ years',
     duration: '2 hours',
-    location: 'Any location (we come to you!)',
+    location: 'In-home or your venue',
     availability: {
       type: 'any-day',
       timeSlots: [
@@ -168,81 +161,26 @@ export const createProductCatalog = (): CatalogProduct[] => [
       ]
     },
     features: [
-      'Game design workshops',
-      'Coding in Scratch/Python',
-      'Character creation',
-      'Level design challenges',
-      'Multiplayer game testing',
-      'Up to 12 kids included',
-      'Digital game files to keep'
+      'AI, Minecraft and Scratch adventures',
+      'Creative coding challenges',
+      'Age-appropriate for 6+',
+      '10 students included (inc. birthday child)',
+      'We come to your home or venue',
+      'Expert party host provided',
+      'All materials included'
     ],
     images: ['/images/dropin.jpg', '/images/code-1.jpg'],
-    maxCapacity: 12,
+    maxCapacity: 10,
     addOns: [
       {
         id: 'extra-kids',
         name: 'Extra Kids',
-        description: 'Add up to 8 additional kids to your party',
+        description: 'Add additional kids to your party',
         price: 225,
-        maxQuantity: 1
-      },
-      {
-        id: 'catering',
-        name: 'Party Catering',
-        description: 'Delicious food and drinks for the whole party',
-        price: 150,
         maxQuantity: 1
       }
     ],
-    tags: ['coding', 'game-design', 'creative', 'digital']
-  },
-
-  {
-    id: '3d-design-party',
-    name: '3D Design Party',
-    description: 'Unleash creativity with 3D modeling and printing! Kids will design custom objects, learn about 3D technology, and take home their printed creations.',
-    shortDescription: 'Design and print amazing 3D creations',
-    price: 450,
-    category: 'birthdays',
-    ageRange: '9-16 years',
-    duration: '2 hours',
-    location: 'Any location (we come to you!)',
-    availability: {
-      type: 'any-day',
-      timeSlots: [
-        { start: '10:00', end: '12:00' },
-        { start: '14:00', end: '16:00' },
-        { start: '16:30', end: '18:30' }
-      ]
-    },
-    features: [
-      '3D modeling software training',
-      'Custom design challenges',
-      'Professional 3D printing',
-      'Design thinking workshops',
-      'Collaborative projects',
-      'Up to 12 kids included',
-      'Printed models to take home'
-    ],
-    images: ['/images/3d-1.jpg', '/images/workshop.jpg'],
-    maxCapacity: 12,
-    addOns: [
-      {
-        id: 'extra-kids',
-        name: 'Extra Kids',
-        description: 'Add up to 8 additional kids to your party',
-        price: 225,
-        maxQuantity: 1
-      },
-      {
-        id: 'catering',
-        name: 'Party Catering',
-        description: 'Delicious food and drinks for the whole party',
-        price: 150,
-        maxQuantity: 1
-      }
-    ],
-    tags: ['3d-design', '3d-printing', 'creative', 'take-home']
+    tags: ['coding', 'AI', 'minecraft', 'scratch']
   },
 
   // Ignite Subscriptions
