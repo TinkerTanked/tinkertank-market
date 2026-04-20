@@ -113,6 +113,13 @@ export const SPECIFIC_CLOSURE_DATES: ClosureDate[] = [
     year: 2026
   },
   {
+    name: 'Neutral Bay Closed',
+    description: 'No camps available on this date',
+    recurring: false,
+    specificDate: new Date('2026-04-21'),
+    year: 2026
+  },
+  {
     name: 'ANZAC Day',
     description: 'TinkerTank is closed for ANZAC Day',
     recurring: false,
