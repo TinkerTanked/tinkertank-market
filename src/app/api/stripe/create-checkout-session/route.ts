@@ -27,6 +27,8 @@ const CreateCheckoutSessionSchema = z.object({
     productName: z.string().optional(),
     productPrice: z.number().optional(),
     location: z.string().optional(),
+    venueAddress: z.string().optional(),
+    notes: z.string().optional(),
   })),
   customerInfo: z.object({
     name: z.string().min(1),
@@ -147,6 +149,9 @@ export async function POST(request: NextRequest) {
             studentId: createdStudent.id,
             bookingDate,
             price: pricePerDay,
+            location: item.location || null,
+            venueAddress: item.venueAddress || null,
+            notes: item.notes || null,
           })
         }
       }

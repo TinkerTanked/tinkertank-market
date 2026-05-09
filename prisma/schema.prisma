@@ -95,16 +95,25 @@ model Order {
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  productId   String
-  studentId   String
-  bookingDate DateTime
-  price       Decimal  @db.Money
-  createdAt   DateTime @default(now())
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product  @relation(fields: [productId], references: [id])
-  student     Student  @relation(fields: [studentId], references: [id])
+  id           String   @id @default(cuid())
+  orderId      String
+  productId    String
+  studentId    String
+  bookingDate  DateTime
+  price        Decimal  @db.Money
+  // Customer-selected location for this line item (e.g. "TinkerTank Neutral Bay",
+  // "Manly Library", "Your Venue"). Stored as a free-form string so the booking
+  // pipeline does not depend on a foreign key to the Location table at order time.
+  location     String?
+  // Full street address of the customer's chosen venue when location is "Your Venue".
+  venueAddress String?
+  // Free-form booking notes captured from the booking wizard (e.g. venue type
+  // such as "Your home" or "Community hall").
+  notes        String?
+  createdAt    DateTime @default(now())
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product  @relation(fields: [productId], references: [id])
+  student      Student  @relation(fields: [studentId], references: [id])
 
   @@map("order_items")
 }

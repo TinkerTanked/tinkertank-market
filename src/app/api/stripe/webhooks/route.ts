@@ -136,13 +136,40 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
           // Create bookings for each order item (camps and birthdays)
           for (const orderItem of order.orderItems) {
             if (orderItem.product.type === 'CAMP' || orderItem.product.type === 'BIRTHDAY') {
-              // Determine location: use metadata if provided, else default to Neutral Bay
-              const locationName = session.metadata?.location
-              let bookingLocation = locationName
-                ? await tx.location.findFirst({
-                    where: { name: { contains: locationName, mode: 'insensitive' }, isActive: true },
+              // Resolve the booking Location, preferring the per-item selection
+              // captured at checkout. Falls back to session metadata for legacy
+              // orders, then to Neutral Bay.
+              const itemLocation = orderItem.location || session.metadata?.location || null
+              const isYourVenue = !!itemLocation && itemLocation.toLowerCase().includes('your venue')
+
+              let bookingLocation = null
+
+              if (isYourVenue) {
+                // Find or create the canonical "Your Venue" Location row so
+                // bookings always have a valid FK.
+                bookingLocation = await tx.location.findFirst({
+                  where: { name: 'Your Venue' },
+                })
+                if (!bookingLocation) {
+                  bookingLocation = await tx.location.create({
+                    data: {
+                      name: 'Your Venue',
+                      address: 'Customer-provided venue',
+                      capacity: 0,
+                    },
                   })
-                : null
+                }
+              } else if (itemLocation) {
+                // Try exact match first, then a contains-match for legacy short
+                // names like "Neutral Bay" vs "TinkerTank Neutral Bay".
+                bookingLocation =
+                  (await tx.location.findFirst({
+                    where: { name: itemLocation, isActive: true },
+                  })) ||
+                  (await tx.location.findFirst({
+                    where: { name: { contains: itemLocation, mode: 'insensitive' }, isActive: true },
+                  }))
+              }
 
               if (!bookingLocation) {
                 // Default to Neutral Bay (canonical camp location), not alphabetical first
@@ -183,6 +210,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                 continue;
               }
 
+              // Build a useful Booking.notes string that captures venue + customer notes
+              const noteParts: string[] = [`Order: ${order.id}`]
+              if (orderItem.venueAddress) {
+                noteParts.push(`Venue address: ${orderItem.venueAddress}`)
+              }
+              if (orderItem.notes) {
+                noteParts.push(orderItem.notes)
+              }
+
               await tx.booking.create({
                 data: {
                   studentId: orderItem.studentId,
@@ -192,7 +228,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                   endDate,
                   status: 'CONFIRMED',
                   totalPrice: orderItem.price,
-                  notes: `Checkout session completed - Order: ${order.id}`,
+                  notes: noteParts.join(' | '),
                 },
               });
             }
