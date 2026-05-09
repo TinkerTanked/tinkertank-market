@@ -25,13 +25,15 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
     locationId: 'neutral-bay',
     locationName: 'TinkerTank Neutral Bay',
     availableCampTypes: ['day', 'allday'],
+    // Combined daily cap across Day Camp and All Day Camp bookings
+    dailyCapacity: 35
   },
   {
     locationId: 'manly-library',
     locationName: 'Manly Library',
     availableCampTypes: ['day'],
     availableDates: MANLY_LIBRARY_JULY_2026_DATES,
-    dailyCapacity: 25
+    dailyCapacity: 30
   }
 ]
 

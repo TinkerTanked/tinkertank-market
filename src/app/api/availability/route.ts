@@ -41,13 +41,20 @@ export async function GET(request: NextRequest) {
 
     if (dbLocation) {
       // Constrain query to the configured availability window when present,
-      // otherwise count everything in the future.
+      // otherwise look 6 months forward (covers the 3-month booking lookahead
+      // plus a safety buffer).
       const dateFilter = availability.availableDates && availability.availableDates.length > 0
         ? {
             gte: new Date(`${availability.availableDates[0]}T00:00:00.000Z`),
             lte: new Date(`${availability.availableDates[availability.availableDates.length - 1]}T23:59:59.999Z`)
           }
-        : { gte: new Date() }
+        : (() => {
+            const start = new Date()
+            start.setUTCHours(0, 0, 0, 0)
+            const end = new Date(start)
+            end.setUTCMonth(end.getUTCMonth() + 6)
+            return { gte: start, lte: end }
+          })()
 
       const bookings = await prisma.booking.findMany({
         where: {
@@ -66,12 +73,31 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const dates = (availability.availableDates ?? []).map(date => ({
-      date,
-      bookings: counts[date] ?? 0,
-      capacity: dailyCapacity,
-      soldOut: dailyCapacity != null && (counts[date] ?? 0) >= dailyCapacity
-    }))
+    // Build the response: include every configured availableDate (so the
+    // frontend can render zero-booking days too) and every other date in the
+    // window that has any bookings (so locations without a fixed window — like
+    // Neutral Bay — can still report sold-out days).
+    const datesMap = new Map<string, { date: string; bookings: number; capacity: number | null; soldOut: boolean }>()
+
+    const upsertDate = (date: string) => {
+      if (datesMap.has(date)) return
+      const bookings = counts[date] ?? 0
+      datesMap.set(date, {
+        date,
+        bookings,
+        capacity: dailyCapacity,
+        soldOut: dailyCapacity != null && bookings >= dailyCapacity
+      })
+    }
+
+    for (const date of availability.availableDates ?? []) {
+      upsertDate(date)
+    }
+    for (const date of Object.keys(counts)) {
+      upsertDate(date)
+    }
+
+    const dates = Array.from(datesMap.values()).sort((a, b) => a.date.localeCompare(b.date))
 
     return NextResponse.json({
       success: true,
