@@ -41,11 +41,26 @@ export default function CartPage() {
               </p>
             </div>
             <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-              <Link href='/camps' className='btn-primary text-lg px-8 py-4'>
-                Browse Camps
+              <Link
+                href='/ignite'
+                className='inline-flex items-center justify-center gap-2 text-lg font-medium px-8 py-4 rounded-lg text-white shadow-md hover:shadow-lg transition-all bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 hover:from-green-600 hover:via-blue-600 hover:to-purple-600'
+              >
+                <span className='text-xl' aria-hidden='true'>🚀</span>
+                Ignite
               </Link>
-              <Link href='/birthdays' className='btn-outline text-lg px-8 py-4'>
-                Birthday Parties
+              <Link
+                href='/camps'
+                className='inline-flex items-center justify-center gap-2 text-lg font-medium px-8 py-4 rounded-lg text-white shadow-md hover:shadow-lg transition-all bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700'
+              >
+                <span className='text-xl' aria-hidden='true'>🔥</span>
+                Camps
+              </Link>
+              <Link
+                href='/birthdays'
+                className='inline-flex items-center justify-center gap-2 text-lg font-medium px-8 py-4 rounded-lg text-white shadow-md hover:shadow-lg transition-all bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
+              >
+                <span className='text-xl' aria-hidden='true'>🎉</span>
+                Parties
               </Link>
             </div>
           </div>
