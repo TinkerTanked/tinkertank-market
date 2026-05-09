@@ -18,7 +18,7 @@ import {
   startOfDay
 } from 'date-fns'
 import { isClosureDate, getClosureInfo } from '@/types'
-import { isDateAvailableForLocation } from '@/data/locationAvailability'
+import { isDateAvailableForLocation, getLocationAvailability } from '@/data/locationAvailability'
 
 interface Location {
   id: string
@@ -36,6 +36,13 @@ interface DateStepProps {
   maxDateCount?: number
 }
 
+function toLocalDateString(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function DateStep({ 
   selectedDate, 
   selectedDates = [],
@@ -45,16 +52,23 @@ export default function DateStep({
   enableMultiSelect = true,
   maxDateCount
 }: DateStepProps) {
-  // Start calendar in April for locations with April-only availability
+  // Start calendar on the first available date for locations with limited availability
   const getInitialMonth = () => {
-    if (location?.id === 'manly-library') {
-      return new Date(2026, 3, 1) // April 2026
+    if (!location) return new Date()
+    const availability = getLocationAvailability(location.name)
+    if (availability?.availableDates && availability.availableDates.length > 0) {
+      const first = availability.availableDates[0]
+      const [y, m] = first.split('-').map(Number)
+      return new Date(y, m - 1, 1)
     }
     return new Date()
   }
   
   const [currentMonth, setCurrentMonth] = useState(getInitialMonth())
   const [internalSelectedDates, setInternalSelectedDates] = useState<Date[]>(selectedDates)
+  const [soldOutDates, setSoldOutDates] = useState<Set<string>>(new Set())
+  const [dailyCapacity, setDailyCapacity] = useState<number | null>(null)
+  const [loadingAvailability, setLoadingAvailability] = useState(false)
   const today = startOfDay(new Date())
 
   useEffect(() => {
@@ -63,10 +77,55 @@ export default function DateStep({
   
   // Update calendar month when location changes
   useEffect(() => {
-    if (location?.id === 'manly-library') {
-      setCurrentMonth(new Date(2026, 3, 1))
+    if (!location) return
+    const availability = getLocationAvailability(location.name)
+    if (availability?.availableDates && availability.availableDates.length > 0) {
+      const first = availability.availableDates[0]
+      const [y, m] = first.split('-').map(Number)
+      setCurrentMonth(new Date(y, m - 1, 1))
     }
-  }, [location?.id])
+  }, [location?.id, location?.name])
+
+  // Fetch sold-out information when location changes
+  useEffect(() => {
+    if (!location) {
+      setSoldOutDates(new Set())
+      setDailyCapacity(null)
+      return
+    }
+
+    const availability = getLocationAvailability(location.name)
+    if (!availability?.dailyCapacity) {
+      setSoldOutDates(new Set())
+      setDailyCapacity(null)
+      return
+    }
+
+    let cancelled = false
+    setLoadingAvailability(true)
+    fetch(`/api/availability?locationId=${encodeURIComponent(availability.locationId)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (cancelled) return
+        if (data?.success && Array.isArray(data.dates)) {
+          const sold = new Set<string>(
+            data.dates.filter((d: { soldOut?: boolean }) => d.soldOut).map((d: { date: string }) => d.date)
+          )
+          setSoldOutDates(sold)
+          setDailyCapacity(data.dailyCapacity ?? null)
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load availability:', err)
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingAvailability(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [location?.id, location?.name])
 
   const goToPreviousMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1))
@@ -80,10 +139,18 @@ export default function DateStep({
     return internalSelectedDates.some(selectedDate => isSameDay(selectedDate, date))
   }
 
+  const isDateSoldOut = (date: Date) => {
+    return soldOutDates.has(toLocalDateString(date))
+  }
+
   const handleDateClick = (date: Date) => {
     // Always block weekends first
     if (isWeekend(date)) {
       console.warn('Weekend date blocked:', date)
+      return
+    }
+
+    if (isDateSoldOut(date)) {
       return
     }
     
@@ -142,6 +209,10 @@ export default function DateStep({
     if (location && !isDateAvailableForLocation(date, location.name)) {
       return `${baseClasses} bg-gray-50 text-gray-400 cursor-not-allowed`
     }
+
+    if (isDateSoldOut(date)) {
+      return `${baseClasses} bg-amber-50 text-amber-700 border border-amber-200 cursor-not-allowed`
+    }
     
     if (isDateSelected(date)) {
       return `${baseClasses} bg-blue-500 text-white shadow-lg cursor-pointer hover:bg-blue-600`
@@ -180,6 +251,11 @@ export default function DateStep({
               : `Select a weekday for your STEAM camp at ${location?.name || 'your chosen location'}`
           }
         </p>
+        {dailyCapacity != null && (
+          <p className="text-xs text-gray-500">
+            Limited to {dailyCapacity} campers per day{loadingAvailability ? ' • checking availability…' : ''}
+          </p>
+        )}
         {maxDateCount && internalSelectedDates.length === maxDateCount && (
           <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
             ✓ 3-Day Bundle pricing available!
@@ -269,53 +345,66 @@ export default function DateStep({
         </div>
 
         <div className="grid grid-cols-7 gap-px bg-gray-200">
-          {calendarDays.map((date, index) => (
-            <div 
-              key={date.toString()} 
-              className="bg-white min-h-[48px] flex items-center justify-center relative"
-            >
-              <button
-                onClick={() => handleDateClick(date)}
-                className={getDayClassName(date)}
-                disabled={isWeekend(date) || isBefore(date, today) || isClosureDate(date)}
-                title={
-                  isClosureDate(date) 
-                    ? `Closed: ${getClosureInfo(date)?.name || 'Business closure'}` 
-                    : isWeekend(date) 
-                    ? 'Weekends are not available' 
-                    : isBefore(date, today) 
-                    ? 'Past date' 
-                    : undefined
-                }
+          {calendarDays.map((date) => {
+            const soldOut = isDateSoldOut(date)
+            return (
+              <div 
+                key={date.toString()} 
+                className="bg-white min-h-[48px] flex items-center justify-center relative"
               >
-                <span className={`${!isSameMonth(date, currentMonth) ? 'text-gray-300' : ''}`}>
-                  {format(date, 'd')}
-                </span>
-                
-                {isDateSelected(date) && isSameMonth(date, currentMonth) && (
-                  <div className="absolute top-1 right-1">
-                    <CheckIcon className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                
-                {isWeekend(date) && isSameMonth(date, currentMonth) && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xs text-gray-500 font-medium mt-4">
-                      Closed
-                    </span>
-                  </div>
-                )}
-                
-                {isClosureDate(date) && isSameMonth(date, currentMonth) && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xs text-red-500 font-medium mt-4">
-                      Closed
-                    </span>
-                  </div>
-                )}
-              </button>
-            </div>
-          ))}
+                <button
+                  onClick={() => handleDateClick(date)}
+                  className={getDayClassName(date)}
+                  disabled={isWeekend(date) || isBefore(date, today) || isClosureDate(date) || soldOut}
+                  title={
+                    soldOut
+                      ? 'Sold out — no spaces available on this date'
+                      : isClosureDate(date)
+                      ? `Closed: ${getClosureInfo(date)?.name || 'Business closure'}`
+                      : isWeekend(date) 
+                      ? 'Weekends are not available' 
+                      : isBefore(date, today) 
+                      ? 'Past date' 
+                      : undefined
+                  }
+                >
+                  <span className={`${!isSameMonth(date, currentMonth) ? 'text-gray-300' : ''}`}>
+                    {format(date, 'd')}
+                  </span>
+                  
+                  {isDateSelected(date) && isSameMonth(date, currentMonth) && (
+                    <div className="absolute top-1 right-1">
+                      <CheckIcon className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                  
+                  {isWeekend(date) && isSameMonth(date, currentMonth) && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-xs text-gray-500 font-medium mt-4">
+                        Closed
+                      </span>
+                    </div>
+                  )}
+                  
+                  {isClosureDate(date) && isSameMonth(date, currentMonth) && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-xs text-red-500 font-medium mt-4">
+                        Closed
+                      </span>
+                    </div>
+                  )}
+
+                  {soldOut && isSameMonth(date, currentMonth) && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wide mt-4">
+                        Sold Out
+                      </span>
+                    </div>
+                  )}
+                </button>
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -329,6 +418,10 @@ export default function DateStep({
             <CheckIcon className="w-3 h-3 text-white" />
           </div>
           <span className="text-gray-600">Selected</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 bg-amber-50 border border-amber-200 rounded"></div>
+          <span className="text-gray-600">Sold Out</span>
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-4 h-4 bg-gray-100 border border-gray-200 rounded"></div>
@@ -352,7 +445,9 @@ export default function DateStep({
               {enableMultiSelect && <li>• Select multiple dates for multi-day bookings</li>}
               <li>• Book up to 3 months in advance</li>
               <li>• Each camp is limited to 12 participants</li>
-              
+              {dailyCapacity != null && (
+                <li>• {location?.name || 'This location'} caps total bookings at {dailyCapacity} per day</li>
+              )}
             </ul>
           </div>
         </div>
