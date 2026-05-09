@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ArrowLeftIcon, ArrowRightIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { format } from 'date-fns'
-import LocationStep from './LocationStep'
+import BirthdayLocationStep, { type BirthdayLocation } from './BirthdayLocationStep'
 import BirthdayDateStep from './BirthdayDateStep'
 import BirthdayTimeStep from './BirthdayTimeStep'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
@@ -33,11 +33,7 @@ function parseTimeSlot(timeString: string): TimeSlot {
 }
 
 interface BookingData {
-  location: {
-    id: string
-    name: string
-    address: string
-  } | null
+  location: BirthdayLocation | null
   date: Date | null
   timeSlot: string | null
 }
@@ -101,6 +97,11 @@ export default function BirthdayBookingWizard({ product, onClose, isOpen }: Birt
 
   const handleAddToCart = () => {
     if (bookingData.location && bookingData.date && bookingData.timeSlot) {
+      const isYourVenue = bookingData.location.id === 'your-venue'
+      const locationDisplay = isYourVenue
+        ? `${bookingData.location.name} — ${bookingData.location.address}`
+        : bookingData.location.name
+
       const cartItem = {
         id: product.id,
         name: product.name,
@@ -112,10 +113,12 @@ export default function BirthdayBookingWizard({ product, onClose, isOpen }: Birt
         features: product.features || [],
         images: product.images || ['/images/birthdays.jpeg'],
         date: bookingData.date,
-        location: bookingData.location.name,
+        location: locationDisplay,
+        venueAddress: bookingData.location.address,
+        venueLabel: bookingData.location.venueLabel,
         duration: product.duration || '2 hours',
         time: bookingData.timeSlot,
-        description: `${product.name} at ${bookingData.location.name}`,
+        description: `${product.name} at ${locationDisplay}`,
         image: product.images?.[0] || '/images/birthdays.jpeg',
         isActive: true,
         availableCapacity: product.maxCapacity || 12,
@@ -124,9 +127,12 @@ export default function BirthdayBookingWizard({ product, onClose, isOpen }: Birt
       } as any
 
       const timeSlotObj = parseTimeSlot(bookingData.timeSlot)
-      addItem(cartItem, { 
+      addItem(cartItem, {
         selectedDate: bookingData.date,
-        selectedTimeSlot: timeSlotObj
+        selectedTimeSlot: timeSlotObj,
+        notes: isYourVenue
+          ? `Venue: ${bookingData.location.venueLabel || 'Your venue'} — ${bookingData.location.address}`
+          : undefined
       })
       onClose()
     }
@@ -140,7 +146,7 @@ export default function BirthdayBookingWizard({ product, onClose, isOpen }: Birt
     switch (currentStep) {
       case 1:
         return (
-          <LocationStep 
+          <BirthdayLocationStep
             selectedLocation={bookingData.location}
             onLocationSelect={(location) => updateBookingData('location', location)}
           />
@@ -183,8 +189,16 @@ export default function BirthdayBookingWizard({ product, onClose, isOpen }: Birt
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-purple-200">
                 <div className="space-y-1">
                   <p className="text-sm text-gray-500">Location</p>
-                  <p className="font-medium text-gray-900">{bookingData.location?.name}</p>
+                  <p className="font-medium text-gray-900">
+                    {bookingData.location?.id === 'your-venue' ? 'Your Venue' : bookingData.location?.name}
+                  </p>
+                  {bookingData.location?.id === 'your-venue' && bookingData.location.venueLabel && (
+                    <p className="text-sm text-gray-700">{bookingData.location.venueLabel}</p>
+                  )}
                   <p className="text-sm text-gray-600">{bookingData.location?.address}</p>
+                  {bookingData.location?.id === 'your-venue' && (
+                    <p className="text-xs text-pink-600 mt-1">Our team will come to you</p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-gray-500">Date & Time</p>

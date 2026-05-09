@@ -104,7 +104,12 @@ export default function BirthdayDateStep({
       <div className="text-center space-y-2">
         <h3 className="text-2xl font-bold text-gray-900">Choose Your Party Date</h3>
         <p className="text-gray-600">
-          Birthday parties are available on Fridays and Saturdays at {location?.name || 'TinkerTank'}
+          Birthday parties are available on Fridays and Saturdays
+          {location?.id === 'your-venue'
+            ? ' — we come to your venue'
+            : location?.name
+              ? ` at ${location.name}`
+              : ''}
         </p>
       </div>
 

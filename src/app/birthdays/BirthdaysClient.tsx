@@ -31,7 +31,7 @@ export default function BirthdaysClient() {
               </div>
               <div className='flex items-center space-x-2 text-purple-100'>
                 <SparklesIcon className='w-5 h-5' />
-                <span>Hassle-Free Setup</span>
+                <span>Our Studio or Your Venue</span>
               </div>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function BirthdaysClient() {
                 Where do the parties take place?
               </h3>
               <p className='text-gray-600'>
-                All our birthday parties are in-home or at a venue you've booked. We come to you with everything needed — just provide the space and we'll handle the rest!
+                You can host your party at our fully-equipped TinkerTank Neutral Bay studio, or pick &ldquo;Your Venue&rdquo; in the booking flow and we&apos;ll bring the party to you — your home, a community hall, a local park, or anywhere you choose. Just provide the space and we&apos;ll handle the rest!
               </p>
             </div>
 

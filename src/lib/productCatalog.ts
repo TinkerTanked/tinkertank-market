@@ -110,7 +110,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
     category: 'birthdays',
     ageRange: '6+ years',
     duration: '2 hours',
-    location: 'In-home or your venue',
+    location: 'TinkerTank Neutral Bay or Your Venue',
     availability: {
       type: 'any-day',
       timeSlots: [
@@ -151,7 +151,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
     category: 'birthdays',
     ageRange: '6+ years',
     duration: '2 hours',
-    location: 'In-home or your venue',
+    location: 'TinkerTank Neutral Bay or Your Venue',
     availability: {
       type: 'any-day',
       timeSlots: [
