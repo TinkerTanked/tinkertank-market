@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
+import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 
 interface OrderWithItems {
   id: string;
@@ -34,17 +35,92 @@ interface CalendarEvent {
   };
 }
 
-export async function sendBookingConfirmationEmail(order: OrderWithItems) {
-  const emailContent = generateBookingConfirmationEmail(order);
-  
-  // In production, use a real email service like SendGrid, Resend, etc.
-  console.log('📧 Booking confirmation email:');
-  console.log('To:', order.customerEmail);
-  console.log('Subject:', emailContent.subject);
-  console.log('Body:', emailContent.body);
-  
-  // Simulate email sending
-  return { success: true, messageId: `msg_${Date.now()}` };
+// -----------------------------------------------------------------------------
+// SES client (lazy + cached). Authenticates via the pod's IRSA role on EKS,
+// or via AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY when those env vars are set.
+// -----------------------------------------------------------------------------
+let cachedSes: SESv2Client | null = null;
+function getSesClient(): SESv2Client {
+  if (cachedSes) return cachedSes;
+  const region = process.env.SES_REGION || process.env.AWS_REGION || 'ap-southeast-2';
+  cachedSes = new SESv2Client({
+    region,
+    credentials: process.env.AWS_ACCESS_KEY_ID
+      ? {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+        }
+      : undefined // Falls back to IRSA / instance role
+  });
+  return cachedSes;
+}
+
+interface SendEmailResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+
+/**
+ * Low-level SES send. Uses the SESv2 SDK SendEmail with simple HTML content
+ * (no attachments needed for booking confirmations).
+ */
+async function sendViaSes(params: {
+  to: string;
+  from: string;
+  subject: string;
+  html: string;
+  configurationSetName?: string;
+}): Promise<SendEmailResult> {
+  try {
+    const client = getSesClient();
+    const result = await client.send(
+      new SendEmailCommand({
+        FromEmailAddress: params.from,
+        Destination: { ToAddresses: [params.to] },
+        Content: {
+          Simple: {
+            Subject: { Data: params.subject, Charset: 'UTF-8' },
+            Body: { Html: { Data: params.html, Charset: 'UTF-8' } }
+          }
+        },
+        ConfigurationSetName: params.configurationSetName
+      })
+    );
+    return { success: true, messageId: result.MessageId };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[Email] SES send failed:', message);
+    return { success: false, error: message };
+  }
+}
+
+export async function sendBookingConfirmationEmail(order: OrderWithItems): Promise<SendEmailResult> {
+  const { subject, body } = generateBookingConfirmationEmail(order);
+
+  const from = process.env.SES_FROM || process.env.SMTP_FROM;
+  if (!from) {
+    console.error('[Email] SES_FROM not configured — cannot send booking confirmation for order', order.id);
+    return { success: false, error: 'SES_FROM not configured' };
+  }
+  if (!order.customerEmail) {
+    console.error('[Email] Order has no customer email — skipping confirmation for order', order.id);
+    return { success: false, error: 'No customer email' };
+  }
+
+  console.log(`[Email] Sending booking confirmation to ${order.customerEmail} for order ${order.id}`);
+  const result = await sendViaSes({
+    to: order.customerEmail,
+    from,
+    subject,
+    html: body,
+    configurationSetName: process.env.SES_CONFIGURATION_SET || undefined
+  });
+
+  if (result.success) {
+    console.log(`[Email] Booking confirmation sent (messageId=${result.messageId})`);
+  }
+  return result;
 }
 
 export function generateBookingConfirmationEmail(order: OrderWithItems) {

@@ -85,6 +85,10 @@ spec:
         app: ${REPO_NAME}
         environment: ${NODE_ENV}
     spec:
+      # Use the IRSA-annotated service account so the pod can call AWS SES
+      # (and any other AWS service) without static credentials.
+      # Created by tinkertank-infra/modules/ses (module.ses_market).
+      serviceAccountName: tinkertank-market-sa
       # Tolerate Karpenter controller taint so pods can schedule on Karpenter nodes
       tolerations:
         - key: karpenter.sh/controller
@@ -135,6 +139,16 @@ spec:
               value: "${ADMIN_PASSWORD}"
             - name: NEXT_PUBLIC_STRIPE_MODE
               value: "production"
+            # AWS SES — outbound email (booking confirmations etc.)
+            # Auth comes from the pod's IRSA role (no AWS_ACCESS_KEY_ID needed).
+            - name: AWS_REGION
+              value: "ap-southeast-2"
+            - name: SES_REGION
+              value: "ap-southeast-2"
+            - name: SES_FROM
+              value: "bookings@tinkertank.rocks"
+            - name: SES_CONFIGURATION_SET
+              value: ""
           resources:
             requests:
               memory: "256Mi"
