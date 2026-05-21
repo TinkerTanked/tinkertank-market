@@ -39,7 +39,7 @@ export default function TermsPage() {
             <p>
               These Terms and Conditions (&quot;Terms&quot;) constitute a legally binding agreement between you (&quot;Parent&quot;, &quot;Guardian&quot;, 
               or &quot;Customer&quot;) and TinkerTank Pty Ltd (&quot;TinkerTank&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) regarding your use of our 
-              website (tinkertank.rocks, tinkertank.com.au) and services, including but not limited to STEAM camps, 
+              website (tinkertank.rocks, tinkertank.rocks) and services, including but not limited to STEAM camps, 
               birthday parties, and Ignite subscription programs.
             </p>
             <p>

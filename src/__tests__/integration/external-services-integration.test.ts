@@ -341,8 +341,8 @@ describe('External Services Integration Tests', () => {
       
       const notificationData = {
         subject: 'New Booking Alert',
-        recipients: ['admin@tinkertank.com.au'],
-        cc: ['manager@tinkertank.com.au'],
+        recipients: ['admin@tinkertank.rocks'],
+        cc: ['manager@tinkertank.rocks'],
         content: 'New booking received for STEM Camp'
       };
 
@@ -355,8 +355,8 @@ describe('External Services Integration Tests', () => {
       const result = await sendAdminNotification(notificationData);
 
       expect(result.accepted).toHaveLength(2);
-      expect(result.accepted).toContain('admin@tinkertank.com.au');
-      expect(result.accepted).toContain('manager@tinkertank.com.au');
+      expect(result.accepted).toContain('admin@tinkertank.rocks');
+      expect(result.accepted).toContain('manager@tinkertank.rocks');
     });
   });
 

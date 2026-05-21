@@ -224,8 +224,8 @@ function CheckoutSuccessContent() {
               </div>
               <div className='flex items-center space-x-3'>
                 <EnvelopeIcon className='w-5 h-5 text-primary-500' />
-                <a href='mailto:hello@tinkertank.com.au' className='text-primary-600 hover:text-primary-700'>
-                  hello@tinkertank.com.au
+                <a href='mailto:hello@tinkertank.rocks' className='text-primary-600 hover:text-primary-700'>
+                  hello@tinkertank.rocks
                 </a>
               </div>
             </div>

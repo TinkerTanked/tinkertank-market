@@ -205,7 +205,7 @@ export function BookingIssueForm({ orderId = '', customerEmail = '', onSubmitted
         </button>
 
         <p className="text-xs text-gray-500 text-center">
-          For urgent issues, call us directly at (02) 9999-9999
+          For urgent issues, call us directly at 1300 670 104
         </p>
       </form>
     </div>

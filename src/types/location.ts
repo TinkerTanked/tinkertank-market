@@ -131,8 +131,8 @@ export const NEUTRAL_BAY_LOCATION: Omit<Location, 'id' | 'createdAt' | 'updatedA
     longitude: 151.2243,
   },
   contact: {
-    phone: '02 9999 0000', // Placeholder
-    email: 'neutralbay@tinkertank.com.au', // Placeholder
+    phone: '1300 670 104', // Placeholder
+    email: 'neutralbay@tinkertank.rocks', // Placeholder
   },
   facilities: [
     'STEAM Learning Lab',

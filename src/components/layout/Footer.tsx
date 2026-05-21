@@ -110,10 +110,10 @@ export default function Footer() {
               <div className='flex items-center space-x-3'>
                 <EnvelopeIcon className='w-5 h-5 text-primary-400' />
                 <a 
-                  href='mailto:hello@tinkertank.com.au' 
+                  href='mailto:hello@tinkertank.rocks' 
                   className='text-gray-300 hover:text-white transition-colors duration-200'
                 >
-                  hello@tinkertank.com.au
+                  hello@tinkertank.rocks
                 </a>
               </div>
               <div className='flex items-start space-x-3'>

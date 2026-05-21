@@ -105,7 +105,7 @@ function generateCustomerResponse(issueType: string, ticketId: string) {
   const baseMessage = {
     subject: `TinkerTank Support - Ticket #${ticketId}`,
     greeting: 'Thank you for contacting TinkerTank support.',
-    footer: '\n\nBest regards,\nTinkerTank Support Team\nhello@tinkertank.com.au\n(02) 9999-9999'
+    footer: '\n\nBest regards,\nTinkerTank Support Team\nhello@tinkertank.rocks\n1300 670 104'
   };
 
   switch (issueType) {
@@ -130,7 +130,7 @@ function generateCustomerResponse(issueType: string, ticketId: string) {
     default:
       return {
         ...baseMessage,
-        body: `${baseMessage.greeting}\n\nWe've received your inquiry and assigned it ticket number ${ticketId}. Our team will review your request and respond within 24-48 hours.\n\nIf this is urgent, please call us at (02) 9999-9999.${baseMessage.footer}`
+        body: `${baseMessage.greeting}\n\nWe've received your inquiry and assigned it ticket number ${ticketId}. Our team will review your request and respond within 24-48 hours.\n\nIf this is urgent, please call us at 1300 670 104.${baseMessage.footer}`
       };
   }
 }

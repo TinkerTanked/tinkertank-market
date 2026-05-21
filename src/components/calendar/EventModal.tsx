@@ -103,7 +103,7 @@ export default function EventModal({
       'VERSION:2.0',
       'PRODID:-//TinkerTank//Calendar//EN',
       'BEGIN:VEVENT',
-      `UID:${event.id}@tinkertank.com.au`,
+      `UID:${event.id}@tinkertank.rocks`,
       `DTSTART:${startDate}`,
       `DTEND:${endDate}`,
       `SUMMARY:${event.title}`,

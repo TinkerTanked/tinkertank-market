@@ -209,9 +209,9 @@ export function generateBookingConfirmationEmail(order: OrderWithItems) {
 
     <div style="text-align: center; color: #6b7280; font-size: 14px;">
       <p>Questions? Reply to this email or contact us:</p>
-      <p>📧 hello@tinkertank.com.au | 📞 (02) 9999-9999</p>
+      <p>📧 hello@tinkertank.rocks | 📞 1300 670 104</p>
       <p style="margin-top: 20px;">
-        <a href="https://tinkertank.com.au" style="color: #2563eb;">TinkerTank</a> - 
+        <a href="https://tinkertank.rocks" style="color: #2563eb;">TinkerTank</a> - 
         Where imagination meets innovation
       </p>
     </div>

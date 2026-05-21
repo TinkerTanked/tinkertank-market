@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
             <p>
               TinkerTank Pty Ltd (ABN to be provided) (&quot;TinkerTank&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) is committed to protecting the privacy 
               of our customers, including children who participate in our programs. This Privacy Policy explains how we collect, 
-              use, disclose, and safeguard your information when you visit our website (tinkertank.rocks, tinkertank.com.au) 
+              use, disclose, and safeguard your information when you visit our website (tinkertank.rocks, tinkertank.rocks) 
               or use our services.
             </p>
             <p>
@@ -219,7 +219,7 @@ export default function PrivacyPolicyPage() {
               <p className='font-semibold'>TinkerTank Pty Ltd</p>
               <p>Neutral Bay, NSW 2089, Australia</p>
               <p>Email: <a href='mailto:privacy@tinkertank.rocks' className='text-primary-600 hover:underline'>privacy@tinkertank.rocks</a></p>
-              <p>Phone: <a href='tel:+61XXXXXXXXXX' className='text-primary-600 hover:underline'>Contact via website</a></p>
+              <p>Phone: <a href='tel:1300670104' className='text-primary-600 hover:underline'>1300 670 104</a></p>
             </div>
             <p className='mt-4'>
               If you are not satisfied with our response, you may lodge a complaint with the 

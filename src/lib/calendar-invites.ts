@@ -29,7 +29,7 @@ export function generateICalContent(event: CalendarEvent, attendee: AttendeeInfo
     return format(date, "yyyyMMdd'T'HHmmss'Z'");
   };
 
-  const uid = `event-${event.id}@tinkertank.com.au`;
+  const uid = `event-${event.id}@tinkertank.rocks`;
   const now = new Date();
   const timestamp = formatICalDate(now);
 
@@ -47,7 +47,7 @@ export function generateICalContent(event: CalendarEvent, attendee: AttendeeInfo
     `SUMMARY:${event.title}`,
     `DESCRIPTION:${event.description || 'TinkerTank Activity'}`,
     `LOCATION:${event.location.name}, ${event.location.address}`,
-    `ORGANIZER;CN=TinkerTank:MAILTO:hello@tinkertank.com.au`,
+    `ORGANIZER;CN=TinkerTank:MAILTO:hello@tinkertank.rocks`,
     `ATTENDEE;CN=${attendee.name};RSVP=TRUE:MAILTO:${attendee.email}`,
     'STATUS:CONFIRMED',
     'TRANSP:OPAQUE',
@@ -93,7 +93,7 @@ export function generateOutlookCalendarUrl(event: CalendarEvent): string {
     body: event.description || 'TinkerTank Activity',
     location: `${event.location.name}, ${event.location.address}`,
     allday: 'false',
-    uid: `event-${event.id}@tinkertank.com.au`
+    uid: `event-${event.id}@tinkertank.rocks`
   });
 
   return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;

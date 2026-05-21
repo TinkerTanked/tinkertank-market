@@ -21,7 +21,25 @@ export default function ContactClient() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement form submission
+    const subjectLabels: Record<string, string> = {
+      general: 'General Inquiry',
+      camps: 'Holiday Camps',
+      birthday: 'Birthday Parties',
+      ignite: 'Ignite Subscriptions',
+      booking: 'Booking Support',
+      other: 'Other'
+    }
+    const subjectLine = `[${subjectLabels[formData.subject] || 'Contact Form'}] Message from ${formData.name}`
+    const body = [
+      `Name: ${formData.name}`,
+      `Email: ${formData.email}`,
+      `Phone: ${formData.phone}`,
+      `Subject: ${subjectLabels[formData.subject] || formData.subject}`,
+      '',
+      'Message:',
+      formData.message
+    ].join('\n')
+    window.location.href = `mailto:hello@tinkertank.rocks?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(body)}`
     setIsSubmitted(true)
   }
 
@@ -86,10 +104,10 @@ export default function ContactClient() {
                     <h3 className='font-display font-semibold text-lg text-gray-900'>Email</h3>
                     <p className='text-gray-600'>Send us a message anytime</p>
                     <a 
-                      href='mailto:hello@tinkertank.com.au' 
+                      href='mailto:hello@tinkertank.rocks' 
                       className='text-primary-600 hover:text-primary-700 font-medium transition-colors duration-200'
                     >
-                      hello@tinkertank.com.au
+                      hello@tinkertank.rocks
                     </a>
                   </div>
                 </div>
@@ -279,7 +297,7 @@ export default function ContactClient() {
               <p className='text-gray-600 mb-4'>
                 Send us a detailed message and we'll respond within 24 hours
               </p>
-              <a href='mailto:hello@tinkertank.com.au' className='btn-outline'>
+              <a href='mailto:hello@tinkertank.rocks' className='btn-outline'>
                 Send Email
               </a>
             </div>

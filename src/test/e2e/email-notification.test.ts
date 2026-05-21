@@ -14,9 +14,9 @@ vi.mock('nodemailer', () => ({
 beforeEach(() => {
   process.env.EMAIL_HOST = 'smtp.gmail.com';
   process.env.EMAIL_PORT = '587';
-  process.env.EMAIL_USER = 'test@tinkertank.com.au';
+  process.env.EMAIL_USER = 'test@tinkertank.rocks';
   process.env.EMAIL_PASS = 'test-password';
-  process.env.EMAIL_FROM = 'TinkerTank <bookings@tinkertank.com.au>';
+  process.env.EMAIL_FROM = 'TinkerTank <hello@tinkertank.rocks>';
 });
 
 describe('Email Notification Integration Tests', () => {
@@ -176,8 +176,8 @@ describe('Email Notification Integration Tests', () => {
                   <div class="booking-details">
                     <h3>📞 Contact Information</h3>
                     <p>If you have any questions or need to make changes to your booking:</p>
-                    <p><strong>Email:</strong> bookings@tinkertank.com.au</p>
-                    <p><strong>Phone:</strong> 1300 TINKER (1300 846 537)</p>
+                    <p><strong>Email:</strong> hello@tinkertank.rocks</p>
+                    <p><strong>Phone:</strong> 1300 670 104</p>
                     <p><strong>Emergency Contact:</strong> +61 400 123 456</p>
                   </div>
 
@@ -196,7 +196,7 @@ describe('Email Notification Integration Tests', () => {
           // Generate iCal attachment
           const startDate = event.startDateTime.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
           const endDate = event.endDateTime.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-          const uid = `${event.id}@tinkertank.com.au`;
+          const uid = `${event.id}@tinkertank.rocks`;
 
           const icalContent = [
             'BEGIN:VCALENDAR',
@@ -228,7 +228,7 @@ describe('Email Notification Integration Tests', () => {
             `SUMMARY:${event.title}`,
             `DESCRIPTION:${orderItem.product.description}\\n\\nStudent: ${orderItem.student.name}\\n${orderItem.student.allergies ? `Allergies: ${orderItem.student.allergies}\\n` : ''}${orderItem.student.medicalNotes ? `Medical: ${orderItem.student.medicalNotes}\\n` : ''}\\nOrder: ${order.id}`,
             `LOCATION:${event.location.name}\\, ${event.location.address}`,
-            `ORGANIZER:CN=TinkerTank:mailto:bookings@tinkertank.com.au`,
+            `ORGANIZER:CN=TinkerTank:mailto:hello@tinkertank.rocks`,
             `ATTENDEE:CN=${order.customerName}:mailto:${order.customerEmail}`,
             'STATUS:CONFIRMED',
             'SEQUENCE:0',
@@ -252,7 +252,7 @@ describe('Email Notification Integration Tests', () => {
       const result = await emailService.sendBookingConfirmation(mockOrder, [mockEvent]);
 
       expect(mockTransporter.sendMail).toHaveBeenCalledWith({
-        from: 'TinkerTank <bookings@tinkertank.com.au>',
+        from: 'TinkerTank <hello@tinkertank.rocks>',
         to: 'emailtest@parent.com',
         subject: 'TinkerTank Booking Confirmation - AI & Machine Learning Camp',
         html: expect.stringContaining('Email Test Student'),
@@ -423,7 +423,7 @@ describe('Email Notification Integration Tests', () => {
                 </ul>
               </div>
               
-              <p>If you need to make any changes or have questions, please contact us at bookings@tinkertank.com.au or call 1300 TINKER.</p>
+              <p>If you need to make any changes or have questions, please contact us at hello@tinkertank.rocks or call 1300 670 104.</p>
               
               <p>See you tomorrow!</p>
               <p>The TinkerTank Team 🚀</p>
@@ -440,7 +440,7 @@ describe('Email Notification Integration Tests', () => {
       const result = await reminderService.sendEventReminder('event_email_123');
 
       expect(mockTransporter.sendMail).toHaveBeenCalledWith({
-        from: 'TinkerTank <bookings@tinkertank.com.au>',
+        from: 'TinkerTank <hello@tinkertank.rocks>',
         to: 'emailtest@parent.com',
         subject: expect.stringContaining('Reminder: Email Test Student\'s'),
         html: expect.stringContaining('Tomorrow')
@@ -519,7 +519,7 @@ describe('Email Notification Integration Tests', () => {
                   <li>🎮 Game Development Bootcamp - Starting next month</li>
                   <li>🧬 Biology & Technology Lab - New program!</li>
                 </ul>
-                <p><a href="https://tinkertank.com.au/programs" style="color: #2563eb; font-weight: bold;">View All Programs →</a></p>
+                <p><a href="https://tinkertank.rocks/programs" style="color: #2563eb; font-weight: bold;">View All Programs →</a></p>
               </div>
               
               <div style="text-align: center; margin: 30px 0;">
@@ -543,7 +543,7 @@ describe('Email Notification Integration Tests', () => {
       const result = await followUpService.sendEventFollowUp('event_email_123');
 
       expect(mockTransporter.sendMail).toHaveBeenCalledWith({
-        from: 'TinkerTank <bookings@tinkertank.com.au>',
+        from: 'TinkerTank <hello@tinkertank.rocks>',
         to: 'emailtest@parent.com',
         subject: 'Thanks Email Test Student! How was your TinkerTank experience?',
         html: expect.stringContaining('Advanced programming concepts')
@@ -620,14 +620,14 @@ describe('Email Notification Integration Tests', () => {
                   <li>🔄 Credit toward any other TinkerTank program</li>
                   <li>📞 Priority booking for similar future events</li>
                 </ul>
-                <p><strong>To discuss alternatives, please reply to this email or call us at 1300 TINKER.</strong></p>
+                <p><strong>To discuss alternatives, please reply to this email or call us at 1300 670 104.</strong></p>
               </div>
               
               <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
                 <h3>📞 Need Assistance?</h3>
                 <p>Our team is here to help:</p>
-                <p><strong>Email:</strong> bookings@tinkertank.com.au</p>
-                <p><strong>Phone:</strong> 1300 TINKER (1300 846 537)</p>
+                <p><strong>Email:</strong> hello@tinkertank.rocks</p>
+                <p><strong>Phone:</strong> 1300 670 104</p>
                 <p><strong>Hours:</strong> Monday-Friday 9AM-6PM, Saturday 9AM-4PM</p>
               </div>
               
@@ -648,7 +648,7 @@ describe('Email Notification Integration Tests', () => {
       const result = await cancellationService.sendCancellationNotification('event_email_123', 'Instructor illness');
 
       expect(mockTransporter.sendMail).toHaveBeenCalledWith({
-        from: 'TinkerTank <bookings@tinkertank.com.au>',
+        from: 'TinkerTank <hello@tinkertank.rocks>',
         to: 'emailtest@parent.com',
         subject: 'Event Cancelled - Full Refund Processing for Email Test Student',
         html: expect.stringContaining('Instructor illness')
@@ -729,7 +729,7 @@ describe('Email Notification Integration Tests', () => {
               
               <p>We apologize for any inconvenience these changes may cause and appreciate your flexibility.</p>
               
-              <p>Questions? Contact us at bookings@tinkertank.com.au or 1300 TINKER.</p>
+              <p>Questions? Contact us at hello@tinkertank.rocks or 1300 670 104.</p>
               
               <p>Looking forward to seeing ${student.name} at the updated time!</p>
               <p>Best regards,<br>The TinkerTank Team</p>
