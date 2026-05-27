@@ -8,7 +8,7 @@ interface ScheduleItem {
   studentId: string;
   studentName: string;
   productName: string;
-  productType: 'DAY_CAMP' | 'ALL_DAY_CAMP';
+  productType: 'DAY_CAMP' | 'ALL_DAY_CAMP' | 'BIRTHDAY';
   parentName: string;
   parentEmail: string;
   parentPhone: string | null;
@@ -22,6 +22,7 @@ interface LocationSummary {
   totalStudents: number;
   dayCampCount: number;
   allDayCampCount: number;
+  birthdayCount: number;
   mentorsNeeded: number;
 }
 
@@ -39,6 +40,7 @@ interface ScheduleResponse {
     mentorsNeeded: number;
     dayCampCount: number;
     allDayCampCount: number;
+    birthdayCount: number;
     byLocation: Record<string, LocationSummary>;
   };
 }
@@ -50,6 +52,7 @@ interface WeekDaySummary {
   totalStudents: number;
   dayCampCount: number;
   allDayCampCount: number;
+  birthdayCount: number;
   mentorsNeeded: number;
 }
 
@@ -68,14 +71,19 @@ function buildLocationSummary(items: ScheduleItem[]): Record<string, LocationSum
         totalStudents: 0,
         dayCampCount: 0,
         allDayCampCount: 0,
+        birthdayCount: 0,
         mentorsNeeded: 0
       };
     }
     const loc = byLocation[item.locationId];
     loc.totalStudents++;
     if (item.productType === 'DAY_CAMP') loc.dayCampCount++;
-    else loc.allDayCampCount++;
-    loc.mentorsNeeded = Math.ceil(loc.totalStudents / 4);
+    else if (item.productType === 'ALL_DAY_CAMP') loc.allDayCampCount++;
+    else if (item.productType === 'BIRTHDAY') loc.birthdayCount++;
+    // Birthdays come with their own host so they don't count toward camp mentor
+    // ratios. Mentors needed is still 1 per 4 camp students.
+    const campStudents = loc.dayCampCount + loc.allDayCampCount;
+    loc.mentorsNeeded = Math.ceil(campStudents / 4);
   }
   return byLocation;
 }
@@ -88,7 +96,7 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
         lte: rangeEnd
       },
       product: {
-        type: 'CAMP'
+        type: { in: ['CAMP', 'BIRTHDAY'] }
       },
       status: {
         in: ['CONFIRMED', 'PENDING']
@@ -131,10 +139,26 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
   });
 
   return bookings.map(booking => {
-    const isAllDay = booking.product.name.toLowerCase().includes('all day') ||
-                     booking.product.duration === 480;
-    const timeSlot = isAllDay ? '9am - 5pm' : '9am - 3pm';
-    const productType = isAllDay ? 'ALL_DAY_CAMP' : 'DAY_CAMP';
+    const isBirthday = booking.product.type === 'BIRTHDAY';
+    const isAllDay = !isBirthday && (
+      booking.product.name.toLowerCase().includes('all day') ||
+      booking.product.duration === 480
+    );
+
+    let productType: ScheduleItem['productType'];
+    let timeSlot: string;
+    if (isBirthday) {
+      productType = 'BIRTHDAY';
+      // Use the booking's actual start/end (set at order time) to render the
+      // party's chosen time slot.
+      timeSlot = `${format(booking.startDate, 'h:mma').toLowerCase()} - ${format(booking.endDate, 'h:mma').toLowerCase()}`;
+    } else if (isAllDay) {
+      productType = 'ALL_DAY_CAMP';
+      timeSlot = '9am - 5pm';
+    } else {
+      productType = 'DAY_CAMP';
+      timeSlot = '9am - 3pm';
+    }
 
     const parentInfo = parentInfoMap.get(booking.studentId);
     const emergencyPhone = booking.student.emergencyContactPhone;
@@ -197,7 +221,8 @@ export async function GET(request: NextRequest) {
       const totalStudents = dayItems.length;
       const dayCampCount = dayItems.filter(i => i.productType === 'DAY_CAMP').length;
       const allDayCampCount = dayItems.filter(i => i.productType === 'ALL_DAY_CAMP').length;
-      const mentorsNeeded = Math.ceil(totalStudents / 4);
+      const birthdayCount = dayItems.filter(i => i.productType === 'BIRTHDAY').length;
+      const mentorsNeeded = Math.ceil((dayCampCount + allDayCampCount) / 4);
 
       days.push({
         date: dayStr,
@@ -206,6 +231,7 @@ export async function GET(request: NextRequest) {
         totalStudents,
         dayCampCount,
         allDayCampCount,
+        birthdayCount,
         mentorsNeeded
       });
       current = addDays(current, 1);
@@ -238,7 +264,8 @@ export async function GET(request: NextRequest) {
       const totalStudents = dayItems.length;
       const dayCampCount = dayItems.filter(i => i.productType === 'DAY_CAMP').length;
       const allDayCampCount = dayItems.filter(i => i.productType === 'ALL_DAY_CAMP').length;
-      const mentorsNeeded = Math.ceil(totalStudents / 4);
+      const birthdayCount = dayItems.filter(i => i.productType === 'BIRTHDAY').length;
+      const mentorsNeeded = Math.ceil((dayCampCount + allDayCampCount) / 4);
 
       days.push({
         date: dayStr,
@@ -247,6 +274,7 @@ export async function GET(request: NextRequest) {
         totalStudents,
         dayCampCount,
         allDayCampCount,
+        birthdayCount,
         mentorsNeeded
       });
     }
@@ -269,8 +297,9 @@ export async function GET(request: NextRequest) {
 
   const dayCampCount = items.filter(i => i.productType === 'DAY_CAMP').length;
   const allDayCampCount = items.filter(i => i.productType === 'ALL_DAY_CAMP').length;
+  const birthdayCount = items.filter(i => i.productType === 'BIRTHDAY').length;
   const totalStudents = items.length;
-  const mentorsNeeded = Math.ceil(totalStudents / 4);
+  const mentorsNeeded = Math.ceil((dayCampCount + allDayCampCount) / 4);
   const byLocation = buildLocationSummary(items);
 
   const response: ScheduleResponse = {
@@ -282,6 +311,7 @@ export async function GET(request: NextRequest) {
       mentorsNeeded,
       dayCampCount,
       allDayCampCount,
+      birthdayCount,
       byLocation
     }
   };

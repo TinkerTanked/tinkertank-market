@@ -51,6 +51,33 @@ async function main() {
       isActive: true,
     },
     {
+      id: 'robotics-party',
+      name: 'Robotics Party',
+      type: ProductType.BIRTHDAY,
+      price: 450,
+      duration: 120,
+      description:
+        'Fantastic builds and exciting challenges! Kids will design, build and program their own robots in this hands-on birthday celebration.',
+      ageMin: 6,
+      ageMax: 16,
+      isActive: true,
+    },
+    {
+      id: 'coding-party',
+      name: 'Coding Party',
+      type: ProductType.BIRTHDAY,
+      price: 450,
+      duration: 120,
+      description:
+        'Explore the world of AI, Minecraft and Scratch in this interactive coding birthday party! Kids will create, play and learn together.',
+      ageMin: 6,
+      ageMax: 16,
+      isActive: true,
+    },
+    // Legacy birthday SKUs — kept for historical orders but hidden from new
+    // purchases. The current catalog (src/lib/productCatalog.ts) only exposes
+    // robotics-party and coding-party.
+    {
       id: 'battle-bots-party',
       name: 'Battle Bots Party',
       type: ProductType.BIRTHDAY,
@@ -59,7 +86,7 @@ async function main() {
       description: 'Build, program, and battle with custom robots in this epic birthday celebration!',
       ageMin: 8,
       ageMax: 14,
-      isActive: true,
+      isActive: false,
     },
     {
       id: 'gamer-party',
@@ -70,7 +97,7 @@ async function main() {
       description: 'Level up your birthday with game design, coding challenges, and multiplayer tournaments!',
       ageMin: 8,
       ageMax: 14,
-      isActive: true,
+      isActive: false,
     },
     {
       id: '3d-design-party',
@@ -81,7 +108,7 @@ async function main() {
       description: 'Design, create, and 3D print amazing projects in this innovative birthday experience!',
       ageMin: 8,
       ageMax: 14,
-      isActive: true,
+      isActive: false,
     },
   ]
 

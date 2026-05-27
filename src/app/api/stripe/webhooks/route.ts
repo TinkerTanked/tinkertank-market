@@ -185,13 +185,23 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                 continue;
               }
 
-              // Set proper camp times: Day Camp 9am-3pm, All Day Camp 9am-5pm
-              // IMPORTANT: Use setUTCHours to avoid server-timezone shifts that put dates on wrong day
-              const isAllDay = orderItem.product.name.toLowerCase().includes('all day')
+              // Set booking start/end times:
+              //   - CAMP: Day Camp 9am-3pm, All Day Camp 9am-5pm (UTC to avoid
+              //     server-timezone shifts that put dates on the wrong day)
+              //   - BIRTHDAY: respect the customer-selected time stored on the
+              //     order item's bookingDate, with end = start + product.duration
+              //     (defaults to 120 minutes if duration is missing).
+              const isBirthday = orderItem.product.type === 'BIRTHDAY'
+              const isAllDay = !isBirthday && orderItem.product.name.toLowerCase().includes('all day')
               const startDate = new Date(orderItem.bookingDate)
-              startDate.setUTCHours(9, 0, 0, 0)
               const endDate = new Date(orderItem.bookingDate)
-              endDate.setUTCHours(isAllDay ? 17 : 15, 0, 0, 0)
+              if (isBirthday) {
+                const durationMinutes = orderItem.product.duration || 120
+                endDate.setTime(startDate.getTime() + durationMinutes * 60 * 1000)
+              } else {
+                startDate.setUTCHours(9, 0, 0, 0)
+                endDate.setUTCHours(isAllDay ? 17 : 15, 0, 0, 0)
+              }
 
               // Prevent duplicate bookings (same student+product+date)
               const existingBooking = await tx.booking.findFirst({

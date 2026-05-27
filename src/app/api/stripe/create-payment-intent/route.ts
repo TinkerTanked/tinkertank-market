@@ -81,14 +81,29 @@ export async function POST(request: NextRequest) {
       }
 
       serverTotal += expectedTotal;
-      
+
+      // For birthday parties the customer picks a specific start time. Combine
+      // selectedDate + selectedTimeSlot.startTime into the booking DateTime so
+      // downstream (webhook + admin schedule) can render the actual party slot
+      // instead of defaulting to 9am.
+      let bookingDate: Date | null = null;
+      if (item.selectedDate) {
+        bookingDate = new Date(item.selectedDate);
+        if (product.type === 'BIRTHDAY' && item.selectedTimeSlot?.startTime) {
+          const [hh, mm] = item.selectedTimeSlot.startTime.split(':').map(Number);
+          if (!Number.isNaN(hh) && !Number.isNaN(mm)) {
+            bookingDate.setUTCHours(hh, mm, 0, 0);
+          }
+        }
+      }
+
       // Prepare order items for database storage
       for (const student of item.students) {
         orderItems.push({
           productId: product.id,
           studentId: student.id || `temp-${Date.now()}-${Math.random()}`,
           studentData: student,
-          bookingDate: item.selectedDate ? new Date(item.selectedDate) : null,
+          bookingDate,
           timeSlot: item.selectedTimeSlot,
           price: Number(product.price),
           notes: item.notes,

@@ -12,7 +12,7 @@ interface ScheduleItem {
   studentId: string;
   studentName: string;
   productName: string;
-  productType: 'DAY_CAMP' | 'ALL_DAY_CAMP';
+  productType: 'DAY_CAMP' | 'ALL_DAY_CAMP' | 'BIRTHDAY';
   parentName: string;
   parentEmail: string;
   parentPhone: string | null;
@@ -25,6 +25,7 @@ interface LocationSummary {
   totalStudents: number;
   dayCampCount: number;
   allDayCampCount: number;
+  birthdayCount: number;
   mentorsNeeded: number;
 }
 
@@ -37,6 +38,7 @@ interface ScheduleData {
     mentorsNeeded: number;
     dayCampCount: number;
     allDayCampCount: number;
+    birthdayCount: number;
     byLocation: Record<string, LocationSummary>;
   };
 }
@@ -48,6 +50,7 @@ interface WeekDayData {
   totalStudents: number;
   dayCampCount: number;
   allDayCampCount: number;
+  birthdayCount: number;
   mentorsNeeded: number;
 }
 
@@ -94,11 +97,12 @@ function SummaryCards({ summary, locationId }: {
         totalStudents: summary.totalStudents,
         dayCampCount: summary.dayCampCount,
         allDayCampCount: summary.allDayCampCount,
+        birthdayCount: summary.birthdayCount,
         mentorsNeeded: summary.mentorsNeeded
       };
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-5 gap-4">
       <div className="bg-white p-4 rounded-lg border border-gray-200">
         <div className="text-2xl font-bold text-gray-900">{stats.totalStudents}</div>
         <div className="text-sm text-gray-500">Total Students</div>
@@ -114,6 +118,10 @@ function SummaryCards({ summary, locationId }: {
       <div className="bg-white p-4 rounded-lg border border-gray-200">
         <div className="text-2xl font-bold text-purple-600">{stats.allDayCampCount}</div>
         <div className="text-sm text-gray-500">All Day (9-5)</div>
+      </div>
+      <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="text-2xl font-bold text-pink-600">{stats.birthdayCount}</div>
+        <div className="text-sm text-gray-500">Birthday Parties</div>
       </div>
     </div>
   );
@@ -396,10 +404,13 @@ export default function AdminSchedule() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={clsx(
                               'px-2 py-1 text-sm font-medium rounded',
-                              item.productType === 'ALL_DAY_CAMP'
-                                ? 'bg-purple-100 text-purple-800'
-                                : 'bg-blue-100 text-blue-800'
+                              item.productType === 'BIRTHDAY'
+                                ? 'bg-pink-100 text-pink-800'
+                                : item.productType === 'ALL_DAY_CAMP'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-blue-100 text-blue-800'
                             )}>
+                              {item.productType === 'BIRTHDAY' && '🎂 '}
                               {item.timeSlot}
                             </span>
                           </td>
@@ -493,6 +504,7 @@ function MonthView({ monthData, loading, selectedDate, selectedLocationId, onDay
                     totalStudents: day.totalStudents,
                     dayCampCount: day.dayCampCount,
                     allDayCampCount: day.allDayCampCount,
+                    birthdayCount: day.birthdayCount,
                     mentorsNeeded: day.mentorsNeeded
                   };
 
@@ -521,14 +533,16 @@ function MonthView({ monthData, loading, selectedDate, selectedLocationId, onDay
                   {stats.totalStudents > 0 && (
                     <div className="space-y-0.5">
                       <div className="text-lg font-bold text-gray-900 leading-tight">{stats.totalStudents}</div>
-                      <div className="flex items-center gap-1 text-[10px]">
+                      <div className="flex items-center flex-wrap gap-x-1 text-[10px]">
                         {stats.dayCampCount > 0 && <span className="text-blue-600">{stats.dayCampCount}d</span>}
-                        {stats.dayCampCount > 0 && stats.allDayCampCount > 0 && <span className="text-gray-300">·</span>}
                         {stats.allDayCampCount > 0 && <span className="text-purple-600">{stats.allDayCampCount}ad</span>}
+                        {stats.birthdayCount > 0 && <span className="text-pink-600">🎂{stats.birthdayCount}</span>}
                       </div>
-                      <div className="text-[10px] text-orange-600 font-medium">
-                        {stats.mentorsNeeded}m
-                      </div>
+                      {stats.mentorsNeeded > 0 && (
+                        <div className="text-[10px] text-orange-600 font-medium">
+                          {stats.mentorsNeeded}m
+                        </div>
+                      )}
                     </div>
                   )}
                 </button>
@@ -569,6 +583,7 @@ function WeekView({ weekData, loading, selectedLocationId, onDayClick }: {
                 totalStudents: day.totalStudents,
                 dayCampCount: day.dayCampCount,
                 allDayCampCount: day.allDayCampCount,
+                birthdayCount: day.birthdayCount,
                 mentorsNeeded: day.mentorsNeeded
               };
 
@@ -598,14 +613,18 @@ function WeekView({ weekData, loading, selectedLocationId, onDayClick }: {
                     <div className="text-xl font-bold text-gray-900">{stats.totalStudents}</div>
                     <div className="text-xs text-gray-500">students</div>
                   </div>
-                  <div className="flex items-center space-x-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-x-2 text-xs">
                     <span className="text-blue-600">{stats.dayCampCount} day</span>
-                    <span className="text-gray-300">|</span>
                     <span className="text-purple-600">{stats.allDayCampCount} all day</span>
+                    {stats.birthdayCount > 0 && (
+                      <span className="text-pink-600">🎂 {stats.birthdayCount}</span>
+                    )}
                   </div>
-                  <div className="text-xs text-orange-600 font-medium">
-                    {stats.mentorsNeeded} mentors
-                  </div>
+                  {stats.mentorsNeeded > 0 && (
+                    <div className="text-xs text-orange-600 font-medium">
+                      {stats.mentorsNeeded} mentors
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-xs text-gray-400 mt-2">No bookings</div>

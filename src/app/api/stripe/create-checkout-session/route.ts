@@ -22,6 +22,10 @@ const CreateCheckoutSessionSchema = z.object({
     })),
     selectedDate: z.string().optional(),
     selectedDates: z.array(z.string()).optional(),
+    selectedTimeSlot: z.object({
+      startTime: z.string(),
+      endTime: z.string(),
+    }).optional(),
     isSubscription: z.boolean().optional(),
     stripePriceId: z.string().optional(),
     productName: z.string().optional(),
@@ -139,10 +143,24 @@ export async function POST(request: NextRequest) {
           throw new Error('Valid booking date is required')
         }
 
+        // For birthday parties the customer picks a specific time slot. Encode
+        // the slot's startTime into the bookingDate so the webhook and admin
+        // schedule render the actual party time rather than defaulting to 9am.
+        if (product.type === 'BIRTHDAY' && item.selectedTimeSlot?.startTime) {
+          const [hh, mm] = item.selectedTimeSlot.startTime.split(':').map(Number)
+          if (!Number.isNaN(hh) && !Number.isNaN(mm)) {
+            bookingDates = bookingDates.map(d => {
+              const withTime = new Date(d)
+              withTime.setUTCHours(hh, mm, 0, 0)
+              return withTime
+            })
+          }
+        }
+
         // For bundles, create an order item for EACH date
         // For regular camps, create one order item per date selected
         const pricePerDay = isBundle ? unitPrice / bookingDates.length : unitPrice
-        
+
         for (const bookingDate of bookingDates) {
           orderItems.push({
             productId: product.id,
