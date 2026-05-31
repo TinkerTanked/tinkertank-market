@@ -93,7 +93,7 @@ const dayCampProduct: Product = {
   name: 'Day Camp',
   description: 'Join us for an exciting day of coding, robotics, and tech adventures!',
   shortDescription: 'Daily tech adventures for young innovators',
-  price: 109.99,
+  price: 119.99,
   category: 'camps',
   ageRange: '6-16 years',
   duration: '6 hours',
@@ -334,8 +334,8 @@ describe('Camp Purchase End-to-End Integration Tests', () => {
       expect(result.current.items[0].quantity).toBe(1)
 
       const summary = result.current.getSummary()
-      expect(summary.subtotal).toBeCloseTo(109.99, 2)
-      expect(summary.total).toBeCloseTo(109.99, 2)
+      expect(summary.subtotal).toBeCloseTo(119.99, 2)
+      expect(summary.total).toBeCloseTo(119.99, 2)
 
       const itemId = result.current.items[0].id
 
@@ -352,7 +352,7 @@ describe('Camp Purchase End-to-End Integration Tests', () => {
         {
           product: dayCampProduct,
           bookingDate: selectedDate,
-          price: 109.99,
+          price: 119.99,
           studentId: 'student-1'
         }
       ])
@@ -448,7 +448,7 @@ describe('Camp Purchase End-to-End Integration Tests', () => {
       expect(summary.subtotal).toBeCloseTo(299.99, 2)
       expect(summary.total).toBeCloseTo(299.99, 2)
 
-      const regularDayCampCost = 109.99 * 3
+      const regularDayCampCost = 119.99 * 3
       expect(summary.total).toBeLessThan(regularDayCampCost)
 
       const itemId = result.current.items[0].id
@@ -538,7 +538,7 @@ describe('Camp Purchase End-to-End Integration Tests', () => {
         {
           product: dayCampProduct,
           bookingDate: selectedDate,
-          price: 109.99,
+          price: 119.99,
           studentId: 'student-1'
         }
       ])
@@ -564,7 +564,7 @@ describe('Camp Purchase End-to-End Integration Tests', () => {
           startDate: new Date('2025-04-15T09:00:00'),
           endDate: new Date('2025-04-15T15:00:00'),
           status: 'CONFIRMED',
-          totalPrice: 109.99
+          totalPrice: 119.99
         }
       ]
 
@@ -643,7 +643,7 @@ describe('Camp Purchase End-to-End Integration Tests', () => {
       })
 
       const summary = result.current.getSummary()
-      expect(summary.total).toBeCloseTo(109.99 * 2, 2)
+      expect(summary.total).toBeCloseTo(119.99 * 2, 2)
     })
   })
 
@@ -720,7 +720,7 @@ describe('Camp Purchase End-to-End Integration Tests', () => {
         {
           product: dayCampProduct,
           bookingDate: new Date('2025-04-15'),
-          price: 109.99,
+          price: 119.99,
           studentId: 'student-1'
         }
       ])

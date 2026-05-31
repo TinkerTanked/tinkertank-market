@@ -38,7 +38,7 @@ describe('Camp Pricing Logic', () => {
       const dayCamp = createMockProduct({
         id: 'day-camp',
         name: 'Day Camp',
-        price: 109.99
+        price: 119.99
       })
       const selectedDates = [
         new Date('2024-06-01'),
@@ -54,8 +54,8 @@ describe('Camp Pricing Logic', () => {
       })
 
       const summary = result.current.getSummary()
-      expect(summary.total).toBeCloseTo(109.99 * 3, 2) // 329.97
-      expect(result.current.items[0].totalPrice).toBeCloseTo(329.97, 2)
+      expect(summary.total).toBeCloseTo(119.99 * 3, 2) // 359.97
+      expect(result.current.items[0].totalPrice).toBeCloseTo(359.97, 2)
     })
 
     it('should calculate price for single day correctly', () => {
@@ -63,7 +63,7 @@ describe('Camp Pricing Logic', () => {
       const dayCamp = createMockProduct({
         id: 'day-camp',
         name: 'Day Camp',
-        price: 109.99
+        price: 119.99
       })
       const selectedDates = [new Date('2024-06-01')]
 
@@ -75,7 +75,7 @@ describe('Camp Pricing Logic', () => {
       })
 
       const summary = result.current.getSummary()
-      expect(summary.total).toBeCloseTo(109.99, 2)
+      expect(summary.total).toBeCloseTo(119.99, 2)
     })
 
     it('should multiply price by dates for all-day-camp', () => {
@@ -256,7 +256,7 @@ describe('Camp Pricing Logic', () => {
       const dayCamp = createMockProduct({
         id: 'day-camp',
         name: 'Day Camp',
-        price: 109.99
+        price: 119.99
       })
       const selectedDates = [
         new Date('2024-06-01'),
@@ -272,7 +272,7 @@ describe('Camp Pricing Logic', () => {
       })
 
       const summary = result.current.getSummary()
-      expect(summary.total).toBeCloseTo(109.99 * 2 * 3, 2) // 659.94
+      expect(summary.total).toBeCloseTo(119.99 * 2 * 3, 2) // 719.94
     })
   })
 
@@ -282,7 +282,7 @@ describe('Camp Pricing Logic', () => {
       const dayCamp = createMockProduct({
         id: 'day-camp',
         name: 'Day Camp',
-        price: 109.99
+        price: 119.99
       })
 
       act(() => {
@@ -293,7 +293,7 @@ describe('Camp Pricing Logic', () => {
       })
 
       const summary = result.current.getSummary()
-      expect(summary.total).toBeCloseTo(109.99, 2)
+      expect(summary.total).toBeCloseTo(119.99, 2)
     })
 
     it('should handle undefined selectedDates', () => {
@@ -301,7 +301,7 @@ describe('Camp Pricing Logic', () => {
       const dayCamp = createMockProduct({
         id: 'day-camp',
         name: 'Day Camp',
-        price: 109.99
+        price: 119.99
       })
 
       act(() => {
@@ -311,7 +311,7 @@ describe('Camp Pricing Logic', () => {
       })
 
       const summary = result.current.getSummary()
-      expect(summary.total).toBeCloseTo(109.99, 2)
+      expect(summary.total).toBeCloseTo(119.99, 2)
     })
 
     it('should update price correctly when quantity is changed', () => {
@@ -319,7 +319,7 @@ describe('Camp Pricing Logic', () => {
       const dayCamp = createMockProduct({
         id: 'day-camp',
         name: 'Day Camp',
-        price: 109.99
+        price: 119.99
       })
       const selectedDates = [
         new Date('2024-06-01'),
@@ -340,7 +340,7 @@ describe('Camp Pricing Logic', () => {
       })
 
       const summary = result.current.getSummary()
-      expect(summary.total).toBeCloseTo(109.99 * 3 * 2, 2) // 659.94
+      expect(summary.total).toBeCloseTo(119.99 * 3 * 2, 2) // 719.94
     })
 
     it('should update bundle price correctly when quantity is changed', () => {

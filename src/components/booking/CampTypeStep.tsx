@@ -28,7 +28,7 @@ const CAMP_TYPES: CampType[] = [
     id: 'day-camp',
     type: 'day',
     name: 'Day Camp',
-    price: 109.99,
+    price: 119.99,
     duration: '6 hours',
     time: '9:00 AM - 3:00 PM'
   },
@@ -155,7 +155,7 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
                 </div>
                 {campType.isBundle && (
                   <div className="text-xs text-green-600 font-medium mt-1">
-                    Save ${((campType.type === 'day-bundle' ? 109.99 : 149.99) * 3 - campType.price).toFixed(2)}!
+                    Save ${((campType.type === 'day-bundle' ? 119.99 : 149.99) * 3 - campType.price).toFixed(2)}!
                   </div>
                 )}
               </div>
@@ -246,7 +246,7 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
             <div className="text-center text-gray-900">8 hours</div>
             
             <div className="text-gray-600">Price</div>
-            <div className="text-center text-green-600 font-bold">$109.99</div>
+            <div className="text-center text-green-600 font-bold">$119.99</div>
             <div className="text-center text-green-600 font-bold">$149.99</div>
           </div>
         </div>

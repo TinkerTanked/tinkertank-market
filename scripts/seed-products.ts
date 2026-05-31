@@ -10,7 +10,7 @@ async function main() {
       id: 'day-camp',
       name: 'Day Camp',
       type: ProductType.CAMP,
-      price: 109.99,
+      price: 119.99,
       duration: 360,
       description: 'Join us for an exciting day of coding, robotics, and tech adventures! Our day camps provide the perfect introduction to STEAM learning in a fun, engaging environment.',
       ageMin: 6,

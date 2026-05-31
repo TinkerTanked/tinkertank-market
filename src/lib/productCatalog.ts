@@ -48,7 +48,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
     name: 'Day Camp',
     description: 'Join us for an exciting day of coding, robotics, and tech adventures! Our day camps provide the perfect introduction to STEAM learning in a fun, engaging environment.',
     shortDescription: 'Daily tech adventures for young innovators',
-    price: 109.99,
+    price: 119.99,
     category: 'camps',
     ageRange: '6-16 years',
     duration: '6 hours',
