@@ -287,7 +287,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
               allergies: item.student.allergies || undefined
             },
             bookingDate: item.bookingDate,
-            price: Number(item.price)
+            price: Number(item.price),
+            // Forward per-item location info so the email template can render
+            // the correct arrival block (Manly Library vs Neutral Bay vs Your
+            // Venue) instead of hardcoded Neutral Bay.
+            location: item.location,
+            venueAddress: item.venueAddress
           }))
         }),
         {
@@ -403,7 +408,12 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
               allergies: item.student.allergies || undefined
             },
             bookingDate: item.bookingDate,
-            price: Number(item.price)
+            price: Number(item.price),
+            // Forward per-item location info so the email template can render
+            // the correct arrival block (Manly Library vs Neutral Bay vs Your
+            // Venue) instead of hardcoded Neutral Bay.
+            location: item.location,
+            venueAddress: item.venueAddress
           }))
         }),
         {
