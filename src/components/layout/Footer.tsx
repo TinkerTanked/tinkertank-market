@@ -68,7 +68,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Support */}
           <div className='space-y-4'>
             <h3 className='font-display font-semibold text-lg'>Support</h3>
             <div className='space-y-2'>
@@ -78,11 +78,17 @@ export default function Footer() {
               <Link href='/faq' className='block text-gray-300 hover:text-white transition-colors duration-200'>
                 FAQ
               </Link>
-              <Link href='/policies' className='block text-gray-300 hover:text-white transition-colors duration-200'>
-                Policies
+              <Link href='/child-safety' className='block text-gray-300 hover:text-white transition-colors duration-200'>
+                Child Safety
+              </Link>
+              <Link href='/terms' className='block text-gray-300 hover:text-white transition-colors duration-200'>
+                Terms of Service
               </Link>
               <Link href='/privacy' className='block text-gray-300 hover:text-white transition-colors duration-200'>
                 Privacy Policy
+              </Link>
+              <Link href='/refunds' className='block text-gray-300 hover:text-white transition-colors duration-200'>
+                Refund Policy
               </Link>
             </div>
           </div>
@@ -128,22 +134,12 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className='border-t border-gray-800 mt-12 pt-8'>
-          <div className='flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0'>
-            <div className='text-gray-400 text-sm'>
-              © 2025 TinkerTank. All rights reserved.
-            </div>
-            <div className='flex items-center space-x-6 text-sm text-gray-400'>
-              <Link href='/terms' className='hover:text-white transition-colors duration-200'>
-                Terms of Service
-              </Link>
-              <Link href='/privacy' className='hover:text-white transition-colors duration-200'>
-                Privacy Policy
-              </Link>
-              <Link href='/refunds' className='hover:text-white transition-colors duration-200'>
-                Refund Policy
-              </Link>
-            </div>
+        <div className='border-t border-gray-800 mt-12 pt-8 space-y-4'>
+          <p className='text-gray-400 text-sm text-center max-w-3xl mx-auto'>
+            &ldquo;TinkerTank is committed to providing a safe, inclusive, and empowering environment for all children and young people.&rdquo;
+          </p>
+          <div className='text-gray-400 text-sm text-center'>
+            © 2025 TinkerTank. All rights reserved.
           </div>
         </div>
       </div>
