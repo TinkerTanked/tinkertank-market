@@ -30,7 +30,7 @@ export default function RefundsPage() {
 
         <div className='space-y-4 mb-12'>
           <h1 className='text-4xl md:text-5xl font-display font-bold text-gray-900'>Refund & Cancellation Policy</h1>
-          <p className='text-gray-500'>Last updated: 15 February 2026</p>
+          <p className='text-gray-500'>Last updated: 14 June 2026</p>
         </div>
 
         <div className='bg-primary-50 border border-primary-200 rounded-xl p-6 mb-12'>

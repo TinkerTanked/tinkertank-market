@@ -67,30 +67,72 @@ export default function AboutPage() {
               Our Story
             </h2>
             <p className='text-xl text-gray-600'>
-              From a small idea to empowering hundreds of young minds
+              From a simple question to inspiring the next generation of creators
             </p>
           </div>
 
           <div className='space-y-12'>
-            <div className='prose prose-lg max-w-none text-gray-700'>
+            <div className='max-w-none text-lg leading-relaxed text-gray-700 space-y-6'>
               <p>
-                TinkerTank began when our founder, a passionate engineer and parent, noticed the gap between 
-                traditional education and the hands-on learning that truly sparks curiosity in children. 
-                Too many kids were losing interest in STEAM subjects because they seemed abstract and disconnected 
-                from real-world applications.
+                TinkerTank began with a simple question: What if learning could be as engaging, creative, and
+                inspiring as the future our children are growing into?
               </p>
-              
+
               <p>
-                We started with a simple workshop in a garage, teaching a handful of neighborhood kids how to 
-                build simple robots. The enthusiasm was infectious. Kids who had never shown interest in 
-                science were suddenly asking questions, experimenting, and dreaming of becoming inventors.
+                Our founder, Julija McDowell, has spent her career at the intersection of creativity, technology,
+                and education. Before founding TinkerTank, Julija worked in the film and animation industry,
+                contributing to major productions and developing a deep understanding of the power of storytelling,
+                technology, and innovation.
               </p>
-              
+
               <p>
-                Today, TinkerTank has grown into Sydney's premier destination for hands-on STEAM education. 
-                We've helped over 500 children discover their passion for science, technology, engineering, 
-                and mathematics through engaging, age-appropriate experiences that feel more like play than learning.
+                When her own children were young, Julija became increasingly interested in alternative approaches to
+                education. She began homeschooling, exploring how children learn best when they are engaged, curious,
+                and given the freedom to pursue their interests. This experience led her to develop an early home
+                education platform and learning app, designed to help families create more personalised learning
+                experiences.
               </p>
+
+              <p>What started as a personal journey soon became a much bigger mission.</p>
+
+              <p>In 2015, TinkerTank was born.</p>
+
+              <p>
+                The vision was simple: create a place where students could learn by doing. A place where robotics,
+                coding, engineering, animation, design, creativity, and problem-solving came together in a hands-on
+                environment that encouraged curiosity, collaboration, resilience, and innovation.
+              </p>
+
+              <p>
+                Over the past decade, TinkerTank has worked with more than 15,000 students across Sydney through
+                after-school programs, holiday camps, school incursions, libraries, community programs, and special
+                events. Along the way, we have seen thousands of students discover new passions, build confidence,
+                develop future-ready skills, and experience those magical &ldquo;A-Ha!&rdquo; moments that happen when
+                learning becomes meaningful.
+              </p>
+
+              <p>Today, our mission continues to evolve.</p>
+
+              <p>
+                As the world changes, the skills students need are changing too. Technical skills matter, but so do
+                creativity, critical thinking, emotional intelligence, resilience, communication, and adaptability.
+              </p>
+
+              <p>
+                That&apos;s why TinkerTank combines STEAM education with project-based learning, real-world
+                challenges, and a strong focus on human skills.
+              </p>
+
+              <p>
+                Today, we are proud to partner with schools, libraries, councils, and community organisations to bring
+                engaging, future-focused learning experiences to even more students. Through workshops, incursions,
+                professional development, holiday programs, and innovative learning pathways, we continue to inspire
+                the next generation of creators, inventors, engineers, storytellers, and problem solvers.
+              </p>
+
+              <p>Because at TinkerTank, we believe every student has incredible potential.</p>
+
+              <p>Sometimes they just need the right environment to discover it.</p>
             </div>
           </div>
         </div>

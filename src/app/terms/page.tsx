@@ -30,7 +30,7 @@ export default function TermsPage() {
 
         <div className='space-y-4 mb-12'>
           <h1 className='text-4xl md:text-5xl font-display font-bold text-gray-900'>Terms and Conditions</h1>
-          <p className='text-gray-500'>Last updated: 14 February 2025</p>
+          <p className='text-gray-500'>Last updated: 14 June 2026</p>
         </div>
 
         <div className='prose prose-lg max-w-none text-gray-700 space-y-8'>
