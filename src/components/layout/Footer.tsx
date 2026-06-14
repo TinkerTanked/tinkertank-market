@@ -139,7 +139,7 @@ export default function Footer() {
             &ldquo;TinkerTank is committed to providing a safe, inclusive, and empowering environment for all children and young people.&rdquo;
           </p>
           <div className='text-gray-400 text-sm text-center'>
-            © 2025 TinkerTank. All rights reserved.
+            © 2026 TinkerTank. All rights reserved.
           </div>
         </div>
       </div>
