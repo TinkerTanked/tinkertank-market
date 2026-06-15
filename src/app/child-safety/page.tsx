@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, EnvelopeIcon } from '@heroicons/react/24/outline'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
@@ -73,6 +73,13 @@ export default function ChildSafetyPage() {
             All concerns are taken seriously and managed respectfully, confidentially, and in accordance with NSW Child
             Safe Standards.
           </p>
+        </div>
+
+        <div className='mt-12'>
+          <a href='mailto:hello@tinkertank.rocks' className='btn-primary'>
+            <EnvelopeIcon className='w-5 h-5 mr-2' />
+            Contact our Child Safe Officer
+          </a>
         </div>
 
         <div className='mt-16 pt-8 border-t border-gray-200'>
