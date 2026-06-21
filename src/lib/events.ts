@@ -368,12 +368,24 @@ export class EventCreationService {
    * Links a booking to an event for tracking
    */
   private async linkBookingToEvent(orderItem: any, eventId: string) {
-    // Find existing booking or create one
+    // Find existing booking or create one.
+    //
+    // Match on the booking DAY, not an exact timestamp. The webhook creates the
+    // real booking with its start time normalised (e.g. 09:00Z via setUTCHours),
+    // whereas orderItem.bookingDate carries a different time-of-day (00:00Z, or
+    // historically the buggy 14:00Z). An exact `startDate` equality therefore
+    // never matched, so this always fell through to the `else` branch and
+    // created a DUPLICATE booking on every order. See TIMEZONE_TECH_DEBT.md.
+    const dayStart = new Date(orderItem.bookingDate)
+    dayStart.setUTCHours(0, 0, 0, 0)
+    const dayEnd = new Date(dayStart)
+    dayEnd.setUTCDate(dayEnd.getUTCDate() + 1)
+
     const booking = await prisma.booking.findFirst({
       where: {
         studentId: orderItem.studentId,
         productId: orderItem.productId,
-        startDate: orderItem.bookingDate
+        startDate: { gte: dayStart, lt: dayEnd }
       }
     })
 
