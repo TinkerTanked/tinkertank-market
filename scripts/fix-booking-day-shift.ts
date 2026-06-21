@@ -30,6 +30,7 @@
  *   npx tsx scripts/fix-booking-day-shift.ts                       # dry run
  *   npx tsx scripts/fix-booking-day-shift.ts --commit              # apply
  *   npx tsx scripts/fix-booking-day-shift.ts --before 2026-06-21T00:00:00Z
+ *   npx tsx scripts/fix-booking-day-shift.ts --from 2026-06-01     # only camps dated on/after
  */
 
 import { PrismaClient, Prisma } from '@prisma/client'
@@ -41,6 +42,21 @@ const beforeArgIdx = process.argv.indexOf('--before')
 const CUTOFF = beforeArgIdx !== -1 && process.argv[beforeArgIdx + 1]
   ? new Date(process.argv[beforeArgIdx + 1])
   : new Date()
+
+// Optional lower bound on the booking's stored date — only shift bookings on or
+// after this date (e.g. --from 2026-06-01 to skip past camps).
+const fromArgIdx = process.argv.indexOf('--from')
+const FROM = fromArgIdx !== -1 && process.argv[fromArgIdx + 1]
+  ? new Date(process.argv[fromArgIdx + 1] + 'T00:00:00.000Z')
+  : null
+
+// Optional: only process bookings last modified before this timestamp. Used to
+// exclude bookings already corrected by a previous run of this migration
+// (Prisma bumps updatedAt on every write), so re-runs never double-shift.
+const touchedArgIdx = process.argv.indexOf('--touched-before')
+const TOUCHED_BEFORE = touchedArgIdx !== -1 && process.argv[touchedArgIdx + 1]
+  ? new Date(process.argv[touchedArgIdx + 1])
+  : null
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -66,16 +82,23 @@ async function main() {
   console.log('║  FIX BOOKING DAY-SHIFT — correct bookings stored 1 day early ║')
   console.log('╚════════════════════════════════════════════════════════════╝')
   console.log(`  Mode:   ${DRY_RUN ? '🔎 DRY RUN (no changes)' : '🔧 COMMIT (writing changes)'}`)
-  console.log(`  Cutoff: only bookings created before ${CUTOFF.toISOString()}\n`)
+  console.log(`  Cutoff: only bookings created before ${CUTOFF.toISOString()}`)
+  console.log(`  From:   ${FROM ? 'only bookings dated on/after ' + utcDateStr(FROM) : 'all dates'}`)
+  console.log(`  Touched-before: ${TOUCHED_BEFORE ? 'only bookings last modified before ' + TOUCHED_BEFORE.toISOString() : 'any'}\n`)
 
   const bookings = await prisma.booking.findMany({
     where: {
       status: { in: ['CONFIRMED', 'PENDING'] },
       createdAt: { lt: CUTOFF },
+      ...(FROM ? { startDate: { gte: FROM } } : {}),
+      ...(TOUCHED_BEFORE ? { updatedAt: { lt: TOUCHED_BEFORE } } : {}),
       product: { type: { in: ['CAMP', 'BIRTHDAY'] } }
     },
     include: { student: true, product: true },
-    orderBy: { startDate: 'asc' }
+    // Descending so that for multi-day bundles the later day is shifted first,
+    // freeing each target day before its earlier sibling is processed. Ascending
+    // order makes consecutive-day bundles collide with their own siblings.
+    orderBy: { startDate: 'desc' }
   })
 
   const camps = bookings.filter(b => b.product.type === 'CAMP')
