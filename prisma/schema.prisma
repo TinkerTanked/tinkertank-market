@@ -21,8 +21,30 @@ model Student {
   bookings              Booking[]
   orderItems            OrderItem[]
   igniteSubscriptions   IgniteSubscriptionStudent[]
+  attendanceRecords     AttendanceRecord[]
 
   @@map("students")
+}
+
+// Tracks a student's physical presence at a session (check-in / check-out).
+// Anchored to a Booking for camps; bookingId is nullable + unique so future
+// session types (e.g. Ignite subscriptions) can attach via other means.
+// Mentor identity is captured as free text until per-mentor accounts (Cognito)
+// exist. One record per session (no leave-and-return for now).
+model AttendanceRecord {
+  id         String    @id @default(cuid())
+  studentId  String
+  bookingId  String?   @unique
+  checkInAt  DateTime
+  checkInBy  String
+  checkOutAt DateTime?
+  checkOutBy String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  student    Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  booking    Booking?  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("attendance_records")
 }
 
 model Product {
@@ -76,6 +98,7 @@ model Booking {
   location   Location      @relation(fields: [locationId], references: [id])
   product    Product       @relation(fields: [productId], references: [id])
   student    Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attendance AttendanceRecord?
 
   @@map("bookings")
 }

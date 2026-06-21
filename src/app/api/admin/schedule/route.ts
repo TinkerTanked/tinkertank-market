@@ -16,6 +16,10 @@ interface ScheduleItem {
   locationId: string;
   locationName: string;
   date: string;
+  checkInAt: string | null;
+  checkInBy: string | null;
+  checkOutAt: string | null;
+  checkOutBy: string | null;
 }
 
 interface LocationSummary {
@@ -105,7 +109,8 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
     include: {
       student: true,
       product: true,
-      location: true
+      location: true,
+      attendance: true
     },
     orderBy: [
       { startDate: 'asc' },
@@ -176,7 +181,11 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
       status: booking.status,
       locationId: booking.locationId,
       locationName: booking.location.name,
-      date: format(booking.startDate, 'yyyy-MM-dd')
+      date: format(booking.startDate, 'yyyy-MM-dd'),
+      checkInAt: booking.attendance?.checkInAt.toISOString() ?? null,
+      checkInBy: booking.attendance?.checkInBy ?? null,
+      checkOutAt: booking.attendance?.checkOutAt?.toISOString() ?? null,
+      checkOutBy: booking.attendance?.checkOutBy ?? null
     };
   });
 }

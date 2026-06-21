@@ -4,7 +4,21 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, startOfMonth, isSameDay, isSameMonth } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { clsx } from 'clsx';
+
+const TIMEZONE = 'Australia/Sydney';
+
+function formatSydneyTime(iso: string): string {
+  return format(toZonedTime(new Date(iso), TIMEZONE), 'h:mma').toLowerCase();
+}
+
+export function formatDuration(fromIso: string, toIso: string): string {
+  const mins = Math.max(0, Math.round((new Date(toIso).getTime() - new Date(fromIso).getTime()) / 60000));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
 
 interface ScheduleItem {
   id: string;
@@ -19,6 +33,10 @@ interface ScheduleItem {
   status: string;
   locationId: string;
   locationName: string;
+  checkInAt: string | null;
+  checkInBy: string | null;
+  checkOutAt: string | null;
+  checkOutBy: string | null;
 }
 
 interface LocationSummary {
@@ -87,6 +105,58 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function AttendanceCell({ item, mentorName, busy, onAction }: {
+  item: ScheduleItem;
+  mentorName: string;
+  busy: boolean;
+  onAction: (item: ScheduleItem, action: 'checkin' | 'checkout') => void;
+}) {
+  const canAct = mentorName.trim().length > 0 && !busy;
+
+  // Checked out — show the completed session and total time present.
+  if (item.checkOutAt && item.checkInAt) {
+    return (
+      <div className="text-xs text-gray-600">
+        <div className="font-medium text-gray-900">
+          {formatSydneyTime(item.checkInAt)} – {formatSydneyTime(item.checkOutAt)}
+        </div>
+        <div className="text-green-700">{formatDuration(item.checkInAt, item.checkOutAt)} present</div>
+      </div>
+    );
+  }
+
+  // Checked in — show arrival time and a check-out button.
+  if (item.checkInAt) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          In · {formatSydneyTime(item.checkInAt)}
+        </span>
+        <button
+          onClick={() => onAction(item, 'checkout')}
+          disabled={!canAct}
+          title={canAct ? undefined : 'Enter the mentor on duty first'}
+          className="px-3 py-1 text-xs font-medium rounded-md bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Check out
+        </button>
+      </div>
+    );
+  }
+
+  // Not yet arrived — show a check-in button.
+  return (
+    <button
+      onClick={() => onAction(item, 'checkin')}
+      disabled={!canAct}
+      title={canAct ? undefined : 'Enter the mentor on duty first'}
+      className="px-3 py-1 text-xs font-medium rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      Check in
+    </button>
+  );
+}
+
 function SummaryCards({ summary, locationId }: {
   summary: ScheduleData['summary'];
   locationId: string | null;
@@ -135,6 +205,17 @@ export default function AdminSchedule() {
   const [weekData, setWeekData] = useState<WeekData | null>(null);
   const [monthData, setMonthData] = useState<MonthData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mentorName, setMentorName] = useState('');
+  const [attendanceBusy, setAttendanceBusy] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Remember the mentor on duty across reloads so it isn't re-typed per student.
+  useEffect(() => {
+    setMentorName(localStorage.getItem('scheduleMentorName') || '');
+  }, []);
+  useEffect(() => {
+    localStorage.setItem('scheduleMentorName', mentorName);
+  }, [mentorName]);
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -166,7 +247,27 @@ export default function AdminSchedule() {
       setLoading(false);
     }
     fetchSchedule();
-  }, [selectedDate, viewMode]);
+  }, [selectedDate, viewMode, refreshKey]);
+
+  const handleAttendance = async (item: ScheduleItem, action: 'checkin' | 'checkout') => {
+    if (!mentorName.trim()) return;
+    setAttendanceBusy(item.id);
+    try {
+      const res = await fetch('/api/admin/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: item.id, action, mentorName: mentorName.trim() })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to update attendance');
+      } else {
+        setRefreshKey(k => k + 1);
+      }
+    } finally {
+      setAttendanceBusy(null);
+    }
+  };
 
   const goToToday = () => setSelectedDate(new Date());
   const goToPrev = () => setSelectedDate(
@@ -352,10 +453,23 @@ export default function AdminSchedule() {
           )}
 
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <h2 className="text-lg font-semibold text-gray-900">
                 {format(selectedDate, 'EEEE, MMMM d, yyyy')}
               </h2>
+              <div className="flex items-center gap-2">
+                <label htmlFor="mentorName" className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                  Mentor on duty
+                </label>
+                <input
+                  id="mentorName"
+                  type="text"
+                  value={mentorName}
+                  onChange={(e) => setMentorName(e.target.value)}
+                  placeholder="Your name"
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
             </div>
 
             {loading ? (
@@ -395,6 +509,9 @@ export default function AdminSchedule() {
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Attendance
                         </th>
                       </tr>
                     </thead>
@@ -437,6 +554,14 @@ export default function AdminSchedule() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <StatusBadge status={item.status} />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <AttendanceCell
+                              item={item}
+                              mentorName={mentorName}
+                              busy={attendanceBusy === item.id}
+                              onAction={handleAttendance}
+                            />
                           </td>
                         </tr>
                       ))}

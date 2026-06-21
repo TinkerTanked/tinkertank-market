@@ -54,6 +54,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             igniteSubscription: true
           }
         },
+        attendanceRecords: true,
         _count: {
           select: { bookings: true, orderItems: true }
         }
@@ -67,6 +68,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const totalSpend = student.orderItems
       .filter(item => item.order.status === 'PAID')
       .reduce((sum, item) => sum + Number(item.price), 0)
+
+    // Total time present, computed from completed (checked-out) attendance
+    // records. Forms part of the student's educational record over time.
+    const totalAttendanceMinutes = student.attendanceRecords.reduce((sum, r) => {
+      if (!r.checkOutAt) return sum
+      return sum + Math.max(0, Math.round((r.checkOutAt.getTime() - r.checkInAt.getTime()) / 60000))
+    }, 0)
 
     let parentPhone: string | null = null
     
@@ -123,6 +131,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({
       ...student,
       totalSpend,
+      totalAttendanceMinutes,
       parentContact,
       groupedOrders
     })

@@ -83,6 +83,7 @@ interface StudentProfile {
   groupedOrders: GroupedOrder[]
   igniteSubscriptions: IgniteSubscription[]
   totalSpend: number
+  totalAttendanceMinutes: number
   parentContact: {
     name: string
     email: string
@@ -116,6 +117,13 @@ function formatDate(dateStr: string): string {
 function formatCurrency(amount: number | string): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount
   return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(num)
+}
+
+function formatHours(minutes: number): string {
+  if (!minutes) return '0h'
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
 function getStatusColor(status: string): string {
@@ -214,9 +222,15 @@ export default function StudentProfilePage() {
             Student since {formatDate(student.createdAt)}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(student.totalSpend)}</p>
-          <p className="text-sm text-gray-500">Total spend</p>
+        <div className="flex items-start gap-8 text-right">
+          <div>
+            <p className="text-2xl font-bold text-gray-900">{formatHours(student.totalAttendanceMinutes)}</p>
+            <p className="text-sm text-gray-500">Time with TinkerTank</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-gray-900">{formatCurrency(student.totalSpend)}</p>
+            <p className="text-sm text-gray-500">Total spend</p>
+          </div>
         </div>
       </div>
 
