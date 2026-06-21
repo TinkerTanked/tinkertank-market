@@ -8,6 +8,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore';
 import { useRouter } from 'next/navigation';
+import { toLocalDateString } from '@/lib/dates';
 import { z } from 'zod';
 
 const CustomerInfoSchema = z.object({
@@ -82,7 +83,7 @@ export default function CheckoutForm({ onBack, onClientSecretReady }: CheckoutFo
             quantity: item.quantity,
             totalPrice: item.totalPrice,
             students: item.students,
-            selectedDate: item.selectedDate?.toISOString(),
+            selectedDate: item.selectedDate ? toLocalDateString(item.selectedDate) : undefined,
             selectedTimeSlot: item.selectedTimeSlot,
             notes: item.notes,
           })),

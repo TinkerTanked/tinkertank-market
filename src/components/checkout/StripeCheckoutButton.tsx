@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
+import { toLocalDateString } from '@/lib/dates'
 
 interface StripeCheckoutButtonProps {
   customerInfo: {
@@ -37,8 +38,8 @@ export default function StripeCheckoutButton({ customerInfo }: StripeCheckoutBut
             productId: item.product.id,
             quantity: item.quantity,
             students: item.students || [],
-            selectedDate: item.selectedDate ? (item.selectedDate instanceof Date ? item.selectedDate.toISOString() : new Date(item.selectedDate).toISOString()) : undefined,
-            selectedDates: item.selectedDates?.map(d => d instanceof Date ? d.toISOString() : new Date(d).toISOString()),
+            selectedDate: item.selectedDate ? toLocalDateString(item.selectedDate) : undefined,
+            selectedDates: item.selectedDates?.map(d => toLocalDateString(d)),
             selectedTimeSlot: item.selectedTimeSlot,
             isSubscription: (item.product as any).isSubscription || false,
             stripePriceId: (item.product as any).stripePriceId,
