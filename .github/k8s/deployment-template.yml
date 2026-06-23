@@ -58,6 +58,16 @@ spec:
             name: ${REPO_NAME}-${NODE_ENV}
             port:
               number: 80
+  - host: www.${DOMAIN}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ${REPO_NAME}-${NODE_ENV}
+            port:
+              number: 80
     
 ---
 apiVersion: apps/v1
