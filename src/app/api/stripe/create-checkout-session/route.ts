@@ -23,8 +23,8 @@ const CreateCheckoutSessionSchema = z.object({
     selectedDate: z.string().optional(),
     selectedDates: z.array(z.string()).optional(),
     selectedTimeSlot: z.object({
-      startTime: z.string(),
-      endTime: z.string(),
+      start: z.string(),
+      end: z.string(),
     }).optional(),
     isSubscription: z.boolean().optional(),
     stripePriceId: z.string().optional(),
@@ -144,10 +144,10 @@ export async function POST(request: NextRequest) {
         }
 
         // For birthday parties the customer picks a specific time slot. Encode
-        // the slot's startTime into the bookingDate so the webhook and admin
+        // the slot's start time into the bookingDate so the webhook and admin
         // schedule render the actual party time rather than defaulting to 9am.
-        if (product.type === 'BIRTHDAY' && item.selectedTimeSlot?.startTime) {
-          const [hh, mm] = item.selectedTimeSlot.startTime.split(':').map(Number)
+        if (product.type === 'BIRTHDAY' && item.selectedTimeSlot?.start) {
+          const [hh, mm] = item.selectedTimeSlot.start.split(':').map(Number)
           if (!Number.isNaN(hh) && !Number.isNaN(mm)) {
             bookingDates = bookingDates.map(d => {
               const withTime = new Date(d)
