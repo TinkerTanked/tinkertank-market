@@ -145,6 +145,7 @@ jobs:
             --image="$IMAGE" \
             --image-pull-policy=Always \
             --restart=Never \
+            --overrides='{"spec":{"nodeSelector":{"kubernetes.io/arch":"arm64"},"tolerations":[{"key":"karpenter.sh/controller","operator":"Equal","value":"true","effect":"NoSchedule"}]}}' \
             --env="DATABASE_URL=$DATABASE_URL" \
             --env="NEXT_PUBLIC_STRIPE_MODE=production" \
             --command -- sh -c 'npx prisma@6.15.0 migrate deploy && node seed-ignite-products-locations.js'
