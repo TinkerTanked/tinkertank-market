@@ -97,18 +97,28 @@ async function main(): Promise<void> {
     })
     const localByStripeId = new Map(localSubscriptions.map(subscription => [subscription.stripeSubscriptionId, subscription]))
 
-    const subscriptions: Stripe.Subscription[] = []
-    let startingAfter: string | undefined
-    do {
-      const page = await stripe.subscriptions.list({
-        status: 'all',
-        limit: 100,
-        starting_after: startingAfter,
-        expand: ['data.customer']
-      })
-      subscriptions.push(...page.data)
-      startingAfter = page.has_more ? page.data.at(-1)?.id : undefined
-    } while (startingAfter)
+    // Query only the twelve configured Ignite prices. Listing every historical
+    // subscription in the Stripe account is both slow and unrelated to this
+    // report. De-duplicate in case a subscription contains multiple Ignite
+    // prices.
+    const subscriptionsById = new Map<string, Stripe.Subscription>()
+    for (const session of IGNITE_SESSIONS) {
+      let startingAfter: string | undefined
+      do {
+        const page = await stripe.subscriptions.list({
+          status: 'all',
+          price: session.stripePriceId,
+          limit: 100,
+          starting_after: startingAfter,
+          expand: ['data.customer']
+        })
+        for (const subscription of page.data) {
+          subscriptionsById.set(subscription.id, subscription)
+        }
+        startingAfter = page.has_more ? page.data.at(-1)?.id : undefined
+      } while (startingAfter)
+    }
+    const subscriptions = Array.from(subscriptionsById.values())
 
     const sourceRows = subscriptions.flatMap(subscription => {
       const priceItem = subscription.items.data.find(item => sessionsByPrice.has(item.price.id))
