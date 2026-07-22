@@ -151,22 +151,28 @@ export default function CartPage() {
                       {/* Quantity and Price */}
                       <div className='flex items-center justify-between'>
                         <div className='flex items-center space-x-3'>
-                          <span className='text-gray-700 font-medium'>Quantity:</span>
-                          <div className='flex items-center space-x-2'>
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className='w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors duration-200'
-                            >
-                              <MinusIcon className='w-4 h-4' />
-                            </button>
-                            <span className='w-8 text-center font-medium'>{item.quantity}</span>
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className='w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors duration-200'
-                            >
-                              <PlusIcon className='w-4 h-4' />
-                            </button>
-                          </div>
+                          {item.product.category === 'subscriptions' ? (
+                            <span className='text-gray-700 font-medium'>Children: {item.students.length}</span>
+                          ) : (
+                            <>
+                              <span className='text-gray-700 font-medium'>Quantity:</span>
+                              <div className='flex items-center space-x-2'>
+                                <button
+                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  className='w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors duration-200'
+                                >
+                                  <MinusIcon className='w-4 h-4' />
+                                </button>
+                                <span className='w-8 text-center font-medium'>{item.quantity}</span>
+                                <button
+                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  className='w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors duration-200'
+                                >
+                                  <PlusIcon className='w-4 h-4' />
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                         
                         <div className='text-right'>

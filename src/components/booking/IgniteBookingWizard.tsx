@@ -3,13 +3,13 @@
 import { useState } from 'react'
 import { ArrowLeftIcon, ArrowRightIcon, ShoppingCartIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 import IgniteWeekCalendarStep, { IgniteSession } from './IgniteWeekCalendarStep'
-import IgniteStudentStep, { StudentInfo } from './IgniteStudentStep'
+import IgniteStudentStep, { StudentInfo, emptyStudent, isStudentValid } from './IgniteStudentStep'
 import IgniteConfirmStep, { IgniteSession as ConfirmIgniteSession } from './IgniteConfirmStep'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
 
 interface IgniteBookingData {
   session: IgniteSession | null
-  studentInfo: StudentInfo
+  students: StudentInfo[]
 }
 
 const DAY_NAME_TO_NUMBER: Record<string, number> = {
@@ -47,45 +47,23 @@ const STEPS = [
   { id: 3, name: 'Confirm', component: 'confirm' }
 ]
 
-const INITIAL_STUDENT_INFO: StudentInfo = {
-  firstName: '',
-  lastName: '',
-  dateOfBirth: '',
-  school: '',
-  allergies: '',
-  medicalNotes: '',
-  emergencyContactName: '',
-  emergencyContactPhone: ''
-}
-
 export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWizardProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [bookingData, setBookingData] = useState<IgniteBookingData>({
     session: null,
-    studentInfo: INITIAL_STUDENT_INFO
+    students: [emptyStudent()]
   })
   const [addedToCart, setAddedToCart] = useState(false)
   const { addItem } = useEnhancedCartStore()
 
   if (!isOpen) return null
 
-  const isValidPhone = (phone: string): boolean => {
-    return /^[\d\s+()-]{8,}$/.test(phone)
-  }
-
   const canProceed = () => {
     switch (currentStep) {
       case 1:
         return bookingData.session !== null
       case 2:
-        return !!(
-          bookingData.studentInfo.firstName.trim() &&
-          bookingData.studentInfo.lastName.trim() &&
-          bookingData.studentInfo.dateOfBirth &&
-          bookingData.studentInfo.emergencyContactName.trim() &&
-          bookingData.studentInfo.emergencyContactPhone.trim() &&
-          isValidPhone(bookingData.studentInfo.emergencyContactPhone)
-        )
+        return bookingData.students.length > 0 && bookingData.students.every(isStudentValid)
       default:
         return true
     }
@@ -104,8 +82,9 @@ export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWi
   }
 
   const handleSubscribe = () => {
-    if (bookingData.session) {
+    if (bookingData.session && bookingData.students.every(isStudentValid)) {
       const session = bookingData.session
+      const students = bookingData.students
       const cartItem = {
         id: session.id,
         name: session.name,
@@ -127,12 +106,44 @@ export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWi
         pricing: { basePrice: session.priceWeekly },
         isSubscription: true,
         stripePriceId: session.stripePriceId,
-        studentInfo: bookingData.studentInfo,
         sessionDetails: session
       } as any
 
+      // Map the wizard's Ignite student shape to the shared cart student shape.
+      // parentName/parentEmail/parentPhone are filled from the emergency contact
+      // (the real customer contact is captured separately at checkout).
+      const ageFromDob = (dob: string): number => {
+        const birth = new Date(dob)
+        if (Number.isNaN(birth.getTime())) return 0
+        const now = new Date()
+        let age = now.getFullYear() - birth.getFullYear()
+        const m = now.getMonth() - birth.getMonth()
+        if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+        return age
+      }
+      const cartStudents = students.map(s => ({
+        id: `${session.id}-${s.firstName}-${s.lastName}-${s.dateOfBirth}`,
+        firstName: s.firstName.trim(),
+        lastName: s.lastName.trim(),
+        age: ageFromDob(s.dateOfBirth),
+        dateOfBirth: new Date(s.dateOfBirth),
+        school: s.school.trim() || undefined,
+        parentName: s.emergencyContactName.trim(),
+        parentEmail: '',
+        parentPhone: s.emergencyContactPhone.trim(),
+        medicalNotes: s.medicalNotes.trim() || undefined,
+        emergencyContact: {
+          name: s.emergencyContactName.trim(),
+          phone: s.emergencyContactPhone.trim(),
+          relationship: ''
+        },
+        allergies: s.allergies.trim() ? [s.allergies.trim()] : []
+      }))
+
       addItem(cartItem, {
-        notes: `Student: ${bookingData.studentInfo.firstName} ${bookingData.studentInfo.lastName}`
+        quantity: students.length,
+        students: cartStudents,
+        notes: `Students: ${students.map(s => `${s.firstName} ${s.lastName}`).join(', ')}`
       })
       setAddedToCart(true)
       setTimeout(() => {
@@ -157,15 +168,15 @@ export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWi
       case 2:
         return (
           <IgniteStudentStep
-            studentInfo={bookingData.studentInfo}
-            onStudentInfoChange={(info) => updateBookingData('studentInfo', info)}
+            students={bookingData.students}
+            onStudentsChange={(students) => updateBookingData('students', students)}
           />
         )
       case 3:
         return (
           <IgniteConfirmStep
             session={convertSessionForConfirm(bookingData.session!)}
-            studentInfo={bookingData.studentInfo}
+            students={bookingData.students}
             onSubscribe={handleSubscribe}
           />
         )

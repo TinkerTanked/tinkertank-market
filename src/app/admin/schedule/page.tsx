@@ -26,7 +26,7 @@ interface ScheduleItem {
   studentId: string;
   studentName: string;
   productName: string;
-  productType: 'DAY_CAMP' | 'ALL_DAY_CAMP' | 'BIRTHDAY';
+  productType: 'DAY_CAMP' | 'ALL_DAY_CAMP' | 'BIRTHDAY' | 'IGNITE';
   parentName: string;
   parentEmail: string;
   parentPhone: string | null;
@@ -44,6 +44,7 @@ interface LocationSummary {
   dayCampCount: number;
   allDayCampCount: number;
   birthdayCount: number;
+  igniteCount: number;
   mentorsNeeded: number;
 }
 
@@ -57,6 +58,7 @@ interface ScheduleData {
     dayCampCount: number;
     allDayCampCount: number;
     birthdayCount: number;
+    igniteCount: number;
     byLocation: Record<string, LocationSummary>;
   };
 }
@@ -69,6 +71,7 @@ interface WeekDayData {
   dayCampCount: number;
   allDayCampCount: number;
   birthdayCount: number;
+  igniteCount: number;
   mentorsNeeded: number;
 }
 
@@ -168,11 +171,12 @@ function SummaryCards({ summary, locationId }: {
         dayCampCount: summary.dayCampCount,
         allDayCampCount: summary.allDayCampCount,
         birthdayCount: summary.birthdayCount,
+        igniteCount: summary.igniteCount,
         mentorsNeeded: summary.mentorsNeeded
       };
 
   return (
-    <div className="grid grid-cols-5 gap-4">
+    <div className="grid grid-cols-6 gap-4">
       <div className="bg-white p-4 rounded-lg border border-gray-200">
         <div className="text-2xl font-bold text-gray-900">{stats.totalStudents}</div>
         <div className="text-sm text-gray-500">Total Students</div>
@@ -192,6 +196,10 @@ function SummaryCards({ summary, locationId }: {
       <div className="bg-white p-4 rounded-lg border border-gray-200">
         <div className="text-2xl font-bold text-pink-600">{stats.birthdayCount}</div>
         <div className="text-sm text-gray-500">Birthday Parties</div>
+      </div>
+      <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="text-2xl font-bold text-green-600">{stats.igniteCount}</div>
+        <div className="text-sm text-gray-500">Ignite Sessions</div>
       </div>
     </div>
   );
@@ -525,9 +533,12 @@ export default function AdminSchedule() {
                                 ? 'bg-pink-100 text-pink-800'
                                 : item.productType === 'ALL_DAY_CAMP'
                                   ? 'bg-purple-100 text-purple-800'
-                                  : 'bg-blue-100 text-blue-800'
+                                  : item.productType === 'IGNITE'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-blue-100 text-blue-800'
                             )}>
                               {item.productType === 'BIRTHDAY' && '🎂 '}
+                              {item.productType === 'IGNITE' && '⚡ '}
                               {item.timeSlot}
                             </span>
                           </td>
@@ -630,6 +641,7 @@ function MonthView({ monthData, loading, selectedDate, selectedLocationId, onDay
                     dayCampCount: day.dayCampCount,
                     allDayCampCount: day.allDayCampCount,
                     birthdayCount: day.birthdayCount,
+                    igniteCount: day.igniteCount,
                     mentorsNeeded: day.mentorsNeeded
                   };
 
@@ -662,6 +674,7 @@ function MonthView({ monthData, loading, selectedDate, selectedLocationId, onDay
                         {stats.dayCampCount > 0 && <span className="text-blue-600">{stats.dayCampCount}d</span>}
                         {stats.allDayCampCount > 0 && <span className="text-purple-600">{stats.allDayCampCount}ad</span>}
                         {stats.birthdayCount > 0 && <span className="text-pink-600">🎂{stats.birthdayCount}</span>}
+                        {stats.igniteCount > 0 && <span className="text-green-600">⚡{stats.igniteCount}</span>}
                       </div>
                       {stats.mentorsNeeded > 0 && (
                         <div className="text-[10px] text-orange-600 font-medium">
@@ -709,6 +722,7 @@ function WeekView({ weekData, loading, selectedLocationId, onDayClick }: {
                 dayCampCount: day.dayCampCount,
                 allDayCampCount: day.allDayCampCount,
                 birthdayCount: day.birthdayCount,
+                igniteCount: day.igniteCount,
                 mentorsNeeded: day.mentorsNeeded
               };
 
@@ -743,6 +757,9 @@ function WeekView({ weekData, loading, selectedLocationId, onDayClick }: {
                     <span className="text-purple-600">{stats.allDayCampCount} all day</span>
                     {stats.birthdayCount > 0 && (
                       <span className="text-pink-600">🎂 {stats.birthdayCount}</span>
+                    )}
+                    {stats.igniteCount > 0 && (
+                      <span className="text-green-600">⚡ {stats.igniteCount}</span>
                     )}
                   </div>
                   {stats.mentorsNeeded > 0 && (

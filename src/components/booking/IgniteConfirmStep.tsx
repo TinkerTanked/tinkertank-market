@@ -19,7 +19,7 @@ export interface IgniteSession {
 
 interface IgniteConfirmStepProps {
   session: IgniteSession
-  studentInfo: StudentInfo
+  students: StudentInfo[]
   onSubscribe: () => void
 }
 
@@ -57,8 +57,9 @@ function formatWeekDays(weekDays: number[]): string {
   return weekDays.map(d => DAYS[d - 1]).join(', ')
 }
 
-export default function IgniteConfirmStep({ session, studentInfo, onSubscribe }: IgniteConfirmStepProps) {
+export default function IgniteConfirmStep({ session, students, onSubscribe }: IgniteConfirmStepProps) {
   const badge = PROGRAM_BADGES[session.programType]
+  const weeklyTotal = session.pricePerWeek * students.length
 
   return (
     <div className="space-y-6">
@@ -94,9 +95,11 @@ export default function IgniteConfirmStep({ session, studentInfo, onSubscribe }:
             <CalendarIcon className="w-4 h-4 text-primary-600 flex-shrink-0" />
             <span className="text-gray-700">{formatWeekDays(session.weekDays)}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <UserIcon className="w-4 h-4 text-primary-600 flex-shrink-0" />
-            <span className="text-gray-700">{studentInfo.firstName} {studentInfo.lastName}</span>
+          <div className="flex items-start space-x-2">
+            <UserIcon className="w-4 h-4 text-primary-600 flex-shrink-0 mt-0.5" />
+            <span className="text-gray-700">
+              {students.map(s => `${s.firstName} ${s.lastName}`).join(', ')}
+            </span>
           </div>
         </div>
 
@@ -112,7 +115,8 @@ export default function IgniteConfirmStep({ session, studentInfo, onSubscribe }:
         <div>
           <p className="text-sm text-blue-900 font-medium">Weekly Subscription</p>
           <p className="text-sm text-blue-800 mt-1">
-            This is a weekly subscription. You will be charged ${session.pricePerWeek} each week. 
+            This is a weekly subscription. You will be charged ${session.pricePerWeek} per child each week
+            {students.length > 1 ? ` (${students.length} children = $${weeklyTotal.toFixed(2)}/week)` : ''}.
             You can cancel anytime from your account.
           </p>
         </div>
@@ -123,7 +127,7 @@ export default function IgniteConfirmStep({ session, studentInfo, onSubscribe }:
         className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
       >
         <ShoppingCartIcon className="w-5 h-5" />
-        Add to Cart - ${session.pricePerWeek}/week
+        Add to Cart - ${weeklyTotal.toFixed(2)}/week
       </button>
 
       <p className="text-xs text-center text-gray-500">

@@ -9,6 +9,7 @@ export interface StudentDetails {
   lastName: string;
   age: number;
   dateOfBirth?: Date;
+  school?: string;
   allergies?: string[];
   medicalNotes?: string;
   emergencyContact?: {

@@ -124,6 +124,47 @@ jobs:
             --region ${{ env.AWS_REGION }} \
             --name ${{ env.EKS_CLUSTER_NAME }}
 
+      # The new application requires both its additive schema migration and the
+      # canonical Ignite Product/Location rows. Run both in-cluster with the new
+      # image before changing the Deployment, so old pods keep serving safely if
+      # either preflight step fails.
+      - name: Run Database Preflight
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.REPO_NAME }}:${{ github.sha }}
+        run: |
+          POD_NAME="${REPO_NAME}-db-preflight-${GITHUB_SHA::8}"
+
+          cleanup() {
+            kubectl --namespace=default logs "$POD_NAME" 2>/dev/null || true
+            kubectl --namespace=default delete pod "$POD_NAME" --ignore-not-found=true --wait=false
+          }
+          trap cleanup EXIT
+
+          kubectl --namespace=default run "$POD_NAME" \
+            --image="$IMAGE" \
+            --image-pull-policy=Always \
+            --restart=Never \
+            --env="DATABASE_URL=$DATABASE_URL" \
+            --env="NEXT_PUBLIC_STRIPE_MODE=production" \
+            --command -- sh -c 'npx prisma@6.15.0 migrate deploy && node seed-ignite-products-locations.js'
+
+          for attempt in $(seq 1 60); do
+            PHASE=$(kubectl --namespace=default get pod "$POD_NAME" -o jsonpath='{.status.phase}')
+            if [ "$PHASE" = "Succeeded" ]; then
+              echo "Database migration and Ignite seed completed successfully."
+              exit 0
+            fi
+            if [ "$PHASE" = "Failed" ]; then
+              echo "Database preflight failed."
+              exit 1
+            fi
+            sleep 5
+          done
+
+          echo "Database preflight timed out."
+          exit 1
+
       - name: Substitute Environment Variables in K8s Template
         env:
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
@@ -138,8 +179,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: |
           ./envsubst < .github/k8s/deployment-template.yml > ${REPO_NAME}.yml
-          echo "=== TinkerTank Market Deployment ==="
-          cat ${REPO_NAME}.yml
+          echo "Rendered TinkerTank Market deployment manifest."
 
       - name: Apply Kubernetes Deployment
         run: |
@@ -150,14 +190,6 @@ jobs:
         run: |
           echo "Waiting for deployment to be ready..."
           kubectl --namespace=default rollout status deployment/${REPO_NAME}-${NODE_ENV} --timeout=5m
-
-      - name: Run Database Migrations
-        run: |
-          echo "Running database migrations..."
-          sleep 10
-          POD_NAME=$(kubectl --namespace=default get pods -l app=${REPO_NAME},environment=${NODE_ENV} -o jsonpath='{.items[0].metadata.name}')
-          echo "Running migrations in pod: $POD_NAME"
-          kubectl --namespace=default exec $POD_NAME -c ${REPO_NAME} -- npx prisma@6.15.0 migrate deploy
 
       - name: Verify Deployment
         run: |

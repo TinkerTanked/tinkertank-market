@@ -7,7 +7,18 @@ import { sendBookingConfirmationEmail } from '@/lib/email';
 import { ErrorHandler, ErrorCategory, ErrorSeverity, withErrorHandling } from '@/lib/error-handling';
 import { notificationService } from '@/lib/notifications';
 import { IGNITE_SESSIONS } from '@/config/igniteProducts';
-import { getSubscriptionStartTerm, getTermDatesForDayOfWeek, DAY_NAME_TO_NUMBER } from '@/config/schoolTerms';
+import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '@/lib/ignite';
+
+const IGNITE_SUBSCRIPTION_STATUS: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED' | 'PAST_DUE' | 'TRIALING'> = {
+  active: 'ACTIVE',
+  paused: 'PAUSED',
+  canceled: 'CANCELED',
+  past_due: 'PAST_DUE',
+  trialing: 'TRIALING',
+  incomplete: 'PAST_DUE',
+  incomplete_expired: 'CANCELED',
+  unpaid: 'PAST_DUE',
+};
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -94,8 +105,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     const orderId = session.metadata?.orderId;
     
     if (!orderId) {
-      console.error('No orderId found in session metadata:', session.id);
-      return;
+      throw new Error(`No orderId found in checkout session metadata: ${session.id}`);
     }
 
     // Find the order with all related data
@@ -112,8 +122,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     });
 
     if (!order) {
-      console.error('Order not found for session:', session.id, 'orderId:', orderId);
-      return;
+      throw new Error(`Order ${orderId} not found for checkout session ${session.id}`);
     }
 
     // Only process if payment was successful and order is still pending
@@ -244,10 +253,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
             }
           }
         });
-      }
 
-      // Create calendar events with retry logic
-      const calendarEvents = await withErrorHandling(
+        // Camps/birthdays only. Ignite subscriptions are fully handled in
+        // handleIgniteSubscription above and must NOT run eventService here — it
+        // would create incorrect per-student recurring events. (Phase 2 adds
+        // dedicated Ignite confirmation emails.)
+        // Create calendar events with retry logic
+        const calendarEvents = await withErrorHandling(
         () => ErrorHandler.retryOperation(
           () => eventService.createEventsFromOrder(order.id),
           3,
@@ -308,13 +320,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         order.customerName, 
         Number(order.totalAmount)
       );
-      
+      }
+
       console.log('Order confirmed via checkout session:', order.id);
     } else {
       console.log(`Skipping order processing - payment_status: ${session.payment_status}, order status: ${order.status}`);
     }
   } catch (error) {
     await ErrorHandler.handlePaymentError(error, session.id);
+    throw error;
   }
 }
 
@@ -513,176 +527,165 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
 }
 
 /**
- * Handle Ignite subscription creation
- * Creates recurring events for the current/next school term
+ * Handle Ignite subscription fulfilment (checkout.session.completed).
+ *
+ * Reads the students created at checkout from the order, then in a single
+ * transaction: atomically flips the order PENDING->PAID (idempotency gate),
+ * upserts the IgniteSubscription, links every student, and creates one
+ * standalone Booking per student per session date for the term. No Events or
+ * RecurringTemplates are created here (Phase 1) — Bookings drive the admin
+ * schedule + attendance. All child writes are guarded by unique constraints so
+ * duplicate/retried Stripe deliveries are safe.
  */
 async function handleIgniteSubscription(
   session: Stripe.Checkout.Session,
-  order: { id: string; customerEmail: string; customerName: string }
+  order: {
+    id: string
+    customerEmail: string
+    customerName: string
+    orderItems: Array<{ bookingDate: Date; student: { id: string; name: string } }>
+  }
 ) {
   console.log('Processing Ignite subscription for order:', order.id);
 
-  const subscriptionProductId = session.metadata?.subscriptionProductId;
-  
-  if (!subscriptionProductId) {
-    console.error('No subscriptionProductId in session metadata');
-    return;
+  const igniteSessionId = session.metadata?.igniteSessionId || session.metadata?.subscriptionProductId;
+  if (!igniteSessionId) {
+    throw new Error(`No Ignite session id in checkout metadata for order ${order.id}`);
   }
 
-  // Find the Ignite session config
-  const igniteSession = IGNITE_SESSIONS.find(s => s.id === subscriptionProductId);
-  
-  if (!igniteSession) {
-    console.error('Ignite session not found:', subscriptionProductId);
-    return;
+  const config = getIgniteSessionConfig(igniteSessionId);
+  if (!config) {
+    throw new Error(`Ignite session config not found: ${igniteSessionId}`);
   }
 
-  // Get the term to schedule for
-  const term = getSubscriptionStartTerm(new Date());
-  
-  if (!term) {
-    console.error('No school term found for subscription scheduling');
-    return;
+  const stripeSubscriptionId =
+    typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
+  if (!stripeSubscriptionId) {
+    throw new Error(`No Stripe subscription id on checkout session for order ${order.id}`);
   }
 
-  console.log(`Scheduling Ignite subscription for ${term.name}`);
+  // Retrieve current Stripe state (price, quantity, period) rather than trusting
+  // a possibly-stale webhook payload.
+  const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+  const priceItem = subscription.items.data[0];
+  const unitAmount = (priceItem?.price?.unit_amount ?? 0) / 100;
+  const quantity = priceItem?.quantity ?? order.orderItems.length;
 
-  // Parse student info from metadata
-  let studentInfo: Array<{
-    firstName: string
-    lastName: string
-    dateOfBirth?: string
-    age?: number
-    school?: string
-    allergies?: string
-    medicalNotes?: string
-    emergencyContactName?: string
-    emergencyContactPhone?: string
-  }> = [];
-  if (session.metadata?.studentInfo) {
-    try {
-      studentInfo = JSON.parse(session.metadata.studentInfo);
-      console.log('Student info from metadata:', studentInfo);
-    } catch (e) {
-      console.error('Failed to parse student info:', e);
-    }
+  // Unique students created at checkout.
+  const studentMap = new Map<string, { id: string; name: string }>();
+  for (const oi of order.orderItems) {
+    if (oi.student) studentMap.set(oi.student.id, oi.student);
   }
+  const students = Array.from(studentMap.values());
+  if (students.length === 0) {
+    throw new Error(`No students found on Ignite order ${order.id}`);
+  }
+  if (priceItem?.price?.id !== config.stripePriceId) {
+    throw new Error(`Stripe price does not match Ignite session ${config.id} for order ${order.id}`);
+  }
+  if (quantity !== students.length) {
+    throw new Error(`Stripe quantity ${quantity} does not match ${students.length} students for order ${order.id}`);
+  }
+
+  const studentNames = students.map(s => {
+    const [firstName, ...rest] = s.name.split(' ');
+    return { firstName, lastName: rest.join(' ') };
+  });
+
+  // Fulfil the schedule selected at checkout, even if Stripe completes after a
+  // term boundary or after the final occurrence has started.
+  const enrollmentAnchor = order.orderItems.reduce(
+    (earliest, item) => item.bookingDate < earliest ? item.bookingDate : earliest,
+    order.orderItems[0].bookingDate
+  );
+  const schedule = getIgniteScheduleFrom(config, enrollmentAnchor);
+  const occurrences = schedule?.occurrences ?? [];
+  if (occurrences.length === 0) {
+    throw new Error(`No Ignite occurrences found for order ${order.id}`);
+  }
+  const productId = igniteProductId(config.id);
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Update order status
-      await tx.order.update({
-        where: { id: order.id },
+      // Idempotency gate: only the first delivery flips PENDING->PAID.
+      const flipped = await tx.order.updateMany({
+        where: { id: order.id, status: 'PENDING' },
         data: { status: 'PAID' },
       });
-
-      // Create students from the subscription
-      const createdStudentIds: string[] = [];
-      for (const student of studentInfo) {
-        let birthdate: Date;
-        if (student.dateOfBirth) {
-          birthdate = new Date(student.dateOfBirth);
-        } else if (student.age) {
-          const birthYear = new Date().getFullYear() - student.age;
-          birthdate = new Date(birthYear, 0, 1);
-        } else {
-          birthdate = new Date(2015, 0, 1);
-        }
-        const createdStudent = await tx.student.create({
-          data: {
-            name: `${student.firstName} ${student.lastName}`,
-            birthdate,
-            allergies: student.allergies || null,
-            school: student.school || null,
-            medicalNotes: student.medicalNotes || null,
-            emergencyContactName: student.emergencyContactName || null,
-            emergencyContactPhone: student.emergencyContactPhone || null
-          }
-        });
-        createdStudentIds.push(createdStudent.id);
-        console.log(`Created student: ${createdStudent.name} (${createdStudent.id})`);
-      }
-
-      // Find or create location
-      let location = await tx.location.findFirst({
-        where: { 
-          name: { contains: igniteSession.location },
-          isActive: true 
-        },
-      });
-
-      if (!location) {
-        // Use default location or create one
-        location = await tx.location.findFirst({
-          where: { isActive: true },
-        });
-      }
-
-      if (!location) {
-        console.error('No location found for Ignite session');
+      if (flipped.count === 0) {
+        console.log('Ignite order already processed, skipping:', order.id);
         return;
       }
 
-      // Create a recurring template
-      const recurringTemplate = await tx.recurringTemplate.create({
-        data: {
-          name: `${igniteSession.name} - ${order.customerName}`,
-          description: `Ignite subscription for ${order.customerEmail}`,
-          type: 'RECURRING_SESSION',
-          startTime: igniteSession.startTime,
-          endTime: igniteSession.endTime,
-          duration: calculateDurationMinutes(igniteSession.startTime, igniteSession.endTime),
-          daysOfWeek: igniteSession.dayOfWeek.map(d => DAY_NAME_TO_NUMBER[d.toLowerCase()]),
-          startDate: term.startDate,
-          endDate: term.endDate,
-          maxCapacity: 20,
-          locationId: location.id,
-          isActive: true,
+      // Resolve the location captured at checkout (never fall back silently).
+      const locationId = session.metadata?.locationId;
+      const location = locationId
+        ? await tx.location.findUnique({ where: { id: locationId } })
+        : await tx.location.findFirst({
+            where: { name: { equals: config.location, mode: 'insensitive' }, isActive: true },
+          });
+      if (!location) {
+        throw new Error(`Ignite location not found for order ${order.id} (${config.location})`);
+      }
+
+      const igniteSub = await tx.igniteSubscription.upsert({
+        where: { stripeSubscriptionId },
+        create: {
+          stripeSubscriptionId,
+          stripeCustomerId: subscription.customer as string,
+          stripePriceId: priceItem?.price?.id || config.stripePriceId,
+          customerEmail: order.customerEmail,
+          customerName: order.customerName || undefined,
+          igniteSessionId: config.id,
+          studentNames,
+          quantity,
+          status: IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE',
+          currentPeriodStart: new Date(subscription.current_period_start * 1000),
+          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          weeklyAmount: unitAmount * quantity,
+        },
+        update: {
+          igniteSessionId: config.id,
+          studentNames,
+          quantity,
+          status: IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE',
+          currentPeriodStart: new Date(subscription.current_period_start * 1000),
+          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          weeklyAmount: unitAmount * quantity,
         },
       });
 
-      console.log('Created recurring template:', recurringTemplate.id);
-
-      // Create events for each day of week in the term
-      const eventsToCreate = [];
-      
-      for (const dayName of igniteSession.dayOfWeek) {
-        const dayNumber = DAY_NAME_TO_NUMBER[dayName.toLowerCase()];
-        const dates = getTermDatesForDayOfWeek(term, dayNumber);
-        
-        for (const date of dates) {
-          const [startHour, startMin] = igniteSession.startTime.split(':').map(Number);
-          const [endHour, endMin] = igniteSession.endTime.split(':').map(Number);
-          
-          const startDateTime = new Date(date);
-          startDateTime.setHours(startHour, startMin, 0, 0);
-          
-          const endDateTime = new Date(date);
-          endDateTime.setHours(endHour, endMin, 0, 0);
-          
-          eventsToCreate.push({
-            title: `Ignite - ${igniteSession.location}`,
-            description: `${igniteSession.name}`,
-            type: 'RECURRING_SESSION' as const,
-            status: 'SCHEDULED' as const,
-            startDateTime,
-            endDateTime,
-            isRecurring: true,
-            maxCapacity: 20,
-            currentCount: 1, // This subscriber
-            locationId: location.id,
-            recurringTemplateId: recurringTemplate.id,
-          });
-        }
-      }
-
-      // Create all events
-      if (eventsToCreate.length > 0) {
-        await tx.event.createMany({
-          data: eventsToCreate,
+      // Link students (unique on [igniteSubscriptionId, studentId]).
+      for (const s of students) {
+        await tx.igniteSubscriptionStudent.upsert({
+          where: {
+            igniteSubscriptionId_studentId: { igniteSubscriptionId: igniteSub.id, studentId: s.id },
+          },
+          create: { igniteSubscriptionId: igniteSub.id, studentId: s.id },
+          update: {},
         });
-        console.log(`Created ${eventsToCreate.length} Ignite events for ${term.name}`);
       }
+
+      // One booking per student per session date. Unique on
+      // [igniteSubscriptionId, studentId, startDate] + skipDuplicates makes
+      // retries safe.
+      const bookingsData = students.flatMap(s =>
+        occurrences.map(occ => ({
+          studentId: s.id,
+          productId,
+          locationId: location.id,
+          igniteSubscriptionId: igniteSub.id,
+          startDate: occ.start,
+          endDate: occ.end,
+          status: 'CONFIRMED' as const,
+          // Financials live on the subscription/order, not the individual
+          // occurrence bookings, so schedule/analytics don't multiply revenue.
+          totalPrice: 0,
+          notes: `Ignite: ${config.name} | Order: ${order.id}`,
+        }))
+      );
+      const created = await tx.booking.createMany({ data: bookingsData, skipDuplicates: true });
+      console.log(`Created ${created.count} Ignite bookings for order ${order.id}`);
     });
 
     console.log('Ignite subscription processed successfully for order:', order.id);
@@ -692,12 +695,6 @@ async function handleIgniteSubscription(
   }
 }
 
-function calculateDurationMinutes(startTime: string, endTime: string): number {
-  const [startHour, startMin] = startTime.split(':').map(Number);
-  const [endHour, endMin] = endTime.split(':').map(Number);
-  return (endHour * 60 + endMin) - (startHour * 60 + startMin);
-}
-
 /**
  * Handle subscription creation or update from Stripe webhook
  */
@@ -705,6 +702,11 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
   console.log('Processing subscription upsert:', subscription.id, 'status:', subscription.status);
 
   try {
+    // Stripe does not guarantee webhook ordering. Treat each lifecycle event as
+    // a signal and sync the current object instead of applying a stale event
+    // snapshot that could reactivate an already-canceled subscription.
+    subscription = await stripe.subscriptions.retrieve(subscription.id);
+
     const customer = await stripe.customers.retrieve(subscription.customer as string);
     if (customer.deleted) {
       console.error('Customer is deleted:', subscription.customer);
@@ -718,9 +720,11 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
     }
 
     const price = await stripe.prices.retrieve(priceItem.price.id);
-    const weeklyAmount = price.recurring?.interval === 'week' 
-      ? (price.unit_amount || 0) / 100 
-      : 0;
+    const unitAmount = (price.unit_amount || 0) / 100;
+    const quantity = priceItem.quantity ?? 1;
+    // weeklyAmount is the TOTAL weekly charge (per-child unit × quantity); the
+    // admin revenue report sums this field.
+    const weeklyAmount = price.recurring?.interval === 'week' ? unitAmount * quantity : 0;
 
     const igniteSession = IGNITE_SESSIONS.find(s => s.stripePriceId === priceItem.price.id);
 
@@ -730,23 +734,15 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
       return;
     }
 
-    // Extract student names from metadata if available
-    const studentNames = subscription.metadata?.student_names
+    // Legacy student names from subscription metadata (current flow stores the
+    // real student records via handleIgniteSubscription; this is only used as a
+    // fallback when creating the row and is never allowed to clobber existing
+    // data on update).
+    const legacyStudentNames = subscription.metadata?.student_names
       ? JSON.parse(subscription.metadata.student_names)
       : subscription.metadata?.studentNames
         ? JSON.parse(subscription.metadata.studentNames)
         : null;
-
-    const statusMap: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED' | 'PAST_DUE' | 'TRIALING'> = {
-      active: 'ACTIVE',
-      paused: 'PAUSED',
-      canceled: 'CANCELED',
-      past_due: 'PAST_DUE',
-      trialing: 'TRIALING',
-      incomplete: 'PAST_DUE',
-      incomplete_expired: 'CANCELED',
-      unpaid: 'PAST_DUE',
-    };
 
     await prisma.igniteSubscription.upsert({
       where: { stripeSubscriptionId: subscription.id },
@@ -757,21 +753,24 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         customerEmail: customer.email || '',
         customerName: customer.name || undefined,
         igniteSessionId: igniteSession.id,
-        studentNames,
-        status: statusMap[subscription.status] || 'ACTIVE',
+        studentNames: legacyStudentNames,
+        quantity,
+        status: IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE',
         currentPeriodStart: new Date(subscription.current_period_start * 1000),
         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
         weeklyAmount,
       },
+      // Lifecycle only — never overwrite studentNames (owned by
+      // handleIgniteSubscription).
       update: {
         stripePriceId: priceItem.price.id,
         customerEmail: customer.email || '',
         customerName: customer.name || undefined,
         igniteSessionId: igniteSession.id,
-        studentNames,
-        status: statusMap[subscription.status] || 'ACTIVE',
+        quantity,
+        status: IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE',
         currentPeriodStart: new Date(subscription.current_period_start * 1000),
         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
@@ -794,20 +793,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log('Processing subscription deletion:', subscription.id);
 
   try {
-    await prisma.igniteSubscription.update({
-      where: { stripeSubscriptionId: subscription.id },
-      data: {
-        status: 'CANCELED',
-        canceledAt: new Date(),
-      },
-    });
-
-    console.log('Subscription marked as canceled:', subscription.id);
+    // Upsert from Stripe's current state so deletion-before-creation delivery
+    // still creates a canceled local row and later stale events cannot revive it.
+    await handleSubscriptionUpsert(subscription);
   } catch (error) {
-    if ((error as any).code === 'P2025') {
-      console.log('Subscription not found in database (may not have been synced):', subscription.id);
-      return;
-    }
     console.error('Error processing subscription deletion:', error);
     throw error;
   }

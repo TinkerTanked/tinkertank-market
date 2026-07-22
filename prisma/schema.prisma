@@ -82,24 +82,30 @@ model Location {
 }
 
 model Booking {
-  id         String        @id @default(cuid())
-  studentId  String
-  productId  String
-  locationId String
-  eventId    String?
-  startDate  DateTime
-  endDate    DateTime
-  status     BookingStatus @default(PENDING)
-  totalPrice Decimal       @db.Money
-  notes      String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  event      Event?        @relation(fields: [eventId], references: [id])
-  location   Location      @relation(fields: [locationId], references: [id])
-  product    Product       @relation(fields: [productId], references: [id])
-  student    Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  attendance AttendanceRecord?
+  id                   String              @id @default(cuid())
+  studentId            String
+  productId            String
+  locationId           String
+  eventId              String?
+  igniteSubscriptionId String?
+  startDate            DateTime
+  endDate              DateTime
+  status               BookingStatus       @default(PENDING)
+  totalPrice           Decimal             @db.Money
+  notes                String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  event                Event?              @relation(fields: [eventId], references: [id])
+  location             Location            @relation(fields: [locationId], references: [id])
+  product              Product             @relation(fields: [productId], references: [id])
+  student              Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  igniteSubscription   IgniteSubscription? @relation(fields: [igniteSubscriptionId], references: [id])
+  attendance           AttendanceRecord?
 
+  // One Ignite booking per subscription+student+session date. Existing camp/
+  // birthday rows have a null igniteSubscriptionId so the constraint ignores them.
+  @@unique([igniteSubscriptionId, studentId, startDate])
+  @@index([startDate, status])
   @@map("bookings")
 }
 
@@ -235,6 +241,7 @@ model IgniteSubscription {
   customerName          String?
   igniteSessionId       String?
   studentNames          Json?
+  quantity              Int                         @default(1)
   status                IgniteSubscriptionStatus    @default(ACTIVE)
   currentPeriodStart    DateTime?
   currentPeriodEnd      DateTime?
@@ -244,6 +251,7 @@ model IgniteSubscription {
   createdAt             DateTime                    @default(now())
   updatedAt             DateTime                    @updatedAt
   students              IgniteSubscriptionStudent[]
+  bookings              Booking[]
 
   @@map("ignite_subscriptions")
 }

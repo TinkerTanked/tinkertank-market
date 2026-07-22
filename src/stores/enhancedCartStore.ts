@@ -72,24 +72,37 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
             // Update existing item
             const items = [...state.items];
             const existingItem = items[existingItemIndex];
-            const newQuantity = existingItem.quantity + (options.quantity || 1);
             const existingDateCount = existingItem.selectedDates?.length || 1;
-            
+
+            // When the caller supplies students (e.g. Ignite subscriptions, which
+            // capture every child in the wizard), merge them and keep the
+            // invariant quantity === students.length. Otherwise just bump quantity.
+            let newStudents = existingItem.students;
+            let newQuantity: number;
+            if (options.students && options.students.length > 0) {
+              newStudents = [...existingItem.students, ...options.students];
+              newQuantity = newStudents.length;
+            } else {
+              newQuantity = existingItem.quantity + (options.quantity || 1);
+            }
+
             items[existingItemIndex] = {
               ...existingItem,
               quantity: newQuantity,
+              students: newStudents,
               totalPrice: calculateItemPrice(product, newQuantity, existingItem.selectedAddOns, existingDateCount),
             };
             
             return { items };
           } else {
             // Add new item
-            const quantity = options.quantity || 1;
+            const students = options.students ?? [];
+            const quantity = students.length > 0 ? students.length : (options.quantity || 1);
             const newItem: EnhancedCartItem = {
               id: generateId(),
               product,
               quantity,
-              students: [],
+              students,
               selectedAddOns: options.selectedAddOns,
               selectedDate: options.selectedDate,
               selectedDates: options.selectedDates,
@@ -112,6 +125,11 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
       },
 
       updateQuantity: (itemId: string, quantity: number) => {
+        const item = get().items.find(candidate => candidate.id === itemId);
+        if (item?.product.category === 'subscriptions') {
+          return;
+        }
+
         if (quantity <= 0) {
           get().removeItem(itemId);
           return;
@@ -149,27 +167,33 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
 
       addStudent: (itemId: string, student: StudentDetails) => {
         set((state) => ({
-          items: state.items.map(item =>
-            item.id === itemId
-              ? {
-                  ...item,
-                  students: [...item.students, { ...student, id: student.id || generateId() }]
-                }
-              : item
-          )
+          items: state.items.map(item => {
+            if (item.id !== itemId) return item;
+            const students = [...item.students, { ...student, id: student.id || generateId() }];
+            const quantity = item.product.category === 'subscriptions' ? students.length : item.quantity;
+            return {
+              ...item,
+              students,
+              quantity,
+              totalPrice: calculateItemPrice(item.product, quantity, item.selectedAddOns, item.selectedDates?.length || 1)
+            };
+          })
         }));
       },
 
       removeStudent: (itemId: string, studentId: string) => {
         set((state) => ({
-          items: state.items.map(item =>
-            item.id === itemId
-              ? {
-                  ...item,
-                  students: item.students.filter(student => student.id !== studentId)
-                }
-              : item
-          )
+          items: state.items.map(item => {
+            if (item.id !== itemId) return item;
+            const students = item.students.filter(student => student.id !== studentId);
+            const quantity = item.product.category === 'subscriptions' ? students.length : item.quantity;
+            return {
+              ...item,
+              students,
+              quantity,
+              totalPrice: calculateItemPrice(item.product, quantity, item.selectedAddOns, item.selectedDates?.length || 1)
+            };
+          })
         }));
       },
 
@@ -178,8 +202,16 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
           items: state.items.map(item => {
             if (item.id === itemId) {
               const updatedItem = { ...item, ...details };
+              if (updatedItem.product.category === 'subscriptions') {
+                updatedItem.quantity = updatedItem.students.length;
+              }
               // Recalculate total price if quantity, addOns, or dates changed
-              if (details.quantity !== undefined || details.selectedAddOns !== undefined || details.selectedDates !== undefined) {
+              if (
+                updatedItem.product.category === 'subscriptions' ||
+                details.quantity !== undefined ||
+                details.selectedAddOns !== undefined ||
+                details.selectedDates !== undefined
+              ) {
                 updatedItem.totalPrice = calculateItemPrice(
                   updatedItem.product,
                   updatedItem.quantity,
@@ -246,8 +278,10 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
             });
           }
 
-          // Validate student data
-          item.students.forEach(student => {
+          // Validate student data (Ignite subscriptions capture students in the
+          // wizard with a different shape — no per-student parent email — so they
+          // are validated there, not here).
+          if (!isIgniteSubscription) item.students.forEach(student => {
             const studentErrors = validateStudent(student, item.product);
             studentErrors.forEach(error => {
               errors.push({

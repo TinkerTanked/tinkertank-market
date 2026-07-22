@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { startOfDay, endOfDay, parseISO, startOfWeek, startOfMonth, endOfMonth, addDays, format } from 'date-fns';
+import { startOfDay, endOfDay, parseISO, startOfWeek, startOfMonth, endOfMonth, addDays, subDays, format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
+import { SYDNEY_TZ } from '@/lib/ignite';
 
 interface ScheduleItem {
   id: string;
@@ -8,7 +10,7 @@ interface ScheduleItem {
   studentId: string;
   studentName: string;
   productName: string;
-  productType: 'DAY_CAMP' | 'ALL_DAY_CAMP' | 'BIRTHDAY';
+  productType: 'DAY_CAMP' | 'ALL_DAY_CAMP' | 'BIRTHDAY' | 'IGNITE';
   parentName: string;
   parentEmail: string;
   parentPhone: string | null;
@@ -27,6 +29,7 @@ interface LocationSummary {
   dayCampCount: number;
   allDayCampCount: number;
   birthdayCount: number;
+  igniteCount: number;
   mentorsNeeded: number;
 }
 
@@ -45,6 +48,7 @@ interface ScheduleResponse {
     dayCampCount: number;
     allDayCampCount: number;
     birthdayCount: number;
+    igniteCount: number;
     byLocation: Record<string, LocationSummary>;
   };
 }
@@ -57,6 +61,7 @@ interface WeekDaySummary {
   dayCampCount: number;
   allDayCampCount: number;
   birthdayCount: number;
+  igniteCount: number;
   mentorsNeeded: number;
 }
 
@@ -76,6 +81,7 @@ function buildLocationSummary(items: ScheduleItem[]): Record<string, LocationSum
         dayCampCount: 0,
         allDayCampCount: 0,
         birthdayCount: 0,
+        igniteCount: 0,
         mentorsNeeded: 0
       };
     }
@@ -84,23 +90,29 @@ function buildLocationSummary(items: ScheduleItem[]): Record<string, LocationSum
     if (item.productType === 'DAY_CAMP') loc.dayCampCount++;
     else if (item.productType === 'ALL_DAY_CAMP') loc.allDayCampCount++;
     else if (item.productType === 'BIRTHDAY') loc.birthdayCount++;
+    else if (item.productType === 'IGNITE') loc.igniteCount++;
     // Birthdays come with their own host so they don't count toward camp mentor
-    // ratios. Mentors needed is still 1 per 4 camp students.
-    const campStudents = loc.dayCampCount + loc.allDayCampCount;
-    loc.mentorsNeeded = Math.ceil(campStudents / 4);
+    // ratios. Camp + Ignite students are supervised at 1 mentor per 4.
+    const supervisedStudents = loc.dayCampCount + loc.allDayCampCount + loc.igniteCount;
+    loc.mentorsNeeded = Math.ceil(supervisedStudents / 4);
   }
   return byLocation;
 }
 
 async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<ScheduleItem[]> {
+  // Ignite instants can fall on the previous UTC date (for example Saturday
+  // 10am AEDT is Friday 11pm UTC), so query a one-day pad and bucket after
+  // converting Ignite rows to Sydney calendar dates.
+  const queryStart = subDays(rangeStart, 1);
+  const queryEnd = addDays(rangeEnd, 1);
   const bookings = await prisma.booking.findMany({
     where: {
       startDate: {
-        gte: rangeStart,
-        lte: rangeEnd
+        gte: queryStart,
+        lte: queryEnd
       },
       product: {
-        type: { in: ['CAMP', 'BIRTHDAY'] }
+        type: { in: ['CAMP', 'BIRTHDAY', 'SUBSCRIPTION'] }
       },
       status: {
         in: ['CONFIRMED', 'PENDING']
@@ -110,7 +122,8 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
       student: true,
       product: true,
       location: true,
-      attendance: true
+      attendance: true,
+      igniteSubscription: true
     },
     orderBy: [
       { startDate: 'asc' },
@@ -124,8 +137,8 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
     where: {
       studentId: { in: bookingStudentIds },
       bookingDate: {
-        gte: rangeStart,
-        lte: rangeEnd
+        gte: queryStart,
+        lte: queryEnd
       }
     },
     include: {
@@ -143,16 +156,31 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
     }
   });
 
-  return bookings.map(booking => {
+  // Only show Ignite occurrences for subscriptions that are currently active or
+  // trialing (matches how the Ignite calendars render live subscribers).
+  const visibleBookings = bookings.filter(booking => {
+    if (booking.product.type !== 'SUBSCRIPTION') return true;
+    const status = booking.igniteSubscription?.status;
+    return status === 'ACTIVE' || status === 'TRIALING';
+  });
+
+  const rangeStartKey = format(rangeStart, 'yyyy-MM-dd');
+  const rangeEndKey = format(rangeEnd, 'yyyy-MM-dd');
+
+  return visibleBookings.map(booking => {
+    const isIgnite = booking.product.type === 'SUBSCRIPTION';
     const isBirthday = booking.product.type === 'BIRTHDAY';
-    const isAllDay = !isBirthday && (
+    const isAllDay = !isBirthday && !isIgnite && (
       booking.product.name.toLowerCase().includes('all day') ||
       booking.product.duration === 480
     );
 
     let productType: ScheduleItem['productType'];
     let timeSlot: string;
-    if (isBirthday) {
+    if (isIgnite) {
+      productType = 'IGNITE';
+      timeSlot = `${formatInTimeZone(booking.startDate, SYDNEY_TZ, 'h:mma').toLowerCase()} - ${formatInTimeZone(booking.endDate, SYDNEY_TZ, 'h:mma').toLowerCase()}`;
+    } else if (isBirthday) {
       productType = 'BIRTHDAY';
       // Use the booking's actual start/end (set at order time) to render the
       // party's chosen time slot.
@@ -165,6 +193,9 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
       timeSlot = '9am - 3pm';
     }
 
+    // Camps/birthdays derive parent contact from the order; Ignite derives it
+    // from the subscription (its OrderItem sits on the enrollment date, not the
+    // weekly occurrence dates).
     const parentInfo = parentInfoMap.get(booking.studentId);
     const emergencyPhone = booking.student.emergencyContactPhone;
 
@@ -175,19 +206,23 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
       studentName: booking.student.name,
       productName: booking.product.name,
       productType,
-      parentName: parentInfo?.name || booking.student.emergencyContactName || 'Unknown',
-      parentEmail: parentInfo?.email || '',
+      parentName: isIgnite
+        ? (booking.igniteSubscription?.customerName || booking.student.emergencyContactName || 'Unknown')
+        : (parentInfo?.name || booking.student.emergencyContactName || 'Unknown'),
+      parentEmail: isIgnite
+        ? (booking.igniteSubscription?.customerEmail || '')
+        : (parentInfo?.email || ''),
       parentPhone: emergencyPhone || null,
       status: booking.status,
       locationId: booking.locationId,
       locationName: booking.location.name,
-      date: format(booking.startDate, 'yyyy-MM-dd'),
+      date: isIgnite ? formatInTimeZone(booking.startDate, SYDNEY_TZ, 'yyyy-MM-dd') : format(booking.startDate, 'yyyy-MM-dd'),
       checkInAt: booking.attendance?.checkInAt.toISOString() ?? null,
       checkInBy: booking.attendance?.checkInBy ?? null,
       checkOutAt: booking.attendance?.checkOutAt?.toISOString() ?? null,
       checkOutBy: booking.attendance?.checkOutBy ?? null
     };
-  });
+  }).filter(item => item.date >= rangeStartKey && item.date <= rangeEndKey);
 }
 
 function extractLocations(items: ScheduleItem[]): LocationInfo[] {
@@ -231,7 +266,8 @@ export async function GET(request: NextRequest) {
       const dayCampCount = dayItems.filter(i => i.productType === 'DAY_CAMP').length;
       const allDayCampCount = dayItems.filter(i => i.productType === 'ALL_DAY_CAMP').length;
       const birthdayCount = dayItems.filter(i => i.productType === 'BIRTHDAY').length;
-      const mentorsNeeded = Math.ceil((dayCampCount + allDayCampCount) / 4);
+      const igniteCount = dayItems.filter(i => i.productType === 'IGNITE').length;
+      const mentorsNeeded = Math.ceil((dayCampCount + allDayCampCount + igniteCount) / 4);
 
       days.push({
         date: dayStr,
@@ -241,6 +277,7 @@ export async function GET(request: NextRequest) {
         dayCampCount,
         allDayCampCount,
         birthdayCount,
+        igniteCount,
         mentorsNeeded
       });
       current = addDays(current, 1);
@@ -274,7 +311,8 @@ export async function GET(request: NextRequest) {
       const dayCampCount = dayItems.filter(i => i.productType === 'DAY_CAMP').length;
       const allDayCampCount = dayItems.filter(i => i.productType === 'ALL_DAY_CAMP').length;
       const birthdayCount = dayItems.filter(i => i.productType === 'BIRTHDAY').length;
-      const mentorsNeeded = Math.ceil((dayCampCount + allDayCampCount) / 4);
+      const igniteCount = dayItems.filter(i => i.productType === 'IGNITE').length;
+      const mentorsNeeded = Math.ceil((dayCampCount + allDayCampCount + igniteCount) / 4);
 
       days.push({
         date: dayStr,
@@ -284,6 +322,7 @@ export async function GET(request: NextRequest) {
         dayCampCount,
         allDayCampCount,
         birthdayCount,
+        igniteCount,
         mentorsNeeded
       });
     }
@@ -307,8 +346,9 @@ export async function GET(request: NextRequest) {
   const dayCampCount = items.filter(i => i.productType === 'DAY_CAMP').length;
   const allDayCampCount = items.filter(i => i.productType === 'ALL_DAY_CAMP').length;
   const birthdayCount = items.filter(i => i.productType === 'BIRTHDAY').length;
+  const igniteCount = items.filter(i => i.productType === 'IGNITE').length;
   const totalStudents = items.length;
-  const mentorsNeeded = Math.ceil((dayCampCount + allDayCampCount) / 4);
+  const mentorsNeeded = Math.ceil((dayCampCount + allDayCampCount + igniteCount) / 4);
   const byLocation = buildLocationSummary(items);
 
   const response: ScheduleResponse = {
@@ -321,6 +361,7 @@ export async function GET(request: NextRequest) {
       dayCampCount,
       allDayCampCount,
       birthdayCount,
+      igniteCount,
       byLocation
     }
   };
