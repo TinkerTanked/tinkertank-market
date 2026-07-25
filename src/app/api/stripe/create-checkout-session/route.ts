@@ -33,7 +33,7 @@ const CreateCheckoutSessionSchema = z.object({
       emergencyContact: z.object({
         name: z.string(),
         phone: z.string(),
-        relationship: z.string()
+        relationship: z.string().optional()
       }).optional(),
     })),
     selectedDate: z.string().optional(),
@@ -141,7 +141,12 @@ async function createIgniteSubscriptionCheckout(
     if (!birthdate || Number.isNaN(birthdate.getTime()) || birthdate >= new Date()) {
       return NextResponse.json({ error: 'A valid date of birth is required for each child.' }, { status: 400 })
     }
-    if (!s.emergencyContact?.name.trim() || !s.emergencyContact.phone.trim() || !s.emergencyContact.relationship.trim()) {
+    // Relationship is not collected by the Ignite wizard. Support parentName/
+    // parentPhone as a fallback for carts persisted before emergencyContact was
+    // added to the shared student shape.
+    const emergencyContactName = s.emergencyContact?.name.trim() || s.parentName.trim()
+    const emergencyContactPhone = s.emergencyContact?.phone.trim() || s.parentPhone.trim()
+    if (!emergencyContactName || !emergencyContactPhone) {
       return NextResponse.json({ error: 'Emergency contact details are required for each child.' }, { status: 400 })
     }
   }

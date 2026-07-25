@@ -15,7 +15,7 @@ export interface StudentDetails {
   emergencyContact?: {
     name: string;
     phone: string;
-    relationship: string;
+    relationship?: string;
   };
   parentName: string;
   parentEmail: string;
