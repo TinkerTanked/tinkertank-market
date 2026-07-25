@@ -10,14 +10,14 @@ export interface LocationAvailability {
 // Dates when 3-day bundles are available at Neutral Bay
 export const BUNDLE_AVAILABLE_DATES = ['2026-04-20', '2026-04-21', '2026-04-22', '2026-04-23']
 
-// July 2026 NSW school holiday camps at Manly Library (day camps only)
-export const MANLY_LIBRARY_JULY_2026_DATES = [
-  '2026-07-07',
-  '2026-07-08',
-  '2026-07-09',
-  '2026-07-14',
-  '2026-07-15',
-  '2026-07-16'
+// Spring 2026 NSW school holiday camps at Manly Library (day camps only)
+export const MANLY_LIBRARY_SPRING_2026_DATES = [
+  '2026-09-29',
+  '2026-09-30',
+  '2026-10-01',
+  '2026-10-06',
+  '2026-10-07',
+  '2026-10-08'
 ]
 
 export const LOCATION_AVAILABILITY: LocationAvailability[] = [
@@ -32,7 +32,7 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
     locationId: 'manly-library',
     locationName: 'Manly Library',
     availableCampTypes: ['day'],
-    availableDates: MANLY_LIBRARY_JULY_2026_DATES,
+    availableDates: MANLY_LIBRARY_SPRING_2026_DATES,
     dailyCapacity: 30
   }
 ]
