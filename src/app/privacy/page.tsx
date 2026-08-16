@@ -5,7 +5,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - TinkerTank',
+  title: 'Privacy Policy',
   description:
     'TinkerTank Privacy Policy. Learn how we collect, use, and protect your personal information and your children\'s data.',
   alternates: {

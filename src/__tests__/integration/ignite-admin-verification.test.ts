@@ -6,11 +6,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getCurrentTerm } from '@/config/schoolTerms';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     booking: {
       count: vi.fn(),
+      findMany: vi.fn()
+    },
+    orderItem: {
       findMany: vi.fn()
     },
     event: {
@@ -265,6 +269,61 @@ describe('Admin Bookings API for Ignite', () => {
     );
     expect(data.totalPages).toBe(3);
     expect(data.currentPage).toBe(2);
+  });
+});
+
+describe('Admin Schedule API for Ignite', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (prisma.orderItem.findMany as any).mockResolvedValue([]);
+  });
+
+  it('buckets and formats Ignite bookings in Sydney time on a UTC server', async () => {
+    (prisma.booking.findMany as any).mockResolvedValue([{
+      id: 'booking_saturday_ignite',
+      studentId: 'student_ignite_1',
+      locationId: 'location_nb_123',
+      startDate: new Date('2026-10-16T23:00:00.000Z'),
+      endDate: new Date('2026-10-17T01:00:00.000Z'),
+      status: 'CONFIRMED',
+      student: {
+        name: 'Test Student',
+        emergencyContactName: 'Test Parent',
+        emergencyContactPhone: '+61400000000'
+      },
+      product: {
+        name: 'Drop-Off Studio Ignite - Neutral Bay',
+        type: 'SUBSCRIPTION',
+        duration: 120
+      },
+      location: {
+        name: 'Neutral Bay Studio'
+      },
+      attendance: null,
+      igniteSubscription: {
+        status: 'ACTIVE',
+        customerName: 'Test Parent',
+        customerEmail: 'parent@test.com'
+      }
+    }]);
+
+    const { GET } = await import('@/app/api/admin/schedule/route');
+    const request = new NextRequest('http://localhost:3000/api/admin/schedule?date=2026-10-17&mode=day');
+    const response = await GET(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0]).toEqual(expect.objectContaining({
+      date: '2026-10-17',
+      productType: 'IGNITE',
+      timeSlot: '10:00am - 12:00pm'
+    }));
+  });
+
+  it('keeps the final Sydney calendar day inside the school term', () => {
+    const finalTermDayAfternoon = new Date('2026-12-17T05:00:00.000Z');
+    expect(getCurrentTerm(finalTermDayAfternoon)?.name).toBe('Term 4 2026');
   });
 });
 

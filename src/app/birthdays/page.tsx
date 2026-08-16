@@ -26,9 +26,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: `${baseUrl}/images/birthdays-og.jpg`,
-        width: 1200,
-        height: 630,
+        url: `${baseUrl}/images/birthdays.jpg`,
         alt: 'TinkerTank Birthday Parties'
       }
     ]

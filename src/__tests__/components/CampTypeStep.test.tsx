@@ -13,7 +13,7 @@ import CampTypeStep from '@/components/booking/CampTypeStep'
 
 vi.mock('@/data/locationAvailability', () => ({
   getAvailableCampTypes: vi.fn((locationName: string) => {
-    return ['day', 'allday']
+    return locationName === 'Manly Library' ? ['day'] : ['day', 'allday']
   })
 }))
 
@@ -146,7 +146,7 @@ describe('CampTypeStep Component', () => {
   })
 
   describe('Manly Library Location', () => {
-    it('shows only regular camps with any date count', () => {
+    it('shows only Day Camp with any date count', () => {
       render(
         <CampTypeStep
           selectedCampType={null}
@@ -158,7 +158,7 @@ describe('CampTypeStep Component', () => {
       )
 
       expect(screen.getByRole('heading', { name: 'Day Camp' })).toBeInTheDocument()
-      expect(screen.getByRole('heading', { name: 'All Day Camp' })).toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: 'All Day Camp' })).not.toBeInTheDocument()
       expect(screen.queryByRole('heading', { name: 'Day Camp 3-Day Bundle' })).not.toBeInTheDocument()
       expect(screen.queryByRole('heading', { name: 'All Day Camp 3-Day Bundle' })).not.toBeInTheDocument()
     })

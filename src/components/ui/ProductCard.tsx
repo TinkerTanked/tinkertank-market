@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { ClockIcon, UserGroupIcon, CalendarIcon } from '@heroicons/react/24/outline'
 import type { CatalogProduct } from '@/types/products'
 
@@ -45,9 +46,11 @@ export default function ProductCard({ product, featured = false, showCategory = 
       {/* Product Image */}
       <div className={`relative ${imageSize} bg-gradient-to-br from-primary-100 to-accent-100`}>
         {product.images && product.images.length > 0 ? (
-          <img
+          <Image
             src={product.images[0]}
             alt={product.name}
+            fill
+            sizes={featured ? '(min-width: 1024px) 66vw, (min-width: 768px) 50vw, 100vw' : '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw'}
             className='w-full h-full object-cover'
           />
         ) : (

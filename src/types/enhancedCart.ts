@@ -9,12 +9,13 @@ export interface StudentDetails {
   lastName: string;
   age: number;
   dateOfBirth?: Date;
+  school?: string;
   allergies?: string[];
   medicalNotes?: string;
   emergencyContact?: {
     name: string;
     phone: string;
-    relationship: string;
+    relationship?: string;
   };
   parentName: string;
   parentEmail: string;

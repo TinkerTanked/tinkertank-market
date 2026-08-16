@@ -70,14 +70,6 @@ export default function OrderSummary() {
           <span className='text-green-500'>✓</span>
           <span>Secure payment processing</span>
         </div>
-        <div className='flex items-center space-x-2 text-sm text-gray-600'>
-          <span className='text-green-500'>✓</span>
-          
-        </div>
-        <div className='flex items-center space-x-2 text-sm text-gray-600'>
-          <span className='text-green-500'>✓</span>
-          <span>100% satisfaction guarantee</span>
-        </div>
       </div>
     </div>
   )
