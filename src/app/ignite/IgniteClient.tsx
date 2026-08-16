@@ -21,17 +21,17 @@ export default function IgniteClient() {
   return (
     <div>
       {/* Hero Section */}
-      <section className='bg-gradient-to-br from-green-500 via-blue-500 to-purple-500 text-white py-16 lg:py-24'>
+      <section className='program-hero'>
         <div className='container-custom'>
           <div className='text-center space-y-6'>
             <div className='flex items-center justify-center space-x-2 mb-4'>
-              <RocketLaunchIcon className='w-8 h-8 text-yellow-300' />
-              <span className='bg-yellow-300 text-purple-900 px-4 py-2 rounded-full font-bold text-sm'>
+              <RocketLaunchIcon className='w-8 h-8 text-orange-300' />
+              <span className='rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-blue-50'>
                 ONGOING PROGRAM
               </span>
             </div>
             <h1 className='text-4xl md:text-5xl font-display font-bold leading-tight text-shadow-sm'>
-              Ignite <span className='text-yellow-300'>STEAM</span> Program
+              Ignite <span className='text-orange-300'>STEAM</span> Program
             </h1>
             <p className='text-xl md:text-2xl font-light text-blue-100 max-w-3xl mx-auto'>
               Weekly STEAM sessions that build confidence, creativity, and problem-solving skills throughout the school term
@@ -67,7 +67,7 @@ export default function IgniteClient() {
       <IgniteBookingWizard isOpen={isWizardOpen} onClose={() => setIsWizardOpen(false)} />
 
       {/* Program Benefits */}
-      <section className='py-16 bg-gray-50'>
+      <section className='bg-slate-50 py-20'>
         <div className='container-custom'>
           <div className='text-center space-y-4 mb-12'>
             <h2 className='text-3xl font-display font-bold text-gray-900'>
@@ -79,7 +79,7 @@ export default function IgniteClient() {
           </div>
 
           <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-            <div className='bg-white rounded-xl p-8 text-center shadow-lg'>
+            <div className='feature-card text-center'>
               <div className='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-3xl'>🧠</span>
               </div>
@@ -91,7 +91,7 @@ export default function IgniteClient() {
               </p>
             </div>
 
-            <div className='bg-white rounded-xl p-8 text-center shadow-lg'>
+            <div className='feature-card text-center'>
               <div className='w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-3xl'>🤝</span>
               </div>
@@ -103,7 +103,7 @@ export default function IgniteClient() {
               </p>
             </div>
 
-            <div className='bg-white rounded-xl p-8 text-center shadow-lg'>
+            <div className='feature-card text-center'>
               <div className='w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-3xl'>💡</span>
               </div>
@@ -119,7 +119,7 @@ export default function IgniteClient() {
       </section>
 
       {/* Program Options */}
-      <section className='py-20'>
+      <section className='bg-white py-20'>
         <div className='container-custom'>
           <div className='text-center space-y-4 mb-12'>
             <h2 className='text-3xl md:text-4xl font-display font-bold text-gray-900'>
@@ -139,7 +139,7 @@ export default function IgniteClient() {
       </section>
 
       {/* Learning Journey */}
-      <section className='py-20 bg-gradient-to-br from-green-50 to-blue-50'>
+      <section className='border-y border-slate-200 bg-slate-50 py-20'>
         <div className='container-custom'>
           <div className='text-center space-y-4 mb-12'>
             <h2 className='text-3xl font-display font-bold text-gray-900'>
@@ -255,7 +255,7 @@ export default function IgniteClient() {
       </section>
 
       {/* CTA */}
-      <section className='py-20 bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 text-white'>
+      <section className='bg-primary-700 py-20 text-white'>
         <div className='container-custom text-center'>
           <div className='space-y-6'>
             <h2 className='text-3xl md:text-4xl font-display font-bold'>
@@ -272,7 +272,7 @@ export default function IgniteClient() {
                 <RocketLaunchIcon className='w-5 h-5 mr-2' />
                 Subscribe Now
               </button>
-              <Link href='/contact' className='btn-outline border-white text-white hover:bg-white hover:text-purple-600 text-lg px-8 py-4'>
+              <Link href='/contact' className='btn-outline-inverse text-lg px-8 py-4'>
                 Ask Questions
               </Link>
             </div>

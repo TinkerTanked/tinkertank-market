@@ -10,25 +10,37 @@
   }
 
   body {
-    @apply text-gray-900 bg-white antialiased;
+    @apply text-gray-900 bg-slate-50 antialiased;
+  }
+
+  ::selection {
+    @apply bg-primary-100 text-primary-950;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-500 hover:bg-primary-600 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-200 inline-flex items-center justify-center;
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold px-6 py-3 rounded-xl shadow-sm transition-all duration-200 inline-flex items-center justify-center;
   }
 
   .btn-secondary {
-    @apply bg-accent-700 hover:bg-accent-800 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-200 inline-flex items-center justify-center;
+    @apply bg-accent-700 hover:bg-accent-800 text-white font-semibold px-6 py-3 rounded-xl shadow-sm transition-all duration-200 inline-flex items-center justify-center;
   }
 
   .btn-outline {
-    @apply border-2 border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 inline-flex items-center justify-center;
+    @apply border border-primary-300 bg-white text-primary-700 hover:border-primary-600 hover:bg-primary-50 font-semibold px-6 py-3 rounded-xl shadow-sm transition-all duration-200 inline-flex items-center justify-center;
+  }
+
+  .btn-outline-inverse {
+    @apply inline-flex items-center justify-center rounded-xl border border-white/60 bg-transparent px-6 py-3 font-semibold text-white shadow-none transition-all duration-200 hover:border-white hover:bg-white hover:text-primary-800;
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden;
+    @apply bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm;
   }
 
   .container-custom {
@@ -36,11 +48,28 @@
   }
 
   .hero-gradient {
-    @apply bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(37, 99, 235, 0.32), transparent 30%),
+      linear-gradient(135deg, #0f2747 0%, #123f75 58%, #075bb7 100%);
   }
 
   .accent-gradient {
     @apply bg-gradient-to-r from-accent-500 to-accent-600;
+  }
+
+  .program-hero {
+    @apply relative overflow-hidden text-white py-16 lg:py-24;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(37, 99, 235, 0.32), transparent 30%),
+      linear-gradient(135deg, #0f2747 0%, #123f75 58%, #075bb7 100%);
+  }
+
+  .section-kicker {
+    @apply text-sm font-bold uppercase tracking-[0.16em] text-primary-700;
+  }
+
+  .feature-card {
+    @apply bg-white rounded-2xl border border-slate-200 p-6 shadow-sm;
   }
 }
 

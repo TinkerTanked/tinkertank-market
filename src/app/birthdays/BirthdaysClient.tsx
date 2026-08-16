@@ -11,25 +11,25 @@ export default function BirthdaysClient() {
   return (
     <div>
       {/* Hero Section */}
-      <section className='bg-gradient-to-br from-purple-500 via-pink-500 to-accent-500 text-white py-16 lg:py-24'>
+      <section className='program-hero'>
         <div className='container-custom'>
           <div className='text-center space-y-6'>
             <h1 className='text-4xl md:text-5xl font-display font-bold leading-tight text-shadow-sm'>
-              Robotics, Coding &amp; <span className='text-yellow-300'>STEAM Birthday Parties</span>
+              Robotics, Coding &amp; <span className='text-orange-300'>STEAM Birthday Parties</span>
             </h1>
-            <p className='text-xl md:text-2xl font-light text-purple-100 max-w-3xl mx-auto'>
+            <p className='text-xl md:text-2xl font-light text-blue-100 max-w-3xl mx-auto'>
               Hands-on kids&apos; parties at our Neutral Bay studio or your venue across Northern Sydney
             </p>
             <div className='flex flex-col sm:flex-row gap-4 justify-center items-center pt-4'>
-              <div className='flex items-center space-x-2 text-purple-100'>
+              <div className='flex items-center space-x-2 text-blue-100'>
                 <GiftIcon className='w-5 h-5' />
                 <span>All-Inclusive Packages</span>
               </div>
-              <div className='flex items-center space-x-2 text-purple-100'>
+              <div className='flex items-center space-x-2 text-blue-100'>
                 <UsersIcon className='w-5 h-5' />
                 <span>10 Students Included</span>
               </div>
-              <div className='flex items-center space-x-2 text-purple-100'>
+              <div className='flex items-center space-x-2 text-blue-100'>
                 <SparklesIcon className='w-5 h-5' />
                 <span>Our Studio or Your Venue</span>
               </div>
@@ -39,7 +39,7 @@ export default function BirthdaysClient() {
       </section>
 
       {/* What Makes Us Special */}
-      <section className='py-16 bg-gray-50'>
+      <section className='bg-slate-50 py-20'>
         <div className='container-custom'>
           <div className='text-center space-y-4 mb-12'>
             <h2 className='text-3xl font-display font-bold text-gray-900'>
@@ -51,7 +51,7 @@ export default function BirthdaysClient() {
           </div>
 
           <div className='grid grid-cols-1 md:grid-cols-4 gap-8'>
-            <div className='bg-white rounded-xl p-6 text-center shadow-lg'>
+            <div className='feature-card text-center'>
               <div className='w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-3xl'>🎉</span>
               </div>
@@ -63,7 +63,7 @@ export default function BirthdaysClient() {
               </p>
             </div>
 
-            <div className='bg-white rounded-xl p-6 text-center shadow-lg'>
+            <div className='feature-card text-center'>
               <div className='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-3xl'>🎂</span>
               </div>
@@ -75,7 +75,7 @@ export default function BirthdaysClient() {
               </p>
             </div>
 
-            <div className='bg-white rounded-xl p-6 text-center shadow-lg'>
+            <div className='feature-card text-center'>
               <div className='w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-3xl'>👨‍🔬</span>
               </div>
@@ -87,7 +87,7 @@ export default function BirthdaysClient() {
               </p>
             </div>
 
-            <div className='bg-white rounded-xl p-6 text-center shadow-lg'>
+            <div className='feature-card text-center'>
               <div className='w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-3xl'>🏆</span>
               </div>
@@ -103,7 +103,7 @@ export default function BirthdaysClient() {
       </section>
 
       {/* Party Packages */}
-      <section className='py-20'>
+      <section className='bg-white py-20'>
         <div className='container-custom'>
           <div className='text-center space-y-4 mb-12'>
             <h2 className='text-3xl md:text-4xl font-display font-bold text-gray-900'>
@@ -123,7 +123,7 @@ export default function BirthdaysClient() {
       </section>
 
       {/* How It Works */}
-      <section className='py-20 bg-gradient-to-br from-purple-50 to-pink-50'>
+      <section className='border-y border-slate-200 bg-slate-50 py-20'>
         <div className='container-custom'>
           <div className='text-center space-y-4 mb-12'>
             <h2 className='text-3xl font-display font-bold text-gray-900'>
@@ -228,13 +228,13 @@ export default function BirthdaysClient() {
       </section>
 
       {/* CTA */}
-      <section className='py-20 bg-gradient-to-r from-purple-500 to-pink-500 text-white'>
+      <section className='bg-primary-700 py-20 text-white'>
         <div className='container-custom text-center'>
           <div className='space-y-6'>
             <h2 className='text-3xl md:text-4xl font-display font-bold'>
               Ready to Plan the Perfect Party?
             </h2>
-            <p className='text-xl text-purple-100 max-w-2xl mx-auto'>
+            <p className='text-xl text-blue-100 max-w-2xl mx-auto'>
               Let us create magical memories for your child's special day
             </p>
             <Link href='/contact' className='btn-secondary text-lg px-8 py-4 shadow-lg'>

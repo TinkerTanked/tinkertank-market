@@ -242,7 +242,7 @@ export default function AboutPage() {
               <Link href='/camps' className='btn-secondary text-lg px-8 py-4'>
                 Book a Program
               </Link>
-              <Link href='/contact' className='btn-outline border-white text-white hover:bg-white hover:text-primary-600 text-lg px-8 py-4'>
+              <Link href='/contact' className='btn-outline-inverse text-lg px-8 py-4'>
                 Get in Touch
               </Link>
             </div>

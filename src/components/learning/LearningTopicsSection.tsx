@@ -13,22 +13,24 @@ export default function LearningTopicsSection({
   className = 'bg-gray-50'
 }: LearningTopicsSectionProps) {
   return (
-    <section className={`py-16 ${className}`}>
+    <section className={`py-20 lg:py-24 ${className}`}>
       <div className='container-custom'>
-        <div className='max-w-3xl mx-auto text-center space-y-4 mb-10'>
-          <h2 className='text-3xl md:text-4xl font-display font-bold text-gray-900'>{heading}</h2>
-          <p className='text-lg text-gray-600'>{description}</p>
+        <div className='mb-12 max-w-3xl space-y-4'>
+          <p className='section-kicker'>Skills for a changing world</p>
+          <h2 className='font-display text-3xl font-bold tracking-tight text-slate-950 md:text-4xl'>{heading}</h2>
+          <p className='text-lg leading-relaxed text-slate-600'>{description}</p>
         </div>
-        <div className='grid sm:grid-cols-2 lg:grid-cols-5 gap-4'>
-          {learningTopics.map(topic => (
+        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-5'>
+          {learningTopics.map((topic, index) => (
             <Link
               key={topic.slug}
               href={`/${topic.slug}`}
-              className='bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-primary-300 transition-all'
+              className='group flex min-h-64 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md'
             >
-              <h3 className='font-display font-semibold text-gray-900'>{topic.navLabel}</h3>
-              <p className='text-sm text-gray-600 mt-2'>{topic.shortDescription}</p>
-              <span className='inline-block text-primary-600 font-semibold text-sm mt-4'>Learn more →</span>
+              <span className='font-display text-3xl font-bold text-primary-500 transition-colors group-hover:text-primary-700'>0{index + 1}</span>
+              <h3 className='mt-6 font-display text-lg font-semibold text-slate-950'>{topic.navLabel}</h3>
+              <p className='mt-3 flex-1 text-sm leading-relaxed text-slate-600'>{topic.shortDescription}</p>
+              <span className='mt-5 inline-block text-sm font-semibold text-primary-700'>Explore topic →</span>
             </Link>
           ))}
         </div>

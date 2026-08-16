@@ -51,7 +51,7 @@ export default function NorthernBeachesPage() {
             <p className='text-xl text-cyan-100'>Hands-on school holiday activities, weekly programs and technology birthday parties in Manly, Brookvale, Balgowlah and surrounding suburbs.</p>
             <div className='flex flex-col sm:flex-row gap-4'>
               <Link href='/camps' className='btn-secondary'>Find Holiday Camps</Link>
-              <Link href='/ignite' className='btn-outline border-white text-white hover:bg-white hover:text-primary-600'>View Weekly Programs</Link>
+              <Link href='/ignite' className='btn-outline-inverse'>View Weekly Programs</Link>
             </div>
           </div>
           <Image src='/images/manly-location.jpg' alt='TinkerTank STEAM programs in Manly on the Northern Beaches' width={900} height={650} className='rounded-2xl shadow-2xl w-full h-80 object-cover' priority />
