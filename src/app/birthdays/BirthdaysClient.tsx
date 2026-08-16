@@ -15,10 +15,10 @@ export default function BirthdaysClient() {
         <div className='container-custom'>
           <div className='text-center space-y-6'>
             <h1 className='text-4xl md:text-5xl font-display font-bold leading-tight text-shadow-sm'>
-              Unforgettable <span className='text-yellow-300'>Birthday</span> Parties
+              Robotics, Coding &amp; <span className='text-yellow-300'>STEAM Birthday Parties</span>
             </h1>
             <p className='text-xl md:text-2xl font-light text-purple-100 max-w-3xl mx-auto'>
-              Turn your child's special day into an epic STEAM adventure they'll remember forever
+              Hands-on kids&apos; parties at our Neutral Bay studio or your venue across Northern Sydney
             </p>
             <div className='flex flex-col sm:flex-row gap-4 justify-center items-center pt-4'>
               <div className='flex items-center space-x-2 text-purple-100'>
@@ -202,7 +202,7 @@ export default function BirthdaysClient() {
                 Where do the parties take place?
               </h3>
               <p className='text-gray-600'>
-                You can host your party at our fully-equipped TinkerTank Neutral Bay studio, or pick &ldquo;Your Venue&rdquo; in the booking flow and we&apos;ll bring the party to you — your home, a community hall, a local park, or anywhere you choose. Just provide the space and we&apos;ll handle the rest!
+                You can host your party at our fully-equipped <Link href='/locations/neutral-bay' className='text-primary-600 font-semibold hover:underline'>TinkerTank Neutral Bay studio</Link>, or pick &ldquo;Your Venue&rdquo; and we&apos;ll bring the party to your home or venue. Mobile parties are available across the Lower North Shore and <Link href='/areas/northern-beaches' className='text-primary-600 font-semibold hover:underline'>Northern Beaches</Link>, subject to availability.
               </p>
             </div>
 

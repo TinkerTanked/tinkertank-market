@@ -198,6 +198,11 @@ export function LocalBusinessJsonLd({ name = 'TinkerTank', url = 'https://tinker
       latitude: -33.8347,
       longitude: 151.2167
     },
+    areaServed: [
+      { '@type': 'AdministrativeArea', name: 'Lower North Shore' },
+      { '@type': 'AdministrativeArea', name: 'Northern Beaches' },
+      { '@type': 'City', name: 'Sydney' }
+    ],
     priceRange: '$$',
     openingHoursSpecification: [
       {

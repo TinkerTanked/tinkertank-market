@@ -14,10 +14,10 @@ export default function HomePage() {
             <div className='space-y-8'>
               <div className='space-y-4'>
                 <h1 className='text-4xl md:text-5xl lg:text-6xl font-display font-bold leading-tight text-shadow-sm'>
-                  Where <span className='text-yellow-300'>Science</span> Meets <span className='text-yellow-300'>Adventure</span>
+                  <span className='text-yellow-300'>STEAM, Coding &amp; Robotics</span> Programs for Kids
                 </h1>
                 <p className='text-xl md:text-2xl font-light text-blue-100 max-w-2xl'>
-                  Join TinkerTank for hands-on STEAM learning experiences that spark creativity and inspire the next generation of innovators
+                  Hands-on camps, weekly programs and birthday parties for ages 5-16 in Neutral Bay and across Sydney&apos;s north
                 </p>
               </div>
 
@@ -101,6 +101,26 @@ export default function HomePage() {
             <div className='text-center'>
               <div className='text-4xl font-display font-bold text-primary-600 mb-2'>98%</div>
               <div className='text-gray-600 font-medium'>Parent Satisfaction</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Local Programs */}
+      <section className='py-16 bg-white'>
+        <div className='container-custom'>
+          <div className='max-w-4xl mx-auto text-center space-y-6'>
+            <h2 className='text-3xl md:text-4xl font-display font-bold text-gray-900'>
+              Kids&apos; STEAM Programs Across Northern Sydney
+            </h2>
+            <p className='text-lg text-gray-600 leading-relaxed'>
+              Visit our purpose-built <Link href='/locations/neutral-bay' className='text-primary-600 font-semibold hover:underline'>Neutral Bay studio</Link>,
+              or find selected camps, weekly sessions and school programs on the <Link href='/areas/northern-beaches' className='text-primary-600 font-semibold hover:underline'>Northern Beaches</Link>.
+              Families can explore robotics, coding, engineering, 3D design and creative technology through practical projects.
+            </p>
+            <div className='flex flex-col sm:flex-row gap-4 justify-center'>
+              <Link href='/locations/neutral-bay' className='btn-primary'>Explore Neutral Bay</Link>
+              <Link href='/areas/northern-beaches' className='btn-outline'>Explore Northern Beaches</Link>
             </div>
           </div>
         </div>
