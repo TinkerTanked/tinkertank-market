@@ -99,174 +99,84 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h3 className="text-2xl font-bold text-gray-900">Choose Your Camp Type</h3>
-        <p className="text-gray-600">
-          Select the perfect camp duration for {date ? formatDate(date) : 'your chosen date'}
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div className="space-y-2">
+        <h3 className="text-2xl font-bold text-slate-950 sm:text-3xl">Choose your camp day</h3>
+        <p className="text-slate-600">
+          Compare times and pricing for {selectedDateCount > 1 ? `${selectedDateCount} selected dates` : date ? formatDate(date) : 'your selected date'}.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {filteredCampTypes.map((campType) => (
-          <div
+          <button
+            type="button"
             key={campType.id}
-            className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+            className={`relative rounded-2xl border p-5 text-left transition-all sm:p-6 ${
               selectedCampType?.id === campType.id
-                ? 'border-primary-500 bg-primary-50 shadow-lg transform scale-105'
-                : 'border-gray-200 bg-white hover:border-primary-300 hover:shadow-md'
+                ? 'border-primary-600 bg-primary-50 shadow-sm ring-1 ring-primary-600'
+                : 'border-slate-200 bg-white hover:border-primary-400 hover:shadow-sm'
             }`}
             onClick={() => onCampTypeSelect(campType)}
+            aria-pressed={selectedCampType?.id === campType.id}
           >
-            {/* Selection Indicator */}
-            {selectedCampType?.id === campType.id && (
-              <div className="absolute top-4 right-4 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
-                <CheckIcon className="w-4 h-4 text-white" />
-              </div>
-            )}
-
-            {/* Popular Badge for All Day */}
-            {campType.type === 'allday' && (
-              <div className="absolute -top-2 left-6">
-                <div className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1">
-                  <SparklesIcon className="w-3 h-3" />
-                  <span>POPULAR</span>
-                </div>
-              </div>
-            )}
-
-            {/* Bundle Badge */}
-            {campType.isBundle && (
-              <div className="absolute -top-2 left-6">
-                <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1">
-                  <SparklesIcon className="w-3 h-3" />
-                  <span>BEST VALUE</span>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              {/* Header */}
-              <div className="text-center">
-                <h4 className="text-xl font-bold text-gray-900 mb-2">{campType.name}</h4>
-                <div className="text-3xl font-bold text-primary-600">${campType.price}</div>
-                <div className="text-sm text-gray-500">
-                  {campType.isBundle ? `for ${campType.bundleDays} days` : 'per child'}
-                </div>
-                {campType.isBundle && (
-                  <div className="text-xs text-green-600 font-medium mt-1">
-                    Save ${((campType.type === 'day-bundle' ? 119.99 : 149.99) * 3 - campType.price).toFixed(2)}!
-                  </div>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                {(campType.type === 'allday' || campType.isBundle) && (
+                  <span className={`mb-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${
+                    campType.isBundle ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                  }`}>
+                    <SparklesIcon className="h-3.5 w-3.5" />
+                    {campType.isBundle ? 'Best value' : 'Most flexible'}
+                  </span>
                 )}
+                <h4 className="text-xl font-bold text-slate-950">{campType.name}</h4>
+                <p className="mt-1 text-sm text-slate-600">
+                  {campType.type === 'day' || campType.type === 'day-bundle'
+                    ? 'A complete day of guided projects and making.'
+                    : 'Extra project time and a later, easier pick-up.'}
+                </p>
               </div>
+              <span className={`grid h-6 w-6 flex-none place-items-center rounded-full border ${
+                selectedCampType?.id === campType.id ? 'border-primary-700 bg-primary-700' : 'border-slate-300 bg-white'
+              }`}>
+                {selectedCampType?.id === campType.id && <CheckIcon className="h-4 w-4 text-white" />}
+              </span>
+            </div>
 
-              {/* Time Info */}
-              <div className="flex items-center justify-center space-x-2 text-gray-600">
-                <ClockIcon className="w-5 h-5" />
-                <span className="font-medium">{campType.time}</span>
+            <div className="mt-6 grid grid-cols-2 gap-3 border-t border-slate-200 pt-5">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Time</p>
+                <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                  <ClockIcon className="h-4 w-4 text-primary-700" />
+                  {campType.time}
+                </p>
               </div>
-
-              {/* Features */}
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-gray-700">Hands-on STEAM experiments</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-gray-700">Take-home project</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-gray-700">Student-driven project learning</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-gray-700">Expert instructor guidance</span>
-                  </div>
-                  {(campType.type === 'allday' || campType.type === 'allday-bundle') && (
-                    <>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Extended project time</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Free play & outdoor time</span>
-                      </div>
-                    </>
-                  )}
-                  {campType.isBundle && (
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-gray-700">Choose any {campType.bundleDays} days</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Best For */}
-              <div className="pt-3 border-t border-gray-200">
-                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                  Best For
-                </div>
-                {campType.type === 'day' && (
-                  <p className="text-sm text-gray-600">
-                    Perfect for first-time campers or kids who prefer shorter programs
-                  </p>
-                )}
-                {campType.type === 'allday' && (
-                  <p className="text-sm text-gray-600">
-                    Ideal for working parents and kids who love extended learning and play
-                  </p>
-                )}
-                {campType.isBundle && (
-                  <p className="text-sm text-gray-600">
-                    Best value for families booking multiple days - pick any {campType.bundleDays} days!
-                  </p>
-                )}
+              <div className="text-right">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Price</p>
+                <p className="mt-1 text-xl font-bold text-primary-800">${campType.price.toFixed(2)}</p>
+                <p className="text-xs text-slate-500">{campType.isBundle ? `for ${campType.bundleDays} days` : 'per child, per day'}</p>
               </div>
             </div>
-          </div>
+
+            {campType.isBundle && (
+              <p className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+                Save ${((campType.type === 'day-bundle' ? 119.99 : 149.99) * 3 - campType.price).toFixed(2)} across three days
+              </p>
+            )}
+          </button>
         ))}
       </div>
 
-      {/* Comparison Table - only show when multiple camp types available */}
-      {filteredCampTypes.length > 1 && (
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h4 className="font-medium text-gray-900 mb-4 text-center">Quick Comparison</h4>
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div></div>
-            <div className="text-center font-medium text-gray-700">Day Camp</div>
-            <div className="text-center font-medium text-gray-700">All Day Camp</div>
-            
-            <div className="text-gray-600">Duration</div>
-            <div className="text-center text-gray-900">6 hours</div>
-            <div className="text-center text-gray-900">8 hours</div>
-            
-            <div className="text-gray-600">Price</div>
-            <div className="text-center text-green-600 font-bold">$119.99</div>
-            <div className="text-center text-green-600 font-bold">$149.99</div>
-          </div>
-        </div>
-      )}
-
-      {/* Info Section */}
-      <div className="bg-blue-50 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-blue-600 text-lg">💡</span>
-          </div>
-          <div>
-            <h4 className="font-medium text-blue-900 mb-1">What's Included</h4>
-            <ul className="text-blue-800 text-sm space-y-1">
-              <li>• All materials and equipment provided</li>
-              <li>• Age-appropriate activities (6-16 years)</li>
-              <li>• Progress photos shared with parents</li>
-              <li>• Certificate of completion</li>
-            </ul>
-          </div>
+      <div className="rounded-2xl bg-slate-100 p-4 sm:p-5">
+        <p className="text-sm font-bold text-slate-950">Included with every camp</p>
+        <div className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+          {['All equipment and materials', 'Age-appropriate guided projects', 'Take-home creations', 'Experienced TinkerTank facilitators'].map(item => (
+            <div key={item} className="flex items-center gap-2">
+              <CheckIcon className="h-4 w-4 flex-none text-emerald-600" />
+              <span>{item}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
