@@ -5,6 +5,8 @@ import { getProductsByCategory } from '@/data/products'
 import ProductCard from '@/components/ui/ProductCard'
 import { ClockIcon, UserGroupIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import BookCampButton from '@/components/ui/BookCampButton'
+import MobileActionBar from '@/components/ui/MobileActionBar'
+import TrustProofSection from '@/components/trust/TrustProofSection'
 
 export default function CampsClient() {
   const campProducts = getProductsByCategory('camps')
@@ -18,7 +20,7 @@ export default function CampsClient() {
   })
 
   return (
-    <div>
+    <div className='pb-20 md:pb-0'>
       {/* Hero Section */}
       <section className='program-hero'>
         <div className='container-custom'>
@@ -51,6 +53,8 @@ export default function CampsClient() {
           </div>
         </div>
       </section>
+
+      <TrustProofSection />
 
       {/* What to Expect */}
       <section className='bg-slate-50 py-20'>
@@ -118,10 +122,10 @@ export default function CampsClient() {
 
           {/* Filter Buttons */}
           <div className='flex flex-col sm:flex-row items-center justify-center gap-4 mb-12'>
-            <div className='flex space-x-4'>
+            <div className='flex flex-wrap justify-center gap-2 sm:gap-4'>
             <button
               onClick={() => setSelectedFilter('all')}
-              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              className={`px-4 py-3 sm:px-6 rounded-lg font-medium transition-all duration-200 ${
                 selectedFilter === 'all'
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'bg-white text-gray-700 border border-slate-200 hover:border-primary-300'
@@ -131,7 +135,7 @@ export default function CampsClient() {
             </button>
             <button
               onClick={() => setSelectedFilter('day')}
-              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              className={`px-4 py-3 sm:px-6 rounded-lg font-medium transition-all duration-200 ${
                 selectedFilter === 'day'
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'bg-white text-gray-700 border border-slate-200 hover:border-primary-300'
@@ -141,7 +145,7 @@ export default function CampsClient() {
             </button>
             <button
               onClick={() => setSelectedFilter('extended')}
-              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+              className={`px-4 py-3 sm:px-6 rounded-lg font-medium transition-all duration-200 ${
                 selectedFilter === 'extended'
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'bg-white text-gray-700 border border-slate-200 hover:border-primary-300'
@@ -224,6 +228,10 @@ export default function CampsClient() {
           </div>
         </div>
       </section>
+
+      <MobileActionBar label='School holiday camps'>
+        <BookCampButton size='sm' className='shadow-none' />
+      </MobileActionBar>
     </div>
   )
 }

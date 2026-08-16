@@ -4,12 +4,14 @@ import Link from 'next/link'
 import { getProductsByCategory } from '@/data/products'
 import ProductCard from '@/components/ui/ProductCard'
 import { GiftIcon, CakeIcon, SparklesIcon, UsersIcon } from '@heroicons/react/24/outline'
+import MobileActionBar from '@/components/ui/MobileActionBar'
+import TrustProofSection from '@/components/trust/TrustProofSection'
 
 export default function BirthdaysClient() {
   const birthdayProducts = getProductsByCategory('birthdays')
 
   return (
-    <div>
+    <div className='pb-20 md:pb-0'>
       {/* Hero Section */}
       <section className='program-hero'>
         <div className='container-custom'>
@@ -37,6 +39,8 @@ export default function BirthdaysClient() {
           </div>
         </div>
       </section>
+
+      <TrustProofSection />
 
       {/* What Makes Us Special */}
       <section className='bg-slate-50 py-20'>
@@ -103,7 +107,7 @@ export default function BirthdaysClient() {
       </section>
 
       {/* Party Packages */}
-      <section className='bg-white py-20'>
+      <section id='party-packages' className='scroll-mt-32 bg-white py-20'>
         <div className='container-custom'>
           <div className='text-center space-y-4 mb-12'>
             <h2 className='text-3xl md:text-4xl font-display font-bold text-gray-900'>
@@ -244,6 +248,10 @@ export default function BirthdaysClient() {
           </div>
         </div>
       </section>
+
+      <MobileActionBar label='STEAM birthday parties'>
+        <Link href='#party-packages' className='btn-primary px-4 py-2 text-sm'>View parties</Link>
+      </MobileActionBar>
     </div>
   )
 }

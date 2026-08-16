@@ -104,7 +104,7 @@ export default function AboutPage() {
               </p>
 
               <p>
-                Over the past decade, TinkerTank has worked with more than 15,000 students across Sydney through
+                Over the past decade, TinkerTank has worked with more than 30,000 students across Sydney through
                 after-school programs, holiday camps, school incursions, libraries, community programs, and special
                 events. Along the way, we have seen thousands of students discover new passions, build confidence,
                 develop future-ready skills, and experience those magical &ldquo;A-Ha!&rdquo; moments that happen when
