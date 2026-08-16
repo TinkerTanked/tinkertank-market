@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Bars3Icon, XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, ChevronDownIcon, XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
+import { learningTopics } from '@/data/learningTopics'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -41,8 +42,40 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className='hidden md:flex items-center space-x-8'>
-            {navigation.map((item) => (
+          <nav className='hidden xl:flex items-center space-x-8'>
+            {navigation.slice(0, 3).map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className='text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200'
+              >
+                {item.name}
+              </Link>
+            ))}
+            <div className='relative group'>
+              <Link
+                href='/what-kids-learn'
+                className='flex items-center gap-1 text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200'
+              >
+                What Kids Learn
+                <ChevronDownIcon className='w-4 h-4' />
+              </Link>
+              <div className='absolute top-full left-1/2 -translate-x-1/2 pt-3 w-72 invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-all duration-200'>
+                <div className='bg-white border border-gray-100 rounded-xl shadow-xl p-2'>
+                  {learningTopics.map(topic => (
+                    <Link
+                      key={topic.slug}
+                      href={`/${topic.slug}`}
+                      className='block rounded-lg px-4 py-3 hover:bg-primary-50 transition-colors'
+                    >
+                      <span className='block text-sm font-semibold text-gray-900'>{topic.navLabel}</span>
+                      <span className='block text-xs text-gray-500 mt-0.5'>{topic.shortDescription}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {navigation.slice(3).map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
@@ -54,7 +87,7 @@ export default function Header() {
           </nav>
 
           {/* Desktop Actions */}
-          <div className='hidden md:flex items-center space-x-4'>
+          <div className='hidden xl:flex items-center space-x-4'>
             <Link
               href='/cart'
               className='relative p-2 text-gray-700 hover:text-primary-600 transition-colors duration-200'
@@ -69,7 +102,7 @@ export default function Header() {
           </div>
 
           {/* Mobile menu button */}
-          <div className='md:hidden flex items-center space-x-2'>
+          <div className='xl:hidden flex items-center space-x-2'>
             <Link
               href='/cart'
               className='relative p-2 text-gray-700 hover:text-primary-600 transition-colors duration-200'
@@ -92,7 +125,7 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className='md:hidden border-t border-gray-100 py-4'>
+          <div className='xl:hidden border-t border-gray-100 py-4'>
             <div className='flex flex-col space-y-4'>
               {navigation.map((item) => (
                 <Link
@@ -104,6 +137,25 @@ export default function Header() {
                   {item.name}
                 </Link>
               ))}
+              <div className='border-l-2 border-primary-100 pl-4 space-y-3'>
+                <Link
+                  href='/what-kids-learn'
+                  className='block text-gray-900 font-semibold'
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  What Kids Learn
+                </Link>
+                {learningTopics.map(topic => (
+                  <Link
+                    key={topic.slug}
+                    href={`/${topic.slug}`}
+                    className='block text-sm text-gray-600 hover:text-primary-600'
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {topic.navLabel}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         )}

@@ -18,6 +18,7 @@ export function OrganizationJsonLd({
     url,
     logo,
     description: 'STEAM education programs for kids including camps, birthday parties, and weekly programs',
+    knowsAbout: ['STEM education', 'STEAM education', 'Robotics', 'Coding', '3D design', '3D printing', 'Animation'],
     address: {
       '@type': 'PostalAddress',
       streetAddress: '50 Yeo St',

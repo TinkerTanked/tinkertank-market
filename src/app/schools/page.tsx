@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import LearningTopicsSection from '@/components/learning/LearningTopicsSection'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
@@ -52,6 +53,11 @@ export default function SchoolsPage() {
           </div>
         </div>
       </section>
+
+      <LearningTopicsSection
+        heading='STEAM Learning Areas for Schools'
+        description='Programs can connect coding, robotics, 3D design and printing, animation and interdisciplinary STEAM projects.'
+      />
 
       <section className='py-16 bg-gray-50'>
         <div className='container-custom max-w-4xl text-center space-y-6'>

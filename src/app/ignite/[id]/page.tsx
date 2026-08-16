@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { getProductById } from '@/data/products'
 import IgniteBookingWizard from '@/components/booking/IgniteBookingWizard'
+import LearningTopicsSection from '@/components/learning/LearningTopicsSection'
 
 export default function IgniteDetailPage() {
   const params = useParams()
@@ -197,6 +198,11 @@ export default function IgniteDetailPage() {
           </div>
         </div>
       </section>
+
+      <LearningTopicsSection
+        heading='Skills Students Explore in Ignite'
+        description='Ignite projects connect coding, robotics, 3D design and printing, animation and STEAM thinking over time.'
+      />
 
       {/* CTA Section */}
       <section className='py-16 bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 text-white'>
