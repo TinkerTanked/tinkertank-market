@@ -13,6 +13,7 @@ interface BookingData {
     id: string
     name: string
     address: string
+    capacity: number
   } | null
   date: Date | null
   dates: Date[]
@@ -95,8 +96,8 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         description: `${bookingData.campType.name} at ${bookingData.location.name}`,
         image: '/images/camps2.jpeg',
         isActive: true,
-        availableCapacity: 20,
-        maxCapacity: 20,
+        availableCapacity: bookingData.location.capacity,
+        maxCapacity: bookingData.location.capacity,
         pricing: { basePrice: bookingData.campType.price }
       } as any
 

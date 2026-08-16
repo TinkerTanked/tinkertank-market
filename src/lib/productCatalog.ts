@@ -67,7 +67,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Healthy snacks included'
     ],
     images: ['/images/camps1.jpeg', '/images/camps2.jpeg'],
-    maxCapacity: 20,
+    maxCapacity: 35,
     tags: ['coding', 'robotics', '3d-design', 'beginner-friendly']
   },
 
@@ -96,7 +96,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Portfolio building'
     ],
     images: ['/images/camps3.jpeg', '/images/camps4.jpeg'],
-    maxCapacity: 16,
+    maxCapacity: 35,
     tags: ['coding', 'robotics', '3d-design', 'advanced', 'extended-care']
   },
 

@@ -7,6 +7,9 @@ export interface LocationAvailability {
   dailyCapacity?: number
 }
 
+/** Default combined camp capacity per location and date. */
+export const DEFAULT_CAMP_DAILY_CAPACITY = 35
+
 // Dates when 3-day bundles are available at Neutral Bay
 export const BUNDLE_AVAILABLE_DATES = ['2026-04-20', '2026-04-21', '2026-04-22', '2026-04-23']
 
@@ -26,14 +29,14 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
     locationName: 'TinkerTank Neutral Bay',
     availableCampTypes: ['day', 'allday'],
     // Combined daily cap across Day Camp and All Day Camp bookings
-    dailyCapacity: 35
+    dailyCapacity: DEFAULT_CAMP_DAILY_CAPACITY
   },
   {
     locationId: 'manly-library',
     locationName: 'Manly Library',
     availableCampTypes: ['day'],
     availableDates: MANLY_LIBRARY_SPRING_2026_DATES,
-    dailyCapacity: 30
+    dailyCapacity: DEFAULT_CAMP_DAILY_CAPACITY
   }
 ]
 
@@ -73,5 +76,6 @@ export function getAvailableCampTypes(locationName: string): ('day' | 'allday')[
 }
 
 export function getDailyCapacity(locationName: string): number | undefined {
-  return getLocationAvailability(locationName)?.dailyCapacity
+  const availability = getLocationAvailability(locationName)
+  return availability ? availability.dailyCapacity ?? DEFAULT_CAMP_DAILY_CAPACITY : undefined
 }

@@ -69,7 +69,7 @@ model Location {
   id                 String              @id @default(cuid())
   name               String
   address            String
-  capacity           Int
+  capacity           Int                 @default(35)
   timezone           String              @default("Australia/Sydney")
   isActive           Boolean             @default(true)
   createdAt          DateTime            @default(now())

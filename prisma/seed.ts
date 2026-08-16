@@ -24,7 +24,7 @@ async function main() {
     data: {
       name: 'TinkerTank Neutral Bay',
       address: '50 Yeo St, Neutral Bay, NSW, 2089',
-      capacity: 20,
+      capacity: 35,
       timezone: 'Australia/Sydney',
     },
   })
@@ -35,7 +35,7 @@ async function main() {
     data: {
       name: 'Manly Library',
       address: 'Manly Library, Manly NSW 2095',
-      capacity: 16,
+      capacity: 35,
       timezone: 'Australia/Sydney',
     },
   })

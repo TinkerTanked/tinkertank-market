@@ -1,12 +1,13 @@
 'use client'
 
 import { MapPinIcon, CheckIcon } from '@heroicons/react/24/outline'
-import { LOCATION_AVAILABILITY } from '@/data/locationAvailability'
+import { DEFAULT_CAMP_DAILY_CAPACITY, LOCATION_AVAILABILITY } from '@/data/locationAvailability'
 
 interface Location {
   id: string
   name: string
   address: string
+  capacity: number
 }
 
 interface LocationStepProps {
@@ -23,7 +24,8 @@ export default function LocationStep({ selectedLocation, onLocationSelect }: Loc
   const locations: Location[] = LOCATION_AVAILABILITY.map(loc => ({
     id: loc.locationId,
     name: loc.locationName,
-    address: LOCATION_ADDRESSES[loc.locationId] || ''
+    address: LOCATION_ADDRESSES[loc.locationId] || '',
+    capacity: loc.dailyCapacity ?? DEFAULT_CAMP_DAILY_CAPACITY
   }))
 
   return (

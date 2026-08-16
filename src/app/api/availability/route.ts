@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getLocationAvailabilityById } from '@/data/locationAvailability'
+import { getDailyCapacity, getLocationAvailabilityById } from '@/data/locationAvailability'
 
 /**
  * GET /api/availability?locationId=manly-library
@@ -29,12 +29,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const dailyCapacity = availability.dailyCapacity ?? null
-
     // Look up the matching DB location row by name
     const dbLocation = await prisma.location.findFirst({
       where: { name: availability.locationName }
     })
+    // Database capacity is authoritative and configurable per location. The
+    // configured default keeps availability useful before a new location has
+    // been seeded.
+    const dailyCapacity = dbLocation?.capacity ?? getDailyCapacity(availability.locationName) ?? null
 
     // Build a per-date booking count map for camp bookings at this location
     const counts: Record<string, number> = {}
