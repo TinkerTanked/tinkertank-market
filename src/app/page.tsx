@@ -11,6 +11,7 @@ import {
 import { getFeaturedCatalogProducts } from '@/lib/productCatalog'
 import ProductCard from '@/components/ui/ProductCard'
 import LearningTopicsSection from '@/components/learning/LearningTopicsSection'
+import TrustProofSection from '@/components/trust/TrustProofSection'
 
 const testimonials = [
   {
@@ -113,6 +114,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      <TrustProofSection showFacts={false} showOrganisations />
 
       <section className='bg-slate-50 py-20 lg:py-24'>
         <div className='container-custom grid gap-12 lg:grid-cols-2 lg:items-center'>

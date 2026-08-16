@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { getProductsByCategory } from '@/data/products'
 import ProductCard from '@/components/ui/ProductCard'
 import IgniteBookingWizard from '@/components/booking/IgniteBookingWizard'
+import MobileActionBar from '@/components/ui/MobileActionBar'
+import TrustProofSection from '@/components/trust/TrustProofSection'
 import { 
   RocketLaunchIcon, 
   AcademicCapIcon, 
@@ -19,7 +21,7 @@ export default function IgniteClient() {
   const igniteProducts = getProductsByCategory('subscriptions')
 
   return (
-    <div>
+    <div className='pb-20 md:pb-0'>
       {/* Hero Section */}
       <section className='program-hero'>
         <div className='container-custom'>
@@ -65,6 +67,8 @@ export default function IgniteClient() {
 
       {/* Ignite Booking Wizard */}
       <IgniteBookingWizard isOpen={isWizardOpen} onClose={() => setIsWizardOpen(false)} />
+
+      <TrustProofSection />
 
       {/* Program Benefits */}
       <section className='bg-slate-50 py-20'>
@@ -279,6 +283,10 @@ export default function IgniteClient() {
           </div>
         </div>
       </section>
+
+      <MobileActionBar label='Weekly Ignite program'>
+        <button onClick={() => setIsWizardOpen(true)} className='btn-primary px-4 py-2 text-sm'>Subscribe</button>
+      </MobileActionBar>
     </div>
   )
 }
