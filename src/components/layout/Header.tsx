@@ -90,6 +90,7 @@ export default function Header() {
           <div className='hidden xl:flex items-center space-x-4'>
             <Link
               href='/cart'
+              aria-label='View cart'
               className='relative p-2 text-gray-700 hover:text-primary-600 transition-colors duration-200'
             >
               <ShoppingCartIcon className='w-6 h-6' />
@@ -105,6 +106,7 @@ export default function Header() {
           <div className='xl:hidden flex items-center space-x-2'>
             <Link
               href='/cart'
+              aria-label='View cart'
               className='relative p-2 text-gray-700 hover:text-primary-600 transition-colors duration-200'
             >
               <ShoppingCartIcon className='w-6 h-6' />
@@ -116,6 +118,9 @@ export default function Header() {
             </Link>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={isMenuOpen}
+              aria-controls='mobile-navigation'
               className='p-2 text-gray-700 hover:text-primary-600 transition-colors duration-200'
             >
               {isMenuOpen ? <XMarkIcon className='w-6 h-6' /> : <Bars3Icon className='w-6 h-6' />}
@@ -125,7 +130,7 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className='xl:hidden border-t border-gray-100 py-4'>
+          <div id='mobile-navigation' className='xl:hidden border-t border-gray-100 py-4'>
             <div className='flex flex-col space-y-4'>
               {navigation.map((item) => (
                 <Link

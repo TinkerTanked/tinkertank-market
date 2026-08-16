@@ -27,7 +27,7 @@ export default function HomePage() {
                   Book a Camp
                 </Link>
                 <Link href='/about' className='btn-outline border-white text-white hover:bg-white hover:text-primary-600 text-lg px-8 py-4'>
-                  Learn More
+                  Why TinkerTank
                 </Link>
               </div>
 
@@ -52,7 +52,7 @@ export default function HomePage() {
                 <div className='space-y-6'>
                   <div className='text-center space-y-2'>
                     <div className='text-5xl'>🔬</div>
-                    <h3 className='text-2xl font-display font-semibold'>Science Experiments</h3>
+                    <h2 className='text-2xl font-display font-semibold'>Science Experiments</h2>
                   </div>
                   <div className='grid grid-cols-2 gap-4'>
                     <div className='text-center space-y-2'>
