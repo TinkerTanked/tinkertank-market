@@ -46,7 +46,7 @@ export default function ConfirmationStepNew({ location, dates, campType }: Confi
       {/* Header */}
       <div className="text-center">
         <h3 className="text-2xl font-bold text-gray-900 mb-2">Review Your Booking</h3>
-        <p className="text-gray-600">Check the details before adding to cart</p>
+        <p className="text-gray-600">Check the details before continuing to checkout</p>
       </div>
 
       {/* Compact Summary */}

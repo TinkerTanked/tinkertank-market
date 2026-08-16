@@ -168,17 +168,6 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
         ))}
       </div>
 
-      <div className="rounded-2xl bg-slate-100 p-4 sm:p-5">
-        <p className="text-sm font-bold text-slate-950">Included with every camp</p>
-        <div className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-          {['All equipment and materials', 'Age-appropriate guided projects', 'Take-home creations', 'Experienced TinkerTank facilitators'].map(item => (
-            <div key={item} className="flex items-center gap-2">
-              <CheckIcon className="h-4 w-4 flex-none text-emerald-600" />
-              <span>{item}</span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }

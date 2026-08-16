@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Dialog } from '@headlessui/react'
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, ShieldCheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { useRouter } from 'next/navigation'
 import LocationStep from './LocationStep'
 import DateStep from './DateStep'
 import CampTypeStep from './CampTypeStep'
@@ -47,6 +48,7 @@ const NEXT_STEP_LABELS: Record<number, string> = {
 }
 
 export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizardProps) {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [bookingData, setBookingData] = useState<BookingData>({
     location: null,
@@ -83,7 +85,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
     }
   }
 
-  const handleAddToCart = () => {
+  const handleContinueToCheckout = () => {
     if (bookingData.location && bookingData.dates.length > 0 && bookingData.campType) {
       const firstDate = new Date(bookingData.dates[0])
       const cartItem = {
@@ -113,6 +115,7 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         selectedDates: bookingData.dates.map(d => new Date(d))
       })
       onClose()
+      router.push('/checkout')
     }
   }
 
@@ -261,10 +264,10 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
                   ) : (
                     <button
                       type="button"
-                      onClick={handleAddToCart}
+                      onClick={handleContinueToCheckout}
                       className="ml-auto inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-xl bg-emerald-600 px-5 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:max-w-xs"
                     >
-                      Add to cart
+                      Continue to checkout
                       <ArrowRightIcon className="ml-2 h-4 w-4" />
                     </button>
                   )}
