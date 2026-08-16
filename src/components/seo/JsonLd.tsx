@@ -1,4 +1,4 @@
-import { Product } from '@/types/product'
+import { Product } from '@/types/products'
 
 interface OrganizationJsonLdProps {
   name?: string
@@ -9,7 +9,7 @@ interface OrganizationJsonLdProps {
 export function OrganizationJsonLd({
   name = 'TinkerTank',
   url = 'https://tinkertank.rocks',
-  logo = 'https://tinkertank.rocks/logo.png'
+  logo = 'https://tinkertank.rocks/images/logo-black.png'
 }: OrganizationJsonLdProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -20,16 +20,23 @@ export function OrganizationJsonLd({
     description: 'STEAM education programs for kids including camps, birthday parties, and weekly programs',
     address: {
       '@type': 'PostalAddress',
+      streetAddress: '50 Yeo St',
       addressLocality: 'Neutral Bay',
       addressRegion: 'NSW',
+      postalCode: '2089',
       addressCountry: 'AU'
     },
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
+      telephone: '+61 1300 670 104',
       email: 'hello@tinkertank.rocks'
     },
-    sameAs: ['https://www.facebook.com/tinkertank', 'https://www.instagram.com/tinkertank']
+    sameAs: [
+      'https://www.facebook.com/tinkertankau',
+      'https://www.instagram.com/_tinkertank_',
+      'https://www.linkedin.com/company/tinker-tank'
+    ]
   }
 
   return <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -99,24 +106,24 @@ interface ProductJsonLdProps {
 }
 
 export function ProductJsonLd({ product, url }: ProductJsonLdProps) {
+  const images = product.images.map(image => new URL(image, url).toString())
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
     description: product.description,
-    ...(product.imageUrl && { image: product.imageUrl }),
+    ...(images.length > 0 && { image: images }),
     offers: {
       '@type': 'Offer',
-      price: product.pricing.basePrice,
+      price: product.price,
       priceCurrency: 'AUD',
-      availability: 'https://schema.org/InStock',
       url
     },
     brand: {
       '@type': 'Organization',
       name: 'TinkerTank'
     },
-    category: product.type
+    category: product.category
   }
 
   return <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -175,10 +182,13 @@ export function LocalBusinessJsonLd({ name = 'TinkerTank', url = 'https://tinker
     name,
     url,
     description: 'STEAM education programs for kids aged 5-16',
+    telephone: '+61 1300 670 104',
+    email: 'hello@tinkertank.rocks',
+    image: 'https://tinkertank.rocks/images/home-hero.jpg',
     address: {
       '@type': 'PostalAddress',
-      streetAddress: 'Neutral Bay',
-      addressLocality: 'Sydney',
+      streetAddress: '50 Yeo St',
+      addressLocality: 'Neutral Bay',
       addressRegion: 'NSW',
       postalCode: '2089',
       addressCountry: 'AU'
@@ -195,7 +205,18 @@ export function LocalBusinessJsonLd({ name = 'TinkerTank', url = 'https://tinker
         dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
         opens: '09:00',
         closes: '17:00'
+      },
+      {
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: 'Saturday',
+        opens: '10:00',
+        closes: '12:00'
       }
+    ],
+    sameAs: [
+      'https://www.facebook.com/tinkertankau',
+      'https://www.instagram.com/_tinkertank_',
+      'https://www.linkedin.com/company/tinker-tank'
     ]
   }
 

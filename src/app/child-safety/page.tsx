@@ -5,7 +5,7 @@ import { ArrowLeftIcon, EnvelopeIcon } from '@heroicons/react/24/outline'
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
 export const metadata: Metadata = {
-  title: 'Child Safety - TinkerTank',
+  title: 'Child Safety',
   description:
     'TinkerTank is committed to creating safe, respectful, and inclusive environments for all children and young people, in line with the NSW Child Safe Standards.',
   alternates: {

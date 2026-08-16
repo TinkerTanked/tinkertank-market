@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   ClockIcon, 
   UserGroupIcon, 
@@ -108,11 +109,14 @@ export default function IgniteDetailPage() {
 
             {/* Image */}
             <div className='relative'>
-              <div className='bg-gradient-to-br from-green-100 to-blue-100 rounded-2xl h-96 flex items-center justify-center'>
+              <div className='relative bg-gradient-to-br from-green-100 to-blue-100 rounded-2xl h-96 flex items-center justify-center overflow-hidden'>
                 {product.images && product.images.length > 0 ? (
-                  <img
+                  <Image
                     src={product.images[0]}
                     alt={product.name}
+                    fill
+                    preload
+                    sizes='(min-width: 1024px) 50vw, 100vw'
                     className='w-full h-full object-cover rounded-2xl'
                   />
                 ) : (
