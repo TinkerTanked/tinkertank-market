@@ -8,6 +8,7 @@ import { ErrorHandler, ErrorCategory, ErrorSeverity, withErrorHandling } from '@
 import { notificationService } from '@/lib/notifications';
 import { IGNITE_SESSIONS } from '@/config/igniteProducts';
 import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '@/lib/ignite';
+import { assertCampCapacityForLocation, CampCapacityExceededError, lockCampCapacity } from '@/lib/campCapacity';
 
 const IGNITE_SUBSCRIPTION_STATUS: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED' | 'PAST_DUE' | 'TRIALING'> = {
   active: 'ACTIVE',
@@ -212,6 +213,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                 endDate.setUTCHours(isAllDay ? 17 : 15, 0, 0, 0)
               }
 
+              if (orderItem.product.type === 'CAMP') {
+                // Lock before checking for duplicates. This serializes both
+                // capacity checks and simultaneous deliveries of one webhook.
+                await lockCampCapacity(tx, bookingLocation.id, startDate)
+              }
+
               // Prevent duplicate bookings (same student+product+date)
               const existingBooking = await tx.booking.findFirst({
                 where: {
@@ -227,6 +234,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
               if (existingBooking) {
                 console.log(`Skipping duplicate booking for student ${orderItem.studentId} on ${startDate.toISOString().split('T')[0]}`);
                 continue;
+              }
+
+              if (orderItem.product.type === 'CAMP') {
+                await assertCampCapacityForLocation(tx, bookingLocation, startDate, 1)
               }
 
               // Build a useful Booking.notes string that captures venue + customer notes
@@ -327,6 +338,42 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       console.log(`Skipping order processing - payment_status: ${session.payment_status}, order status: ${order.status}`);
     }
   } catch (error) {
+    if (error instanceof CampCapacityExceededError) {
+      const paymentIntent = typeof session.payment_intent === 'string'
+        ? session.payment_intent
+        : session.payment_intent?.id
+
+      if (!paymentIntent) {
+        throw new Error(`Paid camp order exceeded capacity without a payment intent: ${session.id}`)
+      }
+
+      const orderId = session.metadata?.orderId
+      await stripe.refunds.create(
+        {
+          payment_intent: paymentIntent,
+          metadata: {
+            orderId: orderId || '',
+            reason: 'camp_capacity_exceeded'
+          }
+        },
+        { idempotencyKey: `camp-capacity-refund-${orderId || session.id}` }
+      )
+
+      if (orderId) {
+        await prisma.order.update({
+          where: { id: orderId },
+          data: { status: 'REFUNDED' }
+        })
+        await notificationService.notifyPaymentFailed(
+          orderId,
+          `${error.locationName} reached its capacity of ${error.capacity} on ${error.date}; payment refunded automatically.`
+        )
+      }
+
+      console.warn(`Refunded order ${orderId} because camp capacity was reached`)
+      return
+    }
+
     await ErrorHandler.handlePaymentError(error, session.id);
     throw error;
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
+import { assertCampCapacity, CampCapacityExceededError, utcDateKey } from '@/lib/campCapacity'
 import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '@/lib/ignite'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -310,6 +311,58 @@ async function createRegularCheckout(
       { error: 'One or more products not found or inactive' },
       { status: 404 }
     )
+  }
+
+  // Validate the combined number of children across every camp product for a
+  // location and date before sending the customer to Stripe. Capacity is
+  // checked again under a database lock when payment completes.
+  const capacityRequests = new Map<string, { location: string; date: Date; spots: number }>()
+  for (const item of regularItems) {
+    const product = products.find(candidate => candidate.id === item.productId)!
+    if (product.type !== 'CAMP') continue
+
+    if (!item.location) {
+      return NextResponse.json({ error: 'A camp location is required.' }, { status: 400 })
+    }
+
+    const rawDates = item.selectedDates?.length ? item.selectedDates : item.selectedDate ? [item.selectedDate] : []
+    if (rawDates.length === 0) {
+      return NextResponse.json({ error: 'A valid camp date is required.' }, { status: 400 })
+    }
+    for (const rawDate of rawDates) {
+      const date = new Date(rawDate.includes('T') ? rawDate : `${rawDate}T00:00:00.000Z`)
+      if (Number.isNaN(date.getTime())) {
+        return NextResponse.json({ error: 'A valid camp date is required.' }, { status: 400 })
+      }
+
+      const key = `${item.location}:${utcDateKey(date)}`
+      const existing = capacityRequests.get(key)
+      capacityRequests.set(key, {
+        location: item.location,
+        date,
+        spots: (existing?.spots ?? 0) + item.students.length
+      })
+    }
+  }
+
+  try {
+    for (const request of capacityRequests.values()) {
+      await assertCampCapacity(prisma, request.location, request.date, request.spots)
+    }
+  } catch (error) {
+    if (error instanceof CampCapacityExceededError) {
+      return NextResponse.json(
+        {
+          error: error.remaining === 0
+            ? `${error.locationName} is sold out on ${error.date}.`
+            : `Only ${error.remaining} camp place${error.remaining === 1 ? '' : 's'} remain at ${error.locationName} on ${error.date}.`,
+          code: 'CAMP_CAPACITY_EXCEEDED',
+          remaining: error.remaining
+        },
+        { status: 409 }
+      )
+    }
+    throw error
   }
 
   let subtotal = 0

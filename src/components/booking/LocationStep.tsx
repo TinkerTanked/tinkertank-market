@@ -1,12 +1,13 @@
 'use client'
 
-import { MapPinIcon, CheckIcon } from '@heroicons/react/24/outline'
-import { LOCATION_AVAILABILITY } from '@/data/locationAvailability'
+import { BuildingOffice2Icon, CheckIcon, MapPinIcon } from '@heroicons/react/24/outline'
+import { DEFAULT_CAMP_DAILY_CAPACITY, LOCATION_AVAILABILITY } from '@/data/locationAvailability'
 
 interface Location {
   id: string
   name: string
   address: string
+  capacity: number
 }
 
 interface LocationStepProps {
@@ -19,82 +20,67 @@ const LOCATION_ADDRESSES: Record<string, string> = {
   'manly-library': 'Market Place, Manly NSW 2095'
 }
 
+const LOCATION_DESCRIPTIONS: Record<string, string> = {
+  'neutral-bay': 'Our purpose-built Lower North Shore studio',
+  'manly-library': 'A convenient Northern Beaches camp location'
+}
+
 export default function LocationStep({ selectedLocation, onLocationSelect }: LocationStepProps) {
   const locations: Location[] = LOCATION_AVAILABILITY.map(loc => ({
     id: loc.locationId,
     name: loc.locationName,
-    address: LOCATION_ADDRESSES[loc.locationId] || ''
+    address: LOCATION_ADDRESSES[loc.locationId] || '',
+    capacity: loc.dailyCapacity ?? DEFAULT_CAMP_DAILY_CAPACITY
   }))
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h3 className="text-2xl font-bold text-gray-900">Choose Your Location</h3>
-        <p className="text-gray-600">Select the TinkerTank location that works best for you</p>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="space-y-2">
+        <h3 className="text-2xl font-bold text-slate-950 sm:text-3xl">Where would you like to join us?</h3>
+        <p className="text-slate-600">Choose a location to see its available camp dates.</p>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {locations.map((location) => (
-          <div
+          <button
+            type="button"
             key={location.id}
-            className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+            className={`group relative w-full rounded-2xl border p-5 text-left transition-all sm:p-6 ${
               selectedLocation?.id === location.id
-                ? 'border-primary-500 bg-primary-50 shadow-md'
-                : 'border-gray-200 bg-white hover:border-primary-300 hover:shadow-sm'
+                ? 'border-primary-600 bg-primary-50 shadow-sm ring-1 ring-primary-600'
+                : 'border-slate-200 bg-white hover:border-primary-400 hover:shadow-sm'
             }`}
             onClick={() => onLocationSelect(location)}
+            aria-pressed={selectedLocation?.id === location.id}
           >
-            <div className="flex items-start space-x-4">
-              {/* Location Icon */}
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+            <div className="flex items-start gap-4">
+              <div className={`grid h-12 w-12 flex-none place-items-center rounded-xl ${
                 selectedLocation?.id === location.id
-                  ? 'bg-primary-100'
-                  : 'bg-gray-100'
+                  ? 'bg-primary-700 text-white'
+                  : 'bg-slate-100 text-slate-600 group-hover:bg-primary-50 group-hover:text-primary-700'
               }`}>
-                <MapPinIcon className={`w-6 h-6 ${
-                  selectedLocation?.id === location.id
-                    ? 'text-primary-600'
-                    : 'text-gray-600'
-                }`} />
+                {location.id === 'neutral-bay' ? <BuildingOffice2Icon className="h-6 w-6" /> : <MapPinIcon className="h-6 w-6" />}
               </div>
 
-              {/* Location Details */}
-              <div className="flex-1">
-                <h4 className="text-lg font-semibold text-gray-900 mb-1">
-                  {location.name}
-                </h4>
-                <p className="text-gray-600 text-sm mb-3">
-                  {location.address}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-3">
+                  <h4 className="text-lg font-bold text-slate-950">{location.name}</h4>
+                  <span className={`grid h-6 w-6 flex-none place-items-center rounded-full border ${
+                    selectedLocation?.id === location.id ? 'border-primary-700 bg-primary-700' : 'border-slate-300 bg-white'
+                  }`}>
+                    {selectedLocation?.id === location.id && <CheckIcon className="h-4 w-4 text-white" />}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm font-medium text-slate-600">{LOCATION_DESCRIPTIONS[location.id]}</p>
+                <p className="mt-3 flex items-start gap-2 text-sm text-slate-500">
+                  <MapPinIcon className="mt-0.5 h-4 w-4 flex-none" />
+                  <span>{location.address}</span>
                 </p>
-                
-                {/* Features */}
-                <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    🅿️ Parking Available
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    🚌 Public Transport
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                    ♿ Accessible
-                  </span>
-                </div>
               </div>
-
-              {/* Selection Indicator */}
-              {selectedLocation?.id === location.id && (
-                <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
-                  <CheckIcon className="w-4 h-4 text-white" />
-                </div>
-              )}
             </div>
-
-
-          </div>
+          </button>
         ))}
       </div>
-
-
     </div>
   )
 }

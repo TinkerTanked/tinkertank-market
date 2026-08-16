@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
+import { Dialog } from '@headlessui/react'
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, ShieldCheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import LocationStep from './LocationStep'
 import DateStep from './DateStep'
 import CampTypeStep from './CampTypeStep'
@@ -13,6 +14,7 @@ interface BookingData {
     id: string
     name: string
     address: string
+    capacity: number
   } | null
   date: Date | null
   dates: Date[]
@@ -37,6 +39,12 @@ const STEPS = [
   { id: 3, name: 'Camp Type', component: 'camp-type' },
   { id: 4, name: 'Confirm', component: 'confirmation' }
 ]
+
+const NEXT_STEP_LABELS: Record<number, string> = {
+  1: 'Choose dates',
+  2: 'Choose camp type',
+  3: 'Review booking'
+}
 
 export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizardProps) {
   const [currentStep, setCurrentStep] = useState(1)
@@ -95,8 +103,8 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         description: `${bookingData.campType.name} at ${bookingData.location.name}`,
         image: '/images/camps2.jpeg',
         isActive: true,
-        availableCapacity: 20,
-        maxCapacity: 20,
+        availableCapacity: bookingData.location.capacity,
+        maxCapacity: bookingData.location.capacity,
         pricing: { basePrice: bookingData.campType.price }
       } as any
 
@@ -149,7 +157,6 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
             location={bookingData.location!}
             dates={bookingData.dates}
             campType={bookingData.campType!}
-            onAddToCart={handleAddToCart}
           />
         )
       default:
@@ -158,108 +165,115 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
-        {/* Backdrop */}
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" 
-          onClick={onClose}
-        />
-        
-        {/* Modal */}
-        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-          
-          {/* Header */}
-          <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Book Your STEAM Camp</h2>
-              <button 
-                onClick={onClose}
-                className="text-white hover:text-primary-100 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            {/* Progress Indicator */}
-            <div className="mt-4">
-              <div className="flex items-center space-x-2">
-                {STEPS.map((step, index) => (
-                  <div key={step.id} className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      currentStep >= step.id 
-                        ? 'bg-white text-primary-600' 
-                        : 'bg-primary-400 text-white'
-                    }`}>
-                      {currentStep > step.id ? '✓' : step.id}
-                    </div>
-                    <span className={`ml-2 text-sm ${
-                      currentStep >= step.id ? 'text-white' : 'text-primary-200'
-                    }`}>
-                      {step.name}
-                    </span>
-                    {index < STEPS.length - 1 && (
-                      <div className={`w-8 h-0.5 mx-2 ${
-                        currentStep > step.id ? 'bg-white' : 'bg-primary-400'
-                      }`} />
-                    )}
-                  </div>
-                ))}
+    <Dialog open={isOpen} onClose={onClose} className="relative z-[100]">
+      <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm" aria-hidden="true" />
+
+      <div className="fixed inset-0 overflow-hidden sm:p-4 lg:p-8">
+        <div className="flex min-h-full items-center justify-center">
+          <Dialog.Panel className="flex h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-5xl sm:rounded-3xl">
+            <header className="flex flex-none items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-7">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary-700">Camp booking</p>
+                <Dialog.Title className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl">
+                  Find the right camp
+                </Dialog.Title>
               </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="px-6 py-6 overflow-y-auto max-h-[60vh]">
-            {renderStep()}
-          </div>
-
-          {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 flex items-center justify-between">
-            <button
-              onClick={handleBack}
-              disabled={currentStep === 1}
-              className={`inline-flex items-center px-4 py-2 rounded-lg font-medium transition-all ${
-                currentStep === 1
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <ArrowLeftIcon className="w-4 h-4 mr-2" />
-              Back
-            </button>
-
-            <div className="text-sm text-gray-500">
-              Step {currentStep} of {STEPS.length}
-            </div>
-
-            {currentStep < STEPS.length ? (
               <button
-                onClick={handleNext}
-                disabled={!canProceed()}
-                className={`inline-flex items-center px-6 py-2 rounded-lg font-medium transition-all ${
-                  canProceed()
-                    ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
+                type="button"
+                onClick={onClose}
+                className="grid h-11 w-11 place-items-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                aria-label="Close camp booking"
               >
-                Next
-                <ArrowRightIcon className="w-4 h-4 ml-2" />
+                <XMarkIcon className="h-6 w-6" />
               </button>
-            ) : (
-              <button
-                onClick={handleAddToCart}
-                className="inline-flex items-center px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm"
-              >
-                Add to Cart
-                <ArrowRightIcon className="w-4 h-4 ml-2" />
-              </button>
-            )}
-          </div>
+            </header>
+
+            <div className="flex min-h-0 flex-1">
+              <aside className="hidden w-64 flex-none border-r border-slate-200 bg-slate-50 p-6 lg:block">
+                <p className="text-sm font-semibold text-slate-950">Your booking</p>
+                <ol className="mt-6 space-y-1">
+                  {STEPS.map(step => {
+                    const isComplete = currentStep > step.id
+                    const isCurrent = currentStep === step.id
+                    return (
+                      <li key={step.id} className={`flex items-center gap-3 rounded-xl px-3 py-3 ${isCurrent ? 'bg-white shadow-sm ring-1 ring-slate-200' : ''}`}>
+                        <span className={`grid h-8 w-8 flex-none place-items-center rounded-full text-sm font-bold ${
+                          isComplete
+                            ? 'bg-emerald-600 text-white'
+                            : isCurrent
+                              ? 'bg-primary-700 text-white'
+                              : 'bg-slate-200 text-slate-500'
+                        }`}>
+                          {isComplete ? <CheckIcon className="h-4 w-4" /> : step.id}
+                        </span>
+                        <span className={`text-sm font-semibold ${isCurrent ? 'text-slate-950' : 'text-slate-600'}`}>{step.name}</span>
+                      </li>
+                    )
+                  })}
+                </ol>
+                <div className="mt-8 rounded-2xl bg-primary-950 p-4 text-white">
+                  <ShieldCheckIcon className="h-6 w-6 text-primary-300" />
+                  <p className="mt-3 text-sm font-semibold">Book with confidence</p>
+                  <p className="mt-1 text-xs leading-5 text-primary-100">Review every detail before adding your camp to the cart.</p>
+                </div>
+              </aside>
+
+              <main className="flex min-w-0 flex-1 flex-col">
+                <div className="flex flex-none items-center gap-3 border-b border-slate-200 bg-slate-50 px-5 py-3 lg:hidden">
+                  <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-primary-700 text-sm font-bold text-white">{currentStep}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-950">{STEPS[currentStep - 1].name}</p>
+                    <p className="text-xs text-slate-500">Step {currentStep} of {STEPS.length}</p>
+                  </div>
+                  <div className="flex gap-1.5" aria-hidden="true">
+                    {STEPS.map(step => (
+                      <span key={step.id} className={`h-1.5 rounded-full ${step.id <= currentStep ? 'w-6 bg-primary-700' : 'w-3 bg-slate-300'}`} />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 sm:px-8 sm:py-8">
+                  {renderStep()}
+                </div>
+
+                <footer className="flex flex-none items-center gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:px-8">
+                  {currentStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleBack}
+                      className="inline-flex h-12 items-center justify-center rounded-xl border border-slate-300 px-4 font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                    >
+                      <ArrowLeftIcon className="mr-2 h-4 w-4" />
+                      Back
+                    </button>
+                  )}
+
+                  {currentStep < STEPS.length ? (
+                    <button
+                      type="button"
+                      onClick={handleNext}
+                      disabled={!canProceed()}
+                      className="ml-auto inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-xl bg-primary-700 px-5 font-semibold text-white shadow-sm transition-colors hover:bg-primary-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 sm:max-w-xs"
+                    >
+                      <span className="truncate">{NEXT_STEP_LABELS[currentStep]}</span>
+                      <ArrowRightIcon className="ml-2 h-4 w-4 flex-none" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleAddToCart}
+                      className="ml-auto inline-flex h-12 min-w-0 flex-1 items-center justify-center rounded-xl bg-emerald-600 px-5 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:max-w-xs"
+                    >
+                      Add to cart
+                      <ArrowRightIcon className="ml-2 h-4 w-4" />
+                    </button>
+                  )}
+                </footer>
+              </main>
+            </div>
+          </Dialog.Panel>
         </div>
       </div>
-    </div>
+    </Dialog>
   )
 }

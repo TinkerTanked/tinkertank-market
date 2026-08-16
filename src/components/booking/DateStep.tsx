@@ -192,33 +192,33 @@ export default function DateStep({
   }
 
   const getDayClassName = (date: Date) => {
-    const baseClasses = 'relative h-12 flex items-center justify-center text-sm font-medium rounded-lg transition-all duration-200'
+    const baseClasses = 'relative flex h-12 w-full items-center justify-center rounded-lg text-sm font-semibold transition-colors sm:h-14'
     
     if (isBefore(date, today)) {
-      return `${baseClasses} text-gray-300 cursor-not-allowed bg-gray-50`
+      return `${baseClasses} cursor-not-allowed text-slate-300`
     }
     
     if (isWeekend(date)) {
-      return `${baseClasses} bg-gray-100 text-gray-500 cursor-not-allowed`
+      return `${baseClasses} cursor-not-allowed text-slate-400`
     }
     
     if (isClosureDate(date)) {
-      return `${baseClasses} bg-red-50 text-red-500 cursor-not-allowed`
+      return `${baseClasses} cursor-not-allowed bg-red-50 text-red-400`
     }
     
     if (location && !isDateAvailableForLocation(date, location.name)) {
-      return `${baseClasses} bg-gray-50 text-gray-400 cursor-not-allowed`
+      return `${baseClasses} cursor-not-allowed text-slate-300`
     }
 
     if (isDateSoldOut(date)) {
-      return `${baseClasses} bg-amber-50 text-amber-700 border border-amber-200 cursor-not-allowed`
+      return `${baseClasses} cursor-not-allowed bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200`
     }
     
     if (isDateSelected(date)) {
-      return `${baseClasses} bg-blue-500 text-white shadow-lg cursor-pointer hover:bg-blue-600`
+      return `${baseClasses} cursor-pointer bg-primary-700 text-white shadow-sm hover:bg-primary-800`
     }
     
-    return `${baseClasses} hover:bg-blue-50 hover:text-blue-700 cursor-pointer text-gray-900`
+    return `${baseClasses} cursor-pointer text-slate-800 hover:bg-primary-50 hover:text-primary-800`
   }
 
   const formatSelectedDate = (date: Date) => {
@@ -238,12 +238,12 @@ export default function DateStep({
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h3 className="text-2xl font-bold text-gray-900">
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="space-y-2">
+        <h3 className="text-2xl font-bold text-slate-950 sm:text-3xl">
           {enableMultiSelect ? 'Choose Your Dates' : 'Choose Your Date'}
         </h3>
-        <p className="text-gray-600">
+        <p className="text-slate-600">
           {maxDateCount 
             ? `Select 1-${maxDateCount} days for your camp at ${location?.name || 'your chosen location'}`
             : enableMultiSelect 
@@ -252,9 +252,9 @@ export default function DateStep({
           }
         </p>
         {dailyCapacity != null && (
-          <p className="text-xs text-gray-500">
-            Limited to {dailyCapacity} campers per day{loadingAvailability ? ' • checking availability…' : ''}
-          </p>
+          <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            {loadingAvailability ? 'Checking availability…' : `${dailyCapacity} places per day`}
+          </div>
         )}
         {maxDateCount && internalSelectedDates.length === maxDateCount && (
           <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
@@ -263,195 +263,105 @@ export default function DateStep({
         )}
       </div>
 
-      {enableMultiSelect && internalSelectedDates.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start space-x-3 flex-1">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <CalendarIcon className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-blue-900">
-                    {internalSelectedDates.length} {internalSelectedDates.length === 1 ? 'Date' : 'Dates'} Selected
-                  </h4>
-                  <button
-                    onClick={clearAllDates}
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    Clear All
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {internalSelectedDates.map((date, index) => (
-                    <div 
-                      key={index}
-                      className="inline-flex items-center bg-white border border-blue-200 rounded-md px-3 py-1.5 text-sm text-blue-700"
-                    >
-                      <CheckIcon className="w-4 h-4 mr-1.5 text-blue-500" />
-                      {formatSelectedDate(date)}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!enableMultiSelect && selectedDate && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <CalendarIcon className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <h4 className="font-medium text-blue-900">Selected Date</h4>
-              <p className="text-blue-700">{format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-slate-200 px-3 py-3 sm:px-5">
           <button
+            type="button"
             onClick={goToPreviousMonth}
-            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            className="grid h-10 w-10 place-items-center rounded-full text-slate-600 transition-colors hover:bg-slate-100"
             aria-label="Previous month"
           >
             <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
           </button>
           
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h4 className="text-base font-bold text-slate-950 sm:text-lg">
             {format(currentMonth, 'MMMM yyyy')}
-          </h3>
+          </h4>
           
           <button
+            type="button"
             onClick={goToNextMonth}
-            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            className="grid h-10 w-10 place-items-center rounded-full text-slate-600 transition-colors hover:bg-slate-100"
             aria-label="Next month"
           >
             <ChevronRightIcon className="w-5 h-5 text-gray-600" />
           </button>
         </div>
 
-        <div className="grid grid-cols-7 bg-gray-50 border-b">
+        <div className="grid grid-cols-7 px-2 pt-3 sm:px-4">
           {weekDays.map(day => (
-            <div key={day} className="p-3 text-center text-xs font-medium text-gray-500 uppercase">
-              {day}
+            <div key={day} className="py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500 sm:text-xs">
+              <span className="sm:hidden">{day.slice(0, 1)}</span>
+              <span className="hidden sm:inline">{day}</span>
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-px bg-gray-200">
+        <div className="grid grid-cols-7 gap-1 p-2 pt-0 sm:gap-2 sm:p-4 sm:pt-0">
           {calendarDays.map((date) => {
             const soldOut = isDateSoldOut(date)
+            const unavailable = !!location && !isDateAvailableForLocation(date, location.name)
             return (
-              <div 
-                key={date.toString()} 
-                className="bg-white min-h-[48px] flex items-center justify-center relative"
-              >
-                <button
-                  onClick={() => handleDateClick(date)}
-                  className={getDayClassName(date)}
-                  disabled={isWeekend(date) || isBefore(date, today) || isClosureDate(date) || soldOut}
-                  title={
-                    soldOut
-                      ? 'Sold out — no spaces available on this date'
-                      : isClosureDate(date)
+              <button
+                type="button"
+                key={date.toString()}
+                onClick={() => handleDateClick(date)}
+                className={getDayClassName(date)}
+                disabled={isWeekend(date) || isBefore(date, today) || isClosureDate(date) || soldOut || unavailable}
+                aria-pressed={isDateSelected(date)}
+                aria-label={`${format(date, 'EEEE, d MMMM yyyy')}${soldOut ? ', sold out' : ''}`}
+                title={
+                  soldOut
+                    ? 'Sold out — no spaces available on this date'
+                    : isClosureDate(date)
                       ? `Closed: ${getClosureInfo(date)?.name || 'Business closure'}`
-                      : isWeekend(date) 
-                      ? 'Weekends are not available' 
-                      : isBefore(date, today) 
-                      ? 'Past date' 
-                      : undefined
-                  }
-                >
-                  <span className={`${!isSameMonth(date, currentMonth) ? 'text-gray-300' : ''}`}>
-                    {format(date, 'd')}
-                  </span>
-                  
-                  {isDateSelected(date) && isSameMonth(date, currentMonth) && (
-                    <div className="absolute top-1 right-1">
-                      <CheckIcon className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                  
-                  {isWeekend(date) && isSameMonth(date, currentMonth) && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-xs text-gray-500 font-medium mt-4">
-                        Closed
-                      </span>
-                    </div>
-                  )}
-                  
-                  {isClosureDate(date) && isSameMonth(date, currentMonth) && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-xs text-red-500 font-medium mt-4">
-                        Closed
-                      </span>
-                    </div>
-                  )}
-
-                  {soldOut && isSameMonth(date, currentMonth) && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wide mt-4">
-                        Sold Out
-                      </span>
-                    </div>
-                  )}
-                </button>
-              </div>
+                      : isWeekend(date)
+                        ? 'Weekends are not available'
+                        : isBefore(date, today)
+                          ? 'Past date'
+                          : undefined
+                }
+              >
+                <span className={!isSameMonth(date, currentMonth) ? 'text-slate-300' : ''}>{format(date, 'd')}</span>
+                {soldOut && isSameMonth(date, currentMonth) && <span className="absolute bottom-0.5 text-[8px] font-bold uppercase sm:bottom-1 sm:text-[9px]">Full</span>}
+              </button>
             )
           })}
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-white border border-gray-300 rounded"></div>
-          <span className="text-gray-600">Available</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-blue-500 rounded flex items-center justify-center">
-            <CheckIcon className="w-3 h-3 text-white" />
+      {((enableMultiSelect && internalSelectedDates.length > 0) || (!enableMultiSelect && selectedDate)) && (
+        <div className="rounded-2xl border border-primary-200 bg-primary-50 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 flex-none place-items-center rounded-xl bg-primary-700 text-white">
+                <CalendarIcon className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="font-bold text-primary-950">
+                  {enableMultiSelect ? `${internalSelectedDates.length} ${internalSelectedDates.length === 1 ? 'date' : 'dates'} selected` : 'Date selected'}
+                </p>
+                {!enableMultiSelect && selectedDate && <p className="text-sm text-primary-800">{format(selectedDate, 'EEEE, d MMMM yyyy')}</p>}
+              </div>
+            </div>
+            {enableMultiSelect && (
+              <button type="button" onClick={clearAllDates} className="text-sm font-semibold text-primary-800 hover:text-primary-950">Clear</button>
+            )}
           </div>
-          <span className="text-gray-600">Selected</span>
+          {enableMultiSelect && (
+            <div className="mt-3 flex flex-wrap gap-2 border-t border-primary-200 pt-3">
+              {internalSelectedDates.map(date => (
+                <span key={date.toISOString()} className="inline-flex items-center rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-primary-900 shadow-sm">
+                  <CheckIcon className="mr-1.5 h-4 w-4" />
+                  {formatSelectedDate(date)}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-amber-50 border border-amber-200 rounded"></div>
-          <span className="text-gray-600">Sold Out</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-gray-100 border border-gray-200 rounded"></div>
-          <span className="text-gray-600">Weekends (Closed)</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-red-50 border border-red-200 rounded"></div>
-          <span className="text-gray-600">Public Holidays (Closed)</span>
-        </div>
-      </div>
+      )}
 
-      <div className="bg-blue-50 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-blue-600 text-lg">📅</span>
-          </div>
-          <div>
-            <h4 className="font-medium text-blue-900 mb-1">Camp Schedule</h4>
-            <ul className="text-blue-800 text-sm space-y-1">
-              <li>• Camps run Monday to Friday only</li>
-              {enableMultiSelect && <li>• Select multiple dates for multi-day bookings</li>}
-              <li>• Book up to 3 months in advance</li>
-              <li>• Each camp is limited to 12 participants</li>
-              {dailyCapacity != null && (
-                <li>• {location?.name || 'This location'} caps total bookings at {dailyCapacity} per day</li>
-              )}
-            </ul>
-          </div>
-        </div>
-      </div>
+      <p className="text-sm text-slate-500">Camps run Monday to Friday. Grey dates are unavailable.</p>
     </div>
   )
 }

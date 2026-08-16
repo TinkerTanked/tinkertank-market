@@ -17,10 +17,9 @@ interface ConfirmationStepProps {
   location: { id: string; name: string; address: string }
   dates: Date[]
   campType: CampType
-  onAddToCart: () => void
 }
 
-export default function ConfirmationStepNew({ location, dates, campType, onAddToCart }: ConfirmationStepProps) {
+export default function ConfirmationStepNew({ location, dates, campType }: ConfirmationStepProps) {
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-AU', {
       weekday: 'short',
@@ -122,14 +121,6 @@ export default function ConfirmationStepNew({ location, dates, campType, onAddTo
           </div>
         </div>
       </div>
-
-      {/* Action Button */}
-      <button
-        onClick={onAddToCart}
-        className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-      >
-        Add to Cart
-      </button>
 
       <p className="text-xs text-center text-gray-500">
         Student details will be collected at checkout
