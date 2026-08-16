@@ -5,6 +5,9 @@ import Stripe from 'stripe'
 const mockStripe = {
   webhooks: {
     constructEvent: vi.fn()
+  },
+  subscriptions: {
+    retrieve: vi.fn()
   }
 }
 
@@ -20,10 +23,18 @@ vi.mock('@/lib/prisma', () => ({
     },
     booking: {
       create: vi.fn(),
+      createMany: vi.fn(),
       findMany: vi.fn()
     },
     location: {
-      findFirst: vi.fn()
+      findFirst: vi.fn(),
+      findUnique: vi.fn()
+    },
+    igniteSubscription: {
+      upsert: vi.fn()
+    },
+    igniteSubscriptionStudent: {
+      upsert: vi.fn()
     },
     $transaction: vi.fn()
   }
@@ -76,6 +87,7 @@ import { eventService } from '@/lib/events'
 import { sendBookingConfirmationEmail } from '@/lib/email'
 import { notificationService } from '@/lib/notifications'
 import { headers } from 'next/headers'
+import { IGNITE_SESSIONS } from '@/config/igniteProducts'
 
 const mockLocation = {
   id: 'location_nb_123',
@@ -207,6 +219,7 @@ describe('Stripe Webhook Route', () => {
             update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' })
           },
           booking: {
+            findFirst: vi.fn().mockResolvedValue(null),
             create: vi.fn().mockResolvedValue({ id: 'booking_123', status: 'CONFIRMED' })
           },
           location: {
@@ -287,6 +300,7 @@ describe('Stripe Webhook Route', () => {
             update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' })
           },
           booking: {
+            findFirst: vi.fn().mockResolvedValue(null),
             create: mockBookingCreate
           },
           location: {
@@ -304,7 +318,7 @@ describe('Stripe Webhook Route', () => {
       const transactionCallback = (prisma.$transaction as any).mock.calls[0][0]
       const mockTx = {
         order: { update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' }) },
-        booking: { create: mockBookingCreate },
+        booking: { findFirst: vi.fn().mockResolvedValue(null), create: mockBookingCreate },
         location: { findFirst: vi.fn().mockResolvedValue(mockLocation) }
       }
       await transactionCallback(mockTx)
@@ -357,7 +371,7 @@ describe('Stripe Webhook Route', () => {
       ;(prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           order: { update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' }) },
-          booking: { create: mockBookingCreate },
+          booking: { findFirst: vi.fn().mockResolvedValue(null), create: mockBookingCreate },
           location: { findFirst: vi.fn().mockResolvedValue(mockLocation) }
         })
       })
@@ -368,7 +382,7 @@ describe('Stripe Webhook Route', () => {
       const transactionCallback = (prisma.$transaction as any).mock.calls[0][0]
       const mockTx = {
         order: { update: vi.fn() },
-        booking: { create: mockBookingCreate },
+        booking: { findFirst: vi.fn().mockResolvedValue(null), create: mockBookingCreate },
         location: { findFirst: vi.fn().mockResolvedValue(mockLocation) }
       }
       await transactionCallback(mockTx)
@@ -393,7 +407,7 @@ describe('Stripe Webhook Route', () => {
       ;(prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           order: { update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' }) },
-          booking: { create: vi.fn().mockResolvedValue({ id: 'booking_123' }) },
+          booking: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn().mockResolvedValue({ id: 'booking_123' }) },
           location: { findFirst: vi.fn().mockResolvedValue(mockLocation) }
         })
       })
@@ -432,8 +446,8 @@ describe('Stripe Webhook Route', () => {
     })
   })
 
-  describe('6. Missing orderId in metadata logs warning but returns 200', () => {
-    it('should return 200 when orderId is missing from session metadata', async () => {
+  describe('6. Invalid fulfilment data asks Stripe to retry', () => {
+    it('should return 500 when orderId is missing from session metadata', async () => {
       const checkoutSession = createCheckoutSession({ metadata: {} })
       const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
 
@@ -443,15 +457,13 @@ describe('Stripe Webhook Route', () => {
 
       const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
 
-      expect(response.status).toBe(200)
-      const json = await response.json()
-      expect(json.received).toBe(true)
+      expect(response.status).toBe(500)
       expect(prisma.order.findUnique).not.toHaveBeenCalled()
 
       consoleSpy.mockRestore()
     })
 
-    it('should return 200 when metadata is null', async () => {
+    it('should return 500 when metadata is null', async () => {
       const checkoutSession = createCheckoutSession({ metadata: null })
       const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
 
@@ -459,13 +471,13 @@ describe('Stripe Webhook Route', () => {
 
       const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
 
-      expect(response.status).toBe(200)
+      expect(response.status).toBe(500)
       expect(prisma.order.findUnique).not.toHaveBeenCalled()
     })
   })
 
-  describe('7. Order not found returns gracefully', () => {
-    it('should return 200 when order is not found in database', async () => {
+  describe('7. Missing order asks Stripe to retry', () => {
+    it('should return 500 when order is not found in database', async () => {
       const checkoutSession = createCheckoutSession({ metadata: { orderId: 'nonexistent_order' } })
       const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
 
@@ -476,13 +488,82 @@ describe('Stripe Webhook Route', () => {
 
       const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
 
-      expect(response.status).toBe(200)
-      const json = await response.json()
-      expect(json.received).toBe(true)
+      expect(response.status).toBe(500)
 
       expect(prisma.$transaction).not.toHaveBeenCalled()
 
       consoleSpy.mockRestore()
+    })
+  })
+
+  describe('8. Ignite fulfilment retries safely', () => {
+    it('returns 500 on a failed transaction and succeeds when Stripe retries', async () => {
+      const igniteSession = IGNITE_SESSIONS.find(session => session.id === 'ignite-nb-monfri')!
+      const bookingDate = new Date('2026-07-21T05:30:00.000Z')
+      const igniteOrder = createMockOrder({
+        id: 'order_ignite_123',
+        totalAmount: 79.98,
+        orderItems: [
+          {
+            ...createMockOrder().orderItems[0],
+            id: 'item_ignite_1',
+            studentId: 'student_1',
+            bookingDate,
+            student: { id: 'student_1', name: 'Ada Lovelace', allergies: null },
+            product: { id: igniteSession.id, name: igniteSession.name, type: 'SUBSCRIPTION' }
+          },
+          {
+            ...createMockOrder().orderItems[0],
+            id: 'item_ignite_2',
+            studentId: 'student_2',
+            bookingDate,
+            student: { id: 'student_2', name: 'Grace Hopper', allergies: null },
+            product: { id: igniteSession.id, name: igniteSession.name, type: 'SUBSCRIPTION' }
+          }
+        ]
+      })
+      const checkoutSession = createCheckoutSession({
+        id: 'cs_ignite_123',
+        subscription: 'sub_ignite_123',
+        metadata: {
+          orderId: igniteOrder.id,
+          isSubscription: 'true',
+          subscriptionProductId: igniteSession.id,
+          locationId: mockLocation.id
+        }
+      })
+      const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
+      const stripeSubscription = {
+        id: 'sub_ignite_123',
+        customer: 'cus_ignite_123',
+        status: 'active',
+        current_period_start: 1784563200,
+        current_period_end: 1785168000,
+        items: {
+          data: [{ quantity: 2, price: { id: igniteSession.stripePriceId, unit_amount: 3999 } }]
+        }
+      }
+
+      ;(mockStripe.webhooks.constructEvent as any).mockReturnValue(webhookEvent)
+      ;(mockStripe.subscriptions.retrieve as any).mockResolvedValue(stripeSubscription)
+      ;(prisma.order.findUnique as any).mockResolvedValue(igniteOrder)
+      ;(prisma.$transaction as any).mockRejectedValueOnce(new Error('database unavailable'))
+
+      const failedResponse = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+      expect(failedResponse.status).toBe(500)
+
+      const createMany = vi.fn().mockResolvedValue({ count: 20 })
+      ;(prisma.$transaction as any).mockImplementationOnce(async (callback: any) => callback({
+        order: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        location: { findUnique: vi.fn().mockResolvedValue(mockLocation), findFirst: vi.fn() },
+        igniteSubscription: { upsert: vi.fn().mockResolvedValue({ id: 'ignite_sub_123' }) },
+        igniteSubscriptionStudent: { upsert: vi.fn().mockResolvedValue({}) },
+        booking: { createMany }
+      }))
+
+      const retryResponse = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+      expect(retryResponse.status).toBe(200)
+      expect(createMany).toHaveBeenCalledWith(expect.objectContaining({ skipDuplicates: true }))
     })
   })
 
@@ -497,7 +578,7 @@ describe('Stripe Webhook Route', () => {
       ;(prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           order: { update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' }) },
-          booking: { create: vi.fn().mockResolvedValue({ id: 'booking_123' }) },
+          booking: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn().mockResolvedValue({ id: 'booking_123' }) },
           location: { findFirst: vi.fn().mockResolvedValue(mockLocation) }
         })
       })
@@ -518,7 +599,7 @@ describe('Stripe Webhook Route', () => {
       ;(prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           order: { update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' }) },
-          booking: { create: vi.fn().mockResolvedValue({ id: 'booking_123' }) },
+          booking: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn().mockResolvedValue({ id: 'booking_123' }) },
           location: { findFirst: vi.fn().mockResolvedValue(mockLocation) }
         })
       })
@@ -543,7 +624,7 @@ describe('Stripe Webhook Route', () => {
       ;(prisma.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           order: { update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' }) },
-          booking: { create: vi.fn().mockResolvedValue({ id: 'booking_123' }) },
+          booking: { findFirst: vi.fn().mockResolvedValue(null), create: vi.fn().mockResolvedValue({ id: 'booking_123' }) },
           location: { findFirst: vi.fn().mockResolvedValue(mockLocation) }
         })
       })

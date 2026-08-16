@@ -52,6 +52,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 })
     }
 
+    // Phase 1: allow editing existing child details, but reject adding/removing
+    // children here. The number of children is the Stripe subscription quantity;
+    // changing it must also update billing (with a proration decision), which is
+    // a separate, deliberate operation. Prevent silent under/over-charging.
+    if (body.studentNames.length !== subscription.students.length) {
+      return NextResponse.json(
+        {
+          error:
+            'Changing the number of children on a subscription is not supported here yet, because it also changes Stripe billing. Please contact the team to add or remove a child.'
+        },
+        { status: 400 }
+      )
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       const existingStudentIds = subscription.students.map(s => s.studentId)
       const incomingStudentIds = body.studentNames.filter(s => s.id).map(s => s.id!)

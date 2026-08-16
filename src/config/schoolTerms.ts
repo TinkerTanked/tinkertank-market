@@ -2,6 +2,9 @@
  * NSW School Term Dates - Eastern Division
  * Used for Ignite subscription scheduling
  */
+import { formatInTimeZone } from 'date-fns-tz'
+
+const SYDNEY_TZ = 'Australia/Sydney'
 
 export interface SchoolTerm {
   term: number
@@ -55,8 +58,12 @@ export const SCHOOL_HOLIDAYS_2026 = [
  * Get the current school term based on a date
  */
 export function getCurrentTerm(date: Date = new Date()): SchoolTerm | null {
+  const dateKey = formatInTimeZone(date, SYDNEY_TZ, 'yyyy-MM-dd')
+
   for (const term of SCHOOL_TERMS_2026) {
-    if (date >= term.startDate && date <= term.endDate) {
+    const startKey = term.startDate.toISOString().slice(0, 10)
+    const endKey = term.endDate.toISOString().slice(0, 10)
+    if (dateKey >= startKey && dateKey <= endKey) {
       return term
     }
   }
@@ -67,8 +74,10 @@ export function getCurrentTerm(date: Date = new Date()): SchoolTerm | null {
  * Get the next school term if we're currently in a break
  */
 export function getNextTerm(date: Date = new Date()): SchoolTerm | null {
+  const dateKey = formatInTimeZone(date, SYDNEY_TZ, 'yyyy-MM-dd')
+
   for (const term of SCHOOL_TERMS_2026) {
-    if (term.startDate > date) {
+    if (term.startDate.toISOString().slice(0, 10) > dateKey) {
       return term
     }
   }

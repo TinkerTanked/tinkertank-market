@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { Inter, Poppins } from 'next/font/google'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { NotificationProvider } from '@/components/NotificationProvider'
 import Header from '@/components/layout/Header'
@@ -7,6 +8,20 @@ import { OrganizationJsonLd, LocalBusinessJsonLd } from '@/components/seo/JsonLd
 import './globals.css'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
+const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap'
+})
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-poppins',
+  display: 'swap'
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -53,9 +68,9 @@ export const metadata: Metadata = {
     siteName: 'TinkerTank',
     images: [
       {
-        url: `${baseUrl}/og-image.jpg`,
-        width: 1200,
-        height: 630,
+        url: `${baseUrl}/images/home-hero.jpg`,
+        width: 2045,
+        height: 868,
         alt: 'TinkerTank - STEAM Learning Adventures'
       }
     ]
@@ -64,11 +79,13 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'TinkerTank - STEAM Learning Adventures for Kids',
     description: 'Exciting STEAM camps, birthday parties, and educational programs for children.',
-    images: [`${baseUrl}/og-image.jpg`]
+    images: [`${baseUrl}/images/home-hero.jpg`]
   },
-  verification: {
-    google: 'your-google-verification-code'
-  }
+  ...(googleSiteVerification && {
+    verification: {
+      google: googleSiteVerification
+    }
+  })
 }
 
 export const viewport: Viewport = {
@@ -90,7 +107,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <OrganizationJsonLd />
         <LocalBusinessJsonLd />
       </head>
-      <body className='font-sans'>
+      <body className={`${inter.variable} ${poppins.variable} font-sans`}>
         <ErrorBoundary>
           <NotificationProvider>
             <div className='min-h-screen flex flex-col'>

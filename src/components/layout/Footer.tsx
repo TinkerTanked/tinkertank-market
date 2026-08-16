@@ -125,8 +125,8 @@ export default function Footer() {
               <div className='flex items-start space-x-3'>
                 <ClockIcon className='w-5 h-5 text-primary-400 mt-0.5' />
                 <div className='text-gray-300'>
-                  <p>Mon-Fri: 8:00 AM - 6:00 PM</p>
-                  <p>Weekends: 9:00 AM - 5:00 PM</p>
+                  <p>Mon-Fri: 9:00 AM - 5:00 PM</p>
+                  <p>Saturday: 10:00 AM - 12:00 PM</p>
                 </div>
               </div>
             </div>

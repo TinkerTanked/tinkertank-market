@@ -19,6 +19,15 @@ COPY . .
 # Generate Prisma Client
 RUN npx prisma generate
 
+# Bundle the additive Ignite preflight seed so the production image can run it
+# without shipping the TypeScript source tree or tsx runtime.
+RUN npx esbuild scripts/seed-ignite-products-locations.ts \
+  --bundle \
+  --platform=node \
+  --format=cjs \
+  --packages=external \
+  --outfile=/app/seed-ignite-products-locations.js
+
 # Build the application
 ENV NODE_ENV=production
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
@@ -56,6 +65,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modul
 
 # Copy scripts for database operations
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nextjs:nodejs /app/seed-ignite-products-locations.js ./seed-ignite-products-locations.js
 
 USER nextjs
 

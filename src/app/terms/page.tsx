@@ -5,7 +5,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
 export const metadata: Metadata = {
-  title: 'Terms and Conditions - TinkerTank',
+  title: 'Terms and Conditions',
   description:
     'TinkerTank Terms and Conditions. Read our terms of service for camps, birthday parties, and Ignite subscription programs.',
   alternates: {

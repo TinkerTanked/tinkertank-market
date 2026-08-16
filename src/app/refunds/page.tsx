@@ -5,7 +5,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
 export const metadata: Metadata = {
-  title: 'Refund & Cancellation Policy - TinkerTank',
+  title: 'Refund & Cancellation Policy',
   description:
     'TinkerTank Refund and Cancellation Policy for camps, birthday parties, and Ignite subscriptions.',
   alternates: {

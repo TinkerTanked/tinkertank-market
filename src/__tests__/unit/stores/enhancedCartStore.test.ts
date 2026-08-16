@@ -21,6 +21,14 @@ const mockProduct: Product = {
   updatedAt: new Date(),
 }
 
+const mockSubscriptionProduct: Product = {
+  ...mockProduct,
+  id: 'ignite-nb-monfri',
+  name: 'Ignite Neutral Bay',
+  price: 39.99,
+  category: 'subscriptions' as ProductCategory
+}
+
 const mockStudent: StudentDetails = {
   id: 'student-1',
   firstName: 'John',
@@ -148,6 +156,26 @@ describe('Enhanced Cart Store', () => {
   })
 
   describe('Multi-Student Support', () => {
+    it('keeps Ignite quantity and price derived from its students', () => {
+      const { result } = renderHook(() => useEnhancedCartStore())
+      const student2 = { ...mockStudent, id: 'student-2', firstName: 'Jane' }
+
+      act(() => {
+        result.current.addItem(mockSubscriptionProduct, { students: [mockStudent, student2] })
+      })
+
+      const itemId = result.current.items[0].id
+      expect(result.current.items[0].quantity).toBe(2)
+      expect(result.current.items[0].totalPrice).toBe(79.98)
+
+      act(() => {
+        result.current.updateQuantity(itemId, 1)
+      })
+
+      expect(result.current.items[0].quantity).toBe(2)
+      expect(result.current.items[0].totalPrice).toBe(79.98)
+    })
+
     it('should add student to cart item', () => {
       const { result } = renderHook(() => useEnhancedCartStore())
       
