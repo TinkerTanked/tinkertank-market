@@ -62,6 +62,15 @@ export default function Footer() {
               <Link href='/ignite' className='block text-gray-300 hover:text-white transition-colors duration-200'>
                 Ignite Program
               </Link>
+              <Link href='/schools' className='block text-gray-300 hover:text-white transition-colors duration-200'>
+                School Programs
+              </Link>
+              <Link href='/locations/neutral-bay' className='block text-gray-300 hover:text-white transition-colors duration-200'>
+                Neutral Bay Studio
+              </Link>
+              <Link href='/areas/northern-beaches' className='block text-gray-300 hover:text-white transition-colors duration-200'>
+                Northern Beaches Programs
+              </Link>
               <Link href='/about' className='block text-gray-300 hover:text-white transition-colors duration-200'>
                 About Us
               </Link>
@@ -100,8 +109,10 @@ export default function Footer() {
               <div className='flex items-start space-x-3'>
                 <MapPinIcon className='w-5 h-5 text-primary-400 mt-0.5' />
                 <div className='text-gray-300'>
-                  <p>Neutral Bay</p>
-                  <p>Sydney, NSW</p>
+                  <Link href='/locations/neutral-bay' className='hover:text-white transition-colors duration-200'>
+                    <p>50 Yeo St, Neutral Bay</p>
+                    <p>NSW 2089</p>
+                  </Link>
                 </div>
               </div>
               <div className='flex items-center space-x-3'>

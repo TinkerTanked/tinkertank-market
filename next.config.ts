@@ -53,8 +53,39 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.tinkertank.rocks' }],
+        destination: 'https://tinkertank.rocks/:path*',
+        permanent: true,
+      },
+      {
         source: '/home',
         destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/holiday-camps',
+        destination: '/camps',
+        permanent: true,
+      },
+      {
+        source: '/birthday-parties',
+        destination: '/birthdays',
+        permanent: true,
+      },
+      {
+        source: '/why-tinkertank',
+        destination: '/about',
+        permanent: true,
+      },
+      {
+        source: '/after-schoolers',
+        destination: '/ignite',
+        permanent: true,
+      },
+      {
+        source: '/terms-of-use',
+        destination: '/terms',
         permanent: true,
       },
     ]

@@ -21,6 +21,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9
     },
     {
+      url: `${baseUrl}/schools`,
+      changeFrequency: 'monthly',
+      priority: 0.8
+    },
+    {
       url: `${baseUrl}/ignite`,
       changeFrequency: 'weekly',
       priority: 0.9
@@ -39,6 +44,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/contact`,
       changeFrequency: 'monthly',
       priority: 0.7
+    },
+    {
+      url: `${baseUrl}/locations/neutral-bay`,
+      changeFrequency: 'monthly',
+      priority: 0.8
+    },
+    {
+      url: `${baseUrl}/areas/northern-beaches`,
+      changeFrequency: 'weekly',
+      priority: 0.8
     },
     {
       url: `${baseUrl}/catalog`,

@@ -5,23 +5,24 @@ import { BreadcrumbJsonLd, FAQJsonLd } from '@/components/seo/JsonLd'
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
 export const metadata: Metadata = {
-  title: 'STEAM Birthday Parties for Kids',
+  title: 'Robotics, Coding & STEAM Birthday Parties Sydney',
   description:
-    'Unforgettable STEAM birthday parties in Sydney! All-inclusive packages with themed activities, expert hosts, and take-home gifts. Perfect for ages 5-16.',
+    'Hands-on robotics and coding birthday parties for kids aged 6+ at our Neutral Bay studio or your venue across Northern Sydney and the Northern Beaches.',
   keywords: [
     'kids birthday parties Sydney',
     'STEAM birthday party',
-    'science birthday party',
-    'themed birthday parties',
+    'robotics birthday party',
+    'coding birthday party',
     'Neutral Bay birthday parties',
-    'kids party venue Sydney'
+    'kids parties Northern Beaches',
+    'mobile kids party Sydney'
   ],
   alternates: {
     canonical: `${baseUrl}/birthdays`
   },
   openGraph: {
-    title: 'STEAM Birthday Parties for Kids | TinkerTank Sydney',
-    description: 'Unforgettable STEAM birthday parties with themed activities and expert hosts. All-inclusive packages.',
+    title: 'Robotics, Coding & STEAM Birthday Parties | TinkerTank Sydney',
+    description: 'Hands-on technology parties at our Neutral Bay studio or your venue across Northern Sydney.',
     url: `${baseUrl}/birthdays`,
     type: 'website',
     images: [
@@ -37,21 +38,21 @@ const birthdayFAQs = [
   {
     question: 'How many children can attend a TinkerTank birthday party?',
     answer:
-      'Our birthday parties accommodate up to 12 children. This ensures everyone gets personalized attention and has a great time.'
+      'Each party includes 10 children, including the birthday child. Additional children can be added for an extra fee.'
   },
   {
-    question: 'Do you provide decorations and cake?',
+    question: 'Where do TinkerTank birthday parties take place?',
     answer:
-      "We provide themed decorations that match your selected package. You're welcome to bring your own cake, or we can arrange one for an additional fee."
+      'Choose our fully equipped Neutral Bay studio or your own home or venue. Our mobile parties are available across Northern Sydney, including the Lower North Shore and Northern Beaches, subject to availability.'
   },
   {
     question: 'What ages are suitable for birthday parties?',
     answer:
-      "Our parties are designed for ages 5-16, with activities adapted to the birthday child's age group and interests."
+      "Our robotics and coding parties are designed for ages 6 and up, with activities adapted to the birthday child's age group and interests."
   },
   {
     question: 'How long does a TinkerTank birthday party last?',
-    answer: 'Standard parties run for 2 hours, which includes 1.5 hours of activities plus time for cake and presents.'
+    answer: 'Parties run for 2 hours, including hands-on activities plus time for cake and presents.'
   }
 ]
 
