@@ -1,8 +1,9 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ClockIcon, MapPinIcon, SparklesIcon } from '@heroicons/react/24/outline'
+import { ClockIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import { BreadcrumbJsonLd, FAQJsonLd } from '@/components/seo/JsonLd'
+import LocationMap from './LocationMap'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
@@ -62,22 +63,19 @@ export default function NeutralBayPage() {
       </section>
 
       <section className='bg-slate-50 py-20'>
-        <div className='container-custom grid md:grid-cols-3 gap-8'>
-          <div className='feature-card'>
-            <MapPinIcon className='w-8 h-8 text-primary-600 mb-4' />
-            <h2 className='font-display font-semibold text-xl mb-2'>Studio Address</h2>
-            <p className='text-gray-600'>50 Yeo Street<br />Neutral Bay NSW 2089</p>
-            <a href='https://www.google.com/maps/search/?api=1&query=50+Yeo+St+Neutral+Bay+NSW+2089' target='_blank' rel='noopener noreferrer' className='inline-block mt-3 text-primary-600 font-semibold hover:underline'>Open in Google Maps</a>
-          </div>
-          <div className='feature-card'>
-            <ClockIcon className='w-8 h-8 text-primary-600 mb-4' />
-            <h2 className='font-display font-semibold text-xl mb-2'>Opening Hours</h2>
-            <p className='text-gray-600'>Monday-Friday: 9:00 AM-5:00 PM<br />Saturday: 10:00 AM-12:00 PM</p>
-          </div>
-          <div className='feature-card'>
-            <SparklesIcon className='w-8 h-8 text-primary-600 mb-4' />
-            <h2 className='font-display font-semibold text-xl mb-2'>Ages 5-16</h2>
-            <p className='text-gray-600'>Project-based activities are adapted for different ages, interests and experience levels.</p>
+        <div className='container-custom'>
+          <LocationMap />
+          <div className='mt-8 grid gap-8 md:grid-cols-2'>
+            <div className='feature-card'>
+              <ClockIcon className='w-8 h-8 text-primary-600 mb-4' />
+              <h2 className='font-display font-semibold text-xl mb-2'>Opening Hours</h2>
+              <p className='text-gray-600'>Monday-Friday: 9:00 AM-5:00 PM<br />Saturday: 10:00 AM-12:00 PM</p>
+            </div>
+            <div className='feature-card'>
+              <SparklesIcon className='w-8 h-8 text-primary-600 mb-4' />
+              <h2 className='font-display font-semibold text-xl mb-2'>Ages 5-16</h2>
+              <p className='text-gray-600'>Project-based activities are adapted for different ages, interests and experience levels.</p>
+            </div>
           </div>
         </div>
       </section>
