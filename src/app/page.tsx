@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getFeaturedCatalogProducts } from '@/lib/productCatalog'
 import ProductCard from '@/components/ui/ProductCard'
+import LearningTopicsSection from '@/components/learning/LearningTopicsSection'
 
 export default function HomePage() {
   const featuredProducts = getFeaturedCatalogProducts(6)
@@ -125,6 +126,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <LearningTopicsSection />
 
       {/* Featured Programs */}
       <section className='py-20'>

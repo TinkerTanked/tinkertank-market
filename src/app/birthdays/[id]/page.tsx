@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { getProductById } from '@/data/products'
 import BirthdayBookingWizard from '@/components/booking/BirthdayBookingWizard'
+import LearningTopicsSection from '@/components/learning/LearningTopicsSection'
 
 export default function BirthdayDetailPage() {
   const params = useParams()
@@ -225,6 +226,11 @@ export default function BirthdayDetailPage() {
           </div>
         </div>
       </section>
+
+      <LearningTopicsSection
+        heading='Skills Kids Explore at the Party'
+        description='TinkerTank parties bring together coding, robotics, design, animation and hands-on STEAM creativity.'
+      />
 
       <BirthdayBookingWizard 
         product={product}

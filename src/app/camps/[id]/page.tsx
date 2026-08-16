@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { getProductById } from '@/data/products'
 import CampBookingWizard from '@/components/booking/CampBookingWizard'
+import LearningTopicsSection from '@/components/learning/LearningTopicsSection'
 
 export default function CampDetailPage() {
   const params = useParams()
@@ -170,6 +171,11 @@ export default function CampDetailPage() {
           </div>
         </div>
       </section>
+
+      <LearningTopicsSection
+        heading='Skills Kids Explore at Camp'
+        description='Every camp connects coding, robotics, 3D design and printing, animation and broader STEAM problem-solving.'
+      />
 
       {/* Booking Modal */}
       <CampBookingWizard 

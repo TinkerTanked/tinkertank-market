@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { products } from '@/data/products'
+import { learningTopics } from '@/data/learningTopics'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
@@ -22,6 +23,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/schools`,
+      changeFrequency: 'monthly',
+      priority: 0.8
+    },
+    {
+      url: `${baseUrl}/what-kids-learn`,
       changeFrequency: 'monthly',
       priority: 0.8
     },
@@ -96,5 +102,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8
     }))
 
-  return [...staticPages, ...campPages, ...birthdayPages, ...ignitePages]
+  const topicPages: MetadataRoute.Sitemap = learningTopics.map(topic => ({
+    url: `${baseUrl}/${topic.slug}`,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8
+  }))
+
+  return [...staticPages, ...topicPages, ...campPages, ...birthdayPages, ...ignitePages]
 }

@@ -65,6 +65,9 @@ export default function Footer() {
               <Link href='/schools' className='block text-gray-300 hover:text-white transition-colors duration-200'>
                 School Programs
               </Link>
+              <Link href='/what-kids-learn' className='block text-gray-300 hover:text-white transition-colors duration-200'>
+                What Kids Learn
+              </Link>
               <Link href='/locations/neutral-bay' className='block text-gray-300 hover:text-white transition-colors duration-200'>
                 Neutral Bay Studio
               </Link>
