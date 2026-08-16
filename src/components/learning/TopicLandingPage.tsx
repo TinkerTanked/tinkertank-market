@@ -26,7 +26,7 @@ export default function TopicLandingPage({ topic }: { topic: LearningTopic }) {
             <p className='text-xl text-blue-100 leading-relaxed'>{topic.description}</p>
             <div className='flex flex-col sm:flex-row gap-4'>
               <Link href='/camps' className='btn-secondary'>Explore Holiday Camps</Link>
-              <Link href='/ignite' className='btn-outline border-white text-white hover:bg-white hover:text-primary-600'>Explore Weekly Programs</Link>
+              <Link href='/ignite' className='btn-outline-inverse'>Explore Weekly Programs</Link>
             </div>
           </div>
           <Image src={topic.image} alt={topic.imageAlt} width={900} height={650} className='rounded-2xl shadow-2xl w-full h-80 object-cover' priority />

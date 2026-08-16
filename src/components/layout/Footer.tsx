@@ -4,14 +4,29 @@ import {
   PhoneIcon, 
   EnvelopeIcon, 
   MapPinIcon, 
-  ClockIcon 
+  ClockIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline'
 
 export default function Footer() {
   return (
-    <footer className='bg-gray-900 text-white'>
+    <footer className='bg-slate-950 text-white'>
+      <div className='border-b border-white/10'>
+        <div className='container-custom flex flex-col gap-5 py-8 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='flex items-start gap-4'>
+            <span className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-600/30'>
+              <ShieldCheckIcon className='h-7 w-7 text-blue-300' />
+            </span>
+            <div>
+              <p className='font-display text-lg font-semibold'>A safe place for curious minds</p>
+              <p className='mt-1 max-w-2xl text-sm text-slate-400'>Our child safety commitment guides how we design programs, spaces and every interaction.</p>
+            </div>
+          </div>
+          <Link href='/child-safety' className='shrink-0 text-sm font-semibold text-blue-300 hover:text-white'>Read our commitment →</Link>
+        </div>
+      </div>
       <div className='container-custom py-16'>
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-8'>
+        <div className='grid grid-cols-1 gap-10 md:grid-cols-4'>
           {/* Company Info */}
           <div className='space-y-4'>
             <Link href='/' className='flex items-center space-x-3'>
@@ -24,7 +39,7 @@ export default function Footer() {
               />
               <span className='font-display font-bold text-xl'>TinkerTank</span>
             </Link>
-            <p className='text-gray-300 leading-relaxed'>
+            <p className='leading-relaxed text-slate-400'>
               Inspiring the next generation of innovators through hands-on STEAM learning experiences.
             </p>
             <div className='flex space-x-4'>
@@ -148,11 +163,11 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className='border-t border-gray-800 mt-12 pt-8 space-y-4'>
-          <p className='text-gray-400 text-sm text-center max-w-3xl mx-auto'>
+        <div className='mt-12 space-y-4 border-t border-white/10 pt-8'>
+          <p className='mx-auto max-w-3xl text-center text-sm text-slate-400'>
             &ldquo;TinkerTank is committed to providing a safe, inclusive, and empowering environment for all children and young people.&rdquo;
           </p>
-          <div className='text-gray-400 text-sm text-center'>
+          <div className='text-center text-sm text-slate-400'>
             © 2026 TinkerTank. All rights reserved.
           </div>
         </div>

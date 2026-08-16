@@ -20,11 +20,11 @@ export default function CampsClient() {
   return (
     <div>
       {/* Hero Section */}
-      <section className='hero-gradient text-white py-16 lg:py-24'>
+      <section className='program-hero'>
         <div className='container-custom'>
           <div className='text-center space-y-6'>
             <h1 className='text-4xl md:text-5xl font-display font-bold leading-tight text-shadow-sm'>
-              STEAM <span className='text-yellow-300'>Adventure</span> Camps
+              STEAM <span className='text-orange-300'>Adventure</span> Camps
             </h1>
             <p className='text-xl md:text-2xl font-light text-blue-100 max-w-3xl mx-auto'>
               Hands-on learning experiences where kids explore science, technology, engineering, and math through exciting projects and experiments
@@ -53,7 +53,7 @@ export default function CampsClient() {
       </section>
 
       {/* What to Expect */}
-      <section className='py-16 bg-gray-50'>
+      <section className='bg-slate-50 py-20'>
         <div className='container-custom'>
           <div className='text-center space-y-4 mb-12'>
             <h2 className='text-3xl font-display font-bold text-gray-900'>
@@ -65,7 +65,7 @@ export default function CampsClient() {
           </div>
 
           <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
-            <div className='bg-white rounded-xl p-8 text-center shadow-lg'>
+            <div className='feature-card text-center'>
               <div className='w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-3xl'>🔬</span>
               </div>
@@ -77,7 +77,7 @@ export default function CampsClient() {
               </p>
             </div>
 
-            <div className='bg-white rounded-xl p-8 text-center shadow-lg'>
+            <div className='feature-card text-center'>
               <div className='w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-3xl'>🚀</span>
               </div>
@@ -89,7 +89,7 @@ export default function CampsClient() {
               </p>
             </div>
 
-            <div className='bg-white rounded-xl p-8 text-center shadow-lg'>
+            <div className='feature-card text-center'>
               <div className='w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <span className='text-3xl'>🏆</span>
               </div>
@@ -105,7 +105,7 @@ export default function CampsClient() {
       </section>
 
       {/* Camp Options */}
-      <section className='py-20'>
+      <section className='bg-white py-20'>
         <div className='container-custom'>
           <div className='text-center space-y-4 mb-12'>
             <h2 className='text-3xl md:text-4xl font-display font-bold text-gray-900'>
@@ -123,8 +123,8 @@ export default function CampsClient() {
               onClick={() => setSelectedFilter('all')}
               className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                 selectedFilter === 'all'
-                  ? 'bg-primary-500 text-white shadow-lg'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-primary-300'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 border border-slate-200 hover:border-primary-300'
               }`}
             >
               All Camps
@@ -133,8 +133,8 @@ export default function CampsClient() {
               onClick={() => setSelectedFilter('day')}
               className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                 selectedFilter === 'day'
-                  ? 'bg-primary-500 text-white shadow-lg'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-primary-300'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 border border-slate-200 hover:border-primary-300'
               }`}
             >
               Day Camps
@@ -143,8 +143,8 @@ export default function CampsClient() {
               onClick={() => setSelectedFilter('extended')}
               className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                 selectedFilter === 'extended'
-                  ? 'bg-primary-500 text-white shadow-lg'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-primary-300'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 border border-slate-200 hover:border-primary-300'
               }`}
             >
               Extended Day
@@ -173,7 +173,7 @@ export default function CampsClient() {
       </section>
 
       {/* Why Choose Our Camps */}
-      <section className='py-20 bg-gradient-to-br from-accent-50 to-primary-50'>
+      <section className='border-t border-slate-200 bg-slate-50 py-20'>
         <div className='container-custom'>
           <div className='text-center space-y-4 mb-12'>
             <h2 className='text-3xl font-display font-bold text-gray-900'>
