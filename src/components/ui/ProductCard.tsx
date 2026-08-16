@@ -50,7 +50,9 @@ export default function ProductCard({ product, featured = false, showCategory = 
             src={product.images[0]}
             alt={product.name}
             fill
-            sizes={featured ? '(min-width: 1024px) 66vw, (min-width: 768px) 50vw, 100vw' : '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw'}
+            sizes={featured
+              ? '(min-width: 1024px) 66vw, (min-width: 640px) 50vw, calc(100vw - 2rem)'
+              : '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, calc(100vw - 2rem)'}
             className='w-full h-full object-cover'
           />
         ) : (
@@ -133,7 +135,7 @@ export default function ProductCard({ product, featured = false, showCategory = 
             href={product.category === 'subscriptions' ? `/ignite/${product.id}` : `/${product.category}/${product.id}`}
             className='btn-primary w-full'
           >
-            {product.category === 'subscriptions' ? 'Learn More' : 'Book Now'}
+            {product.category === 'subscriptions' ? `Explore ${product.name}` : `Book ${product.name}`}
           </Link>
         </div>
       </div>

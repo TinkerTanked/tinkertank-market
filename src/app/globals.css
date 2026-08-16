@@ -20,7 +20,7 @@
   }
 
   .btn-secondary {
-    @apply bg-accent-500 hover:bg-accent-600 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-200 inline-flex items-center justify-center;
+    @apply bg-accent-700 hover:bg-accent-800 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-200 inline-flex items-center justify-center;
   }
 
   .btn-outline {
