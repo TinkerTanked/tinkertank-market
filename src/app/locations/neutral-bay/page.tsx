@@ -62,7 +62,7 @@ export default function NeutralBayPage() {
         </div>
       </section>
 
-      <section className='bg-slate-50 py-20'>
+      <section id='studio-map' className='scroll-mt-28 bg-slate-50 py-20'>
         <div className='container-custom'>
           <LocationMap />
           <div className='mt-8 grid gap-8 md:grid-cols-2'>
