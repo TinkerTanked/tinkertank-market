@@ -29,7 +29,7 @@ export default function Header() {
     <header className='sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur'>
       <div className='bg-slate-950 text-slate-200'>
         <div className='container-custom flex h-9 items-center justify-between text-xs font-medium sm:text-sm'>
-          <Link href='/locations/neutral-bay' className='flex items-center gap-1.5 hover:text-white'>
+          <Link href='/locations/neutral-bay#studio-map' className='flex items-center gap-1.5 hover:text-white'>
             <MapPinIcon className='h-4 w-4 text-blue-300' />
             <span>50 Yeo St, Neutral Bay</span>
           </Link>
