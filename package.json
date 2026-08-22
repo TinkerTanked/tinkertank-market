@@ -79,6 +79,7 @@
     "zustand": "^4.4.7"
   },
   "overrides": {
+    "deepmerge-ts": "^8.0.1",
     "esbuild": ">=0.25.0"
   },
   "devDependencies": {
@@ -96,7 +97,7 @@
     "eslint-config-next": "15.0.3",
     "jest-axe": "^8.0.0",
     "jsdom": "^25.0.1",
-    "lighthouse": "^12.8.2",
+    "lighthouse": "^13.4.1",
     "msw": "^2.0.11",
     "postcss": "^8.5.15",
     "prettier": "^3.3.3",
