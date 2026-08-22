@@ -1,6 +1,10 @@
 export interface LocationAvailability {
   locationId: string
   locationName: string
+  address: string
+  description: string
+  image: string
+  campPage: string
   availableCampTypes: ('day' | 'allday')[]
   availableDates?: string[]
   /** Maximum number of camp bookings per day at this location. */
@@ -27,6 +31,10 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
   {
     locationId: 'neutral-bay',
     locationName: 'TinkerTank Neutral Bay',
+    address: '50 Yeo St, Neutral Bay NSW 2089',
+    description: 'Our purpose-built Lower North Shore studio',
+    image: '/images/YEO.jpg',
+    campPage: '/camps/neutral-bay',
     availableCampTypes: ['day', 'allday'],
     // Combined daily cap across Day Camp and All Day Camp bookings
     dailyCapacity: DEFAULT_CAMP_DAILY_CAPACITY
@@ -34,6 +42,10 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
   {
     locationId: 'manly-library',
     locationName: 'Manly Library',
+    address: 'Market Place, Manly NSW 2095',
+    description: 'A convenient Northern Beaches camp location',
+    image: '/images/manly-location.jpg',
+    campPage: '/camps/manly',
     availableCampTypes: ['day'],
     availableDates: MANLY_LIBRARY_SPRING_2026_DATES,
     dailyCapacity: DEFAULT_CAMP_DAILY_CAPACITY

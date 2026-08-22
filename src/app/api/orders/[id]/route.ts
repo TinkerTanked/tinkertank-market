@@ -60,11 +60,13 @@ export async function GET(
       },
       items: order.orderItems.map(item => ({
         product: {
+          id: item.product.id,
           name: item.product.name,
           shortDescription: item.product.description,
           category: item.product.type === 'CAMP' ? 'camps' : item.product.type === 'BIRTHDAY' ? 'birthdays' : 'subscriptions'
         },
         selectedDate: item.bookingDate,
+        location: item.location,
         quantity: 1,
         totalPrice: Number(item.price)
       })),

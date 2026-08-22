@@ -11,6 +11,10 @@
    - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key (production)
    - `STRIPE_SECRET_KEY` - Stripe secret key (production)
    - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret
+   - `NEXT_PUBLIC_GA_MEASUREMENT_ID` - GA4 web stream ID (`G-...`)
+   - `NEXT_PUBLIC_META_PIXEL_ID` - Meta Pixel ID
+   - `NEXT_PUBLIC_GOOGLE_ADS_ID` - Google Ads tag ID (`AW-...`)
+   - `NEXT_PUBLIC_GOOGLE_ADS_CAMP_CONVERSION_LABEL` - Google Ads camp purchase conversion label
 
 2. **Kubernetes Cluster** - Ensure your kops cluster is running:
    - Cluster Name: `develop.platform.aten.rocks`
@@ -60,6 +64,12 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 ## Deployment Process
+
+### Analytics Configuration
+
+Add the analytics values above as GitHub Actions secrets before deploying. They are passed into the Docker build because Next.js embeds `NEXT_PUBLIC_*` values in the browser bundle at build time. GA4 and Meta track page views and the camp funnel (`booking_start`, location/date selection, `add_to_cart`, `begin_checkout`, `add_payment_info`, and `purchase`). Meta receives its standard `ViewContent`, `AddToCart`, `InitiateCheckout`, `AddPaymentInfo`, and `Purchase` events. The optional Google Ads conversion fires only for a confirmed paid order containing a camp.
+
+After deployment, use GA4 DebugView, Meta Events Manager Test Events and a Stripe test purchase to verify the funnel. Mark `purchase` as a key event in GA4 and use Meta&apos;s Purchase event as the campaign conversion.
 
 ### 1. Deploy via GitHub Actions
 
@@ -122,6 +132,10 @@ The following environment variables are configured in production:
 - `STRIPE_SECRET_KEY` - Stripe secret key
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret
 - `NEXT_PUBLIC_APP_URL=https://market.tinkertank.academy`
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` - GA4 web stream ID
+- `NEXT_PUBLIC_META_PIXEL_ID` - Meta Pixel ID
+- `NEXT_PUBLIC_GOOGLE_ADS_ID` - Google Ads tag ID
+- `NEXT_PUBLIC_GOOGLE_ADS_CAMP_CONVERSION_LABEL` - Camp purchase conversion label
 
 ## Troubleshooting
 

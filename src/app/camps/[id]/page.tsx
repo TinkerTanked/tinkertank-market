@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -15,12 +15,28 @@ import {
 import { getProductById } from '@/data/products'
 import CampBookingWizard from '@/components/booking/CampBookingWizard'
 import LearningTopicsSection from '@/components/learning/LearningTopicsSection'
+import { trackEvent } from '@/lib/analytics'
 
 export default function CampDetailPage() {
   const params = useParams()
   const [isBookingOpen, setIsBookingOpen] = useState(false)
 
-  const product = getProductById(params.id as string)
+  const productId = params.id as string
+  const product = useMemo(() => getProductById(productId), [productId])
+
+  useEffect(() => {
+    if (!product) return
+    trackEvent('view_item', {
+      currency: 'AUD',
+      value: product.price,
+      items: [{
+        item_id: product.id,
+        item_name: product.name,
+        item_category: product.category,
+        price: product.price
+      }]
+    })
+  }, [product])
 
   if (!product) {
     return (

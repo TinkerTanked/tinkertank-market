@@ -53,7 +53,7 @@ export default function NeutralBayPage() {
             <p className='text-xl text-blue-100'>Hands-on weekly programs, school holiday camps and technology birthday parties for young creators aged 5-16.</p>
             <div className='flex flex-col sm:flex-row gap-4'>
               <Link href='/ignite/drop-off-ignite' className='btn-secondary'>View Weekly Programs</Link>
-              <Link href='/camps' className='btn-outline-inverse'>Book a Camp</Link>
+              <Link href='/camps/neutral-bay' className='btn-outline-inverse'>Book a Camp</Link>
             </div>
           </div>
           <div className='rounded-[2rem] border border-white/20 bg-white/10 p-2 shadow-2xl shadow-slate-950/30'>
@@ -88,7 +88,7 @@ export default function NeutralBayPage() {
           </div>
           <div className='grid md:grid-cols-3 gap-8'>
             <ProgramCard title='Weekly Ignite' description='After-school and Saturday sessions with access to robotics kits, coding tools and 3D printers.' href='/ignite/drop-off-ignite' linkText='Explore Ignite' />
-            <ProgramCard title='School Holiday Camps' description='Full days of coding, robotics, engineering and creative technology during selected NSW school holidays.' href='/camps' linkText='Explore Camps' />
+            <ProgramCard title='School Holiday Camps' description='Full days of coding, robotics, engineering and creative technology during selected NSW school holidays.' href='/camps/neutral-bay' linkText='Explore Camps' />
             <ProgramCard title='Birthday Parties' description='Choose a robotics or coding party hosted at our studio, with activities led by a TinkerTank facilitator.' href='/birthdays' linkText='Explore Parties' />
           </div>
         </div>

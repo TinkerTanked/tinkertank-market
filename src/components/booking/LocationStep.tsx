@@ -7,6 +7,7 @@ interface Location {
   id: string
   name: string
   address: string
+  description?: string
   capacity: number
 }
 
@@ -15,21 +16,12 @@ interface LocationStepProps {
   onLocationSelect: (location: Location) => void
 }
 
-const LOCATION_ADDRESSES: Record<string, string> = {
-  'neutral-bay': '50 Yeo St, Neutral Bay NSW 2089',
-  'manly-library': 'Market Place, Manly NSW 2095'
-}
-
-const LOCATION_DESCRIPTIONS: Record<string, string> = {
-  'neutral-bay': 'Our purpose-built Lower North Shore studio',
-  'manly-library': 'A convenient Northern Beaches camp location'
-}
-
 export default function LocationStep({ selectedLocation, onLocationSelect }: LocationStepProps) {
   const locations: Location[] = LOCATION_AVAILABILITY.map(loc => ({
     id: loc.locationId,
     name: loc.locationName,
-    address: LOCATION_ADDRESSES[loc.locationId] || '',
+    address: loc.address,
+    description: loc.description,
     capacity: loc.dailyCapacity ?? DEFAULT_CAMP_DAILY_CAPACITY
   }))
 
@@ -71,7 +63,7 @@ export default function LocationStep({ selectedLocation, onLocationSelect }: Loc
                     {selectedLocation?.id === location.id && <CheckIcon className="h-4 w-4 text-white" />}
                   </span>
                 </div>
-                <p className="mt-1 text-sm font-medium text-slate-600">{LOCATION_DESCRIPTIONS[location.id]}</p>
+                <p className="mt-1 text-sm font-medium text-slate-600">{location.description}</p>
                 <p className="mt-3 flex items-start gap-2 text-sm text-slate-500">
                   <MapPinIcon className="mt-0.5 h-4 w-4 flex-none" />
                   <span>{location.address}</span>
