@@ -67,9 +67,9 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 Plausible provides cookieless page, campaign, funnel and revenue analytics for `tinkertank.rocks`. The app sends the custom events `Camp Booking Started`, `Camp Location Selected`, `Camp Dates Selected`, `Camp Type Selected`, `Camp Added to Cart`, `Checkout Started`, `Payment Started`, and `Purchase`. Configure matching goals in Plausible; enable AUD revenue on `Purchase` if the Plausible plan supports revenue attribution.
 
-Meta advertising measurement is optional and requires the visitor's explicit choice. The Pixel is not loaded before consent. Checkout only captures Meta identifiers and sends a server-side Meta `Purchase` when that visitor granted consent. The browser and server Purchase share the order ID so Meta can deduplicate them. `NEXT_PUBLIC_META_PIXEL_ID` is embedded in the browser build; `META_CONVERSIONS_API_ACCESS_TOKEN` remains server-only in the Kubernetes pod.
+Meta tracks the booking funnel and every paid one-time order sends a server-side `Purchase`. The browser and server Purchase share the order ID so Meta can deduplicate them. `NEXT_PUBLIC_META_PIXEL_ID` is embedded in the browser build; `META_CONVERSIONS_API_ACCESS_TOKEN` remains server-only in the Kubernetes pod.
 
-After deployment, verify Plausible pageviews and funnel goals. For a consented test visit, use Meta Events Manager and a Stripe test purchase to verify Browser + Server Purchase deduplication.
+After deployment, verify Plausible pageviews and funnel goals. Use Meta Events Manager and a Stripe test purchase to verify Browser + Server Purchase deduplication.
 
 ### 1. Deploy via GitHub Actions
 

@@ -121,7 +121,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Payment Processors:</strong> Stripe processes all payments. We do not store complete credit card details.</li>
               <li><strong>Emergency Services:</strong> Medical and emergency contact information may be shared with emergency services if required.</li>
               <li><strong>Service Providers:</strong> Third-party services that help us operate (email, hosting, analytics) under strict confidentiality agreements.</li>
-              <li><strong>Advertising Measurement:</strong> If you allow Meta measurement, Meta may receive hashed parent or guardian contact details and transaction information to attribute and deduplicate purchases. Hashing supports matching and does not make this data anonymous to Meta. We do not send children&apos;s names, ages, medical information, or emergency contact details for advertising measurement.</li>
+              <li><strong>Advertising Measurement:</strong> Meta may receive hashed parent or guardian contact details and transaction information to attribute and deduplicate purchases. Hashing supports matching and does not make this data anonymous to Meta. We do not send children&apos;s names, ages, medical information, or emergency contact details for advertising measurement.</li>
               <li><strong>Legal Requirements:</strong> When required by law, court order, or government authority.</li>
             </ul>
             <p className='mt-4'>
@@ -149,15 +149,12 @@ export default function PrivacyPolicyPage() {
             <p>
               We use Plausible Analytics to understand aggregate website traffic and campaign performance. Plausible does not use cookies or create persistent visitor profiles. It receives pageviews and selected booking-funnel events, but not customer names, contact details, child information, or order IDs.
             </p>
-            <h3 className='text-xl font-display font-semibold text-gray-900 mt-8 mb-3'>Storage and marketing choices</h3>
+            <h3 className='text-xl font-display font-semibold text-gray-900 mt-8 mb-3'>Storage and measurement</h3>
             <ul className='list-disc pl-6 space-y-2'>
-              <li><strong>Essential Storage:</strong> Required for functions such as the shopping cart and remembering your privacy choice.</li>
+              <li><strong>Essential Storage:</strong> Required for functions such as the shopping cart.</li>
               <li><strong>Cookieless Analytics:</strong> Plausible helps us understand pages, campaigns and aggregate booking-funnel performance without advertising profiles.</li>
-              <li><strong>Meta Measurement:</strong> Meta Pixel cookies and server-side advertising measurement are disabled unless you explicitly allow them.</li>
+              <li><strong>Meta Measurement:</strong> Meta Pixel cookies and server-side advertising measurement help us understand advertising and booking results.</li>
             </ul>
-            <p className='mt-4'>
-              You can change your Meta measurement choice at any time using the &quot;Privacy choices&quot; link in the website footer. Declining Meta measurement does not affect your ability to browse or book.
-            </p>
           </section>
 
           <section>

@@ -6,7 +6,6 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import PlausibleAnalytics from '@/components/analytics/PlausibleAnalytics'
 import MetaPixel from '@/components/analytics/MetaPixel'
-import MarketingConsentBanner from '@/components/analytics/MarketingConsent'
 import { OrganizationJsonLd, LocalBusinessJsonLd } from '@/components/seo/JsonLd'
 import './globals.css'
 
@@ -113,7 +112,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} ${poppins.variable} font-sans`}>
         <PlausibleAnalytics />
         <MetaPixel />
-        <MarketingConsentBanner />
         <ErrorBoundary>
           <NotificationProvider>
             <div className='min-h-screen flex flex-col'>
