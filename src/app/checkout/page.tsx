@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -15,6 +15,7 @@ import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
 import StudentInfoForm from '@/components/checkout/StudentInfoForm'
 import OrderSummary from '@/components/checkout/OrderSummary'
 import StripeCheckoutButton from '@/components/checkout/StripeCheckoutButton'
+import { cartItemsToAnalytics, trackEvent } from '@/lib/analytics'
 
 enum CheckoutStep {
   REVIEW = 'review',
@@ -29,6 +30,7 @@ export default function CheckoutPage() {
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '' })
   const summary = getSummary()
   const validation = getValidation()
+  const hasTrackedCheckout = useRef(false)
 
   // Check if all items are Ignite subscriptions (student info already collected in wizard)
   const allItemsAreIgnite = items.length > 0 && items.every(
@@ -46,6 +48,17 @@ export default function CheckoutPage() {
       router.push('/camps')
     }
   }, [items.length, router])
+
+  useEffect(() => {
+    if (items.length === 0 || hasTrackedCheckout.current) return
+
+    hasTrackedCheckout.current = true
+    trackEvent('begin_checkout', {
+      currency: 'AUD',
+      value: summary.total,
+      items: cartItemsToAnalytics(items)
+    })
+  }, [items, summary.total])
 
   if (items.length === 0) {
     return (

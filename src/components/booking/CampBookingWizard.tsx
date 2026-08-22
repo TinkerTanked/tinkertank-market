@@ -9,6 +9,8 @@ import DateStep from './DateStep'
 import CampTypeStep from './CampTypeStep'
 import ConfirmationStep from './ConfirmationStepNew'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
+import { DEFAULT_CAMP_DAILY_CAPACITY, getLocationAvailabilityById } from '@/data/locationAvailability'
+import { trackEvent } from '@/lib/analytics'
 
 interface BookingData {
   location: {
@@ -32,6 +34,7 @@ interface BookingData {
 interface CampBookingWizardProps {
   onClose: () => void
   isOpen: boolean
+  initialLocationId?: string
 }
 
 const STEPS = [
@@ -47,11 +50,17 @@ const NEXT_STEP_LABELS: Record<number, string> = {
   3: 'Review booking'
 }
 
-export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizardProps) {
+export default function CampBookingWizard({ onClose, isOpen, initialLocationId }: CampBookingWizardProps) {
   const router = useRouter()
-  const [currentStep, setCurrentStep] = useState(1)
+  const initialLocation = initialLocationId ? getLocationAvailabilityById(initialLocationId) : undefined
+  const [currentStep, setCurrentStep] = useState(initialLocation ? 2 : 1)
   const [bookingData, setBookingData] = useState<BookingData>({
-    location: null,
+    location: initialLocation ? {
+      id: initialLocation.locationId,
+      name: initialLocation.locationName,
+      address: initialLocation.address,
+      capacity: initialLocation.dailyCapacity ?? DEFAULT_CAMP_DAILY_CAPACITY
+    } : null,
     date: null,
     dates: [],
     campType: null
@@ -75,6 +84,13 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
 
   const handleNext = () => {
     if (currentStep < STEPS.length && canProceed()) {
+      if (currentStep === 2) {
+        trackEvent('select_camp_dates', {
+          location_id: bookingData.location?.id,
+          date_count: bookingData.dates.length,
+          dates: bookingData.dates.map(date => date.toISOString().slice(0, 10)).join(',')
+        })
+      }
       setCurrentStep(currentStep + 1)
     }
   }
@@ -114,6 +130,21 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         selectedDate: firstDate,
         selectedDates: bookingData.dates.map(d => new Date(d))
       })
+      const isBundle = bookingData.campType.id.includes('bundle')
+      const value = bookingData.campType.price * (isBundle ? 1 : bookingData.dates.length)
+      trackEvent('add_to_cart', {
+        currency: 'AUD',
+        value,
+        items: [{
+          item_id: bookingData.campType.id,
+          item_name: bookingData.campType.name,
+          item_category: 'camps',
+          item_variant: `${bookingData.dates.length} ${bookingData.dates.length === 1 ? 'day' : 'days'}`,
+          location_id: bookingData.location.id,
+          price: bookingData.campType.price,
+          quantity: isBundle ? 1 : bookingData.dates.length
+        }]
+      })
       onClose()
       router.push('/checkout')
     }
@@ -129,7 +160,13 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         return (
           <LocationStep 
             selectedLocation={bookingData.location}
-            onLocationSelect={(location) => updateBookingData('location', location)}
+            onLocationSelect={(location) => {
+              updateBookingData('location', location)
+              trackEvent('select_camp_location', {
+                location_id: location.id,
+                location_name: location.name
+              })
+            }}
           />
         )
       case 2:
@@ -147,7 +184,20 @@ export default function CampBookingWizard({ onClose, isOpen }: CampBookingWizard
         return (
           <CampTypeStep 
             selectedCampType={bookingData.campType}
-            onCampTypeSelect={(campType) => updateBookingData('campType', campType)}
+            onCampTypeSelect={(campType) => {
+              updateBookingData('campType', campType)
+              trackEvent('select_item', {
+                item_list_name: 'camp_types',
+                location_id: bookingData.location?.id,
+                items: [{
+                  item_id: campType.id,
+                  item_name: campType.name,
+                  item_category: 'camps',
+                  price: campType.price,
+                  quantity: 1
+                }]
+              })
+            }}
             date={bookingData.date}
             location={bookingData.location}
             selectedDateCount={bookingData.dates.length}

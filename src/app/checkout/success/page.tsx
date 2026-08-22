@@ -11,15 +11,33 @@ import {
   HomeIcon
 } from '@heroicons/react/24/outline'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
+import { trackCampPurchaseConversion, trackEvent } from '@/lib/analytics'
 
 interface OrderDetails {
   orderId: string
   paymentIntentId: string
-  items: any[]
-  customerInfo: any
+  items: Array<{
+    product: {
+      id: string
+      name: string
+      shortDescription: string
+      category: string
+    }
+    selectedDate?: string
+    selectedTimeSlot?: string | { start: string; end: string }
+    location?: string
+    quantity: number
+    totalPrice: number
+  }>
+  customerInfo: {
+    name?: string
+    email?: string
+  }
   total: number
   status: string
 }
+
+const trackedPurchaseKey = (orderId: string) => `tinkertank_purchase_${orderId}`
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams()
@@ -27,7 +45,6 @@ function CheckoutSuccessContent() {
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const sessionId = searchParams.get('session_id')
   const orderId = searchParams.get('order_id')
 
   useEffect(() => {
@@ -38,10 +55,41 @@ function CheckoutSuccessContent() {
       }
 
       try {
-        const response = await fetch(`/api/orders/${orderId}`)
-        if (response.ok) {
-          const data = await response.json()
+        let data: OrderDetails | null = null
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          const response = await fetch(`/api/orders/${orderId}`)
+          if (response.ok) {
+            data = await response.json()
+            if (data?.status === 'PAID') break
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+
+        if (data) {
           setOrderDetails(data)
+          if (data.status === 'PAID' && !localStorage.getItem(trackedPurchaseKey(data.orderId))) {
+            const items = data.items.map(item => ({
+              item_id: item.product?.id,
+              item_name: item.product?.name,
+              item_category: item.product?.category,
+              location_id: item.location,
+              price: item.totalPrice,
+              quantity: item.quantity
+            }))
+            trackEvent('purchase', {
+              transaction_id: data.orderId,
+              value: data.total,
+              currency: 'AUD',
+              items
+            })
+            const campValue = data.items
+              .filter(item => item.product?.category === 'camps')
+              .reduce((total, item) => total + item.totalPrice, 0)
+            if (campValue > 0) {
+              trackCampPurchaseConversion(campValue, data.orderId)
+            }
+            localStorage.setItem(trackedPurchaseKey(data.orderId), 'true')
+          }
           // Clear cart after successful order
           clearCart()
         }

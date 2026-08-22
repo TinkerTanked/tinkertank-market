@@ -50,7 +50,7 @@ export default function NorthernBeachesPage() {
             <h1 className='text-4xl md:text-5xl font-display font-bold'>Kids&apos; STEAM, Coding &amp; Robotics Programs</h1>
             <p className='text-xl text-cyan-100'>Hands-on school holiday activities, weekly programs and technology birthday parties in Manly, Brookvale, Balgowlah and surrounding suburbs.</p>
             <div className='flex flex-col sm:flex-row gap-4'>
-              <Link href='/camps' className='btn-secondary'>Find Holiday Camps</Link>
+              <Link href='/camps/manly' className='btn-secondary'>Find Holiday Camps</Link>
               <Link href='/ignite' className='btn-outline-inverse'>View Weekly Programs</Link>
             </div>
           </div>
@@ -77,7 +77,7 @@ export default function NorthernBeachesPage() {
           <div className='space-y-5'>
             <h2 className='text-3xl font-display font-bold text-gray-900'>School Holiday Activities</h2>
             <p className='text-lg text-gray-600'>Selected Northern Beaches camps combine coding, robotics, engineering and 3D design in a practical day of making. Current dates and venues appear in the camp booking flow.</p>
-            <Link href='/camps' className='btn-primary inline-flex'>See Upcoming Camps</Link>
+            <Link href='/camps/manly' className='btn-primary inline-flex'>See Upcoming Camps</Link>
           </div>
           <div className='space-y-5'>
             <h2 className='text-3xl font-display font-bold text-gray-900'>Mobile Birthday Parties</h2>

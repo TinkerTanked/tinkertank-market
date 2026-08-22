@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
 import { toLocalDateString } from '@/lib/dates'
+import { cartItemsToAnalytics, trackEvent } from '@/lib/analytics'
 
 interface StripeCheckoutButtonProps {
   customerInfo: {
@@ -59,6 +60,12 @@ export default function StripeCheckoutButton({ customerInfo }: StripeCheckoutBut
         throw new Error(data.error || 'Failed to create checkout session')
       }
 
+      trackEvent('add_payment_info', {
+        currency: 'AUD',
+        value: summary.total,
+        payment_type: 'Stripe',
+        items: cartItemsToAnalytics(items)
+      })
       window.location.href = data.url
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')

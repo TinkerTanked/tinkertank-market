@@ -3,19 +3,35 @@
 import { useState } from 'react'
 import { SparklesIcon } from '@heroicons/react/24/outline'
 import CampBookingWizard from '../booking/CampBookingWizard'
+import { trackEvent } from '@/lib/analytics'
 
 interface BookCampButtonProps {
   className?: string
   size?: 'sm' | 'md' | 'lg'
   variant?: 'primary' | 'secondary' | 'hero'
+  initialLocationId?: string
+  label?: string
+  trackingSource?: string
 }
 
 export default function BookCampButton({ 
   className = '',
   size = 'md',
-  variant = 'primary'
+  variant = 'primary',
+  initialLocationId,
+  label = 'Book Camp',
+  trackingSource = 'camp_cta'
 }: BookCampButtonProps) {
   const [showWizard, setShowWizard] = useState(false)
+
+  const openBooking = () => {
+    trackEvent('booking_start', {
+      program: 'camp',
+      location_id: initialLocationId,
+      source: trackingSource
+    })
+    setShowWizard(true)
+  }
 
   const sizeClasses = {
     sm: 'px-4 py-2 text-sm',
@@ -32,7 +48,7 @@ export default function BookCampButton({
   return (
     <>
       <button
-        onClick={() => setShowWizard(true)}
+        onClick={openBooking}
         className={`
           inline-flex items-center justify-center font-bold rounded-xl 
           transition-all duration-200 
@@ -42,12 +58,13 @@ export default function BookCampButton({
         `}
       >
         <SparklesIcon className="w-5 h-5 mr-2" />
-        Book Camp
+        {label}
       </button>
 
       <CampBookingWizard 
         isOpen={showWizard}
         onClose={() => setShowWizard(false)}
+        initialLocationId={initialLocationId}
       />
     </>
   )

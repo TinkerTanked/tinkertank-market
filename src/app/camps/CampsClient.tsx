@@ -1,16 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { getProductsByCategory } from '@/data/products'
 import ProductCard from '@/components/ui/ProductCard'
-import { ClockIcon, UserGroupIcon, SparklesIcon } from '@heroicons/react/24/outline'
+import { ArrowRightIcon, CalendarDaysIcon, ClockIcon, MapPinIcon, ShieldCheckIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import BookCampButton from '@/components/ui/BookCampButton'
 import MobileActionBar from '@/components/ui/MobileActionBar'
 import TrustProofSection from '@/components/trust/TrustProofSection'
+import { trackEvent } from '@/lib/analytics'
 
 export default function CampsClient() {
-  const campProducts = getProductsByCategory('camps')
+  const campProducts = useMemo(() => getProductsByCategory('camps'), [])
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'day' | 'extended'>('all')
+
+  useEffect(() => {
+    trackEvent('view_item_list', {
+      item_list_id: 'school_holiday_camps',
+      item_list_name: 'School Holiday Camps',
+      items: campProducts.map(product => ({
+        item_id: product.id,
+        item_name: product.name,
+        item_category: product.category,
+        price: product.price
+      }))
+    })
+  }, [campProducts])
 
   const filteredProducts = campProducts.filter(product => {
     if (selectedFilter === 'all') return true
@@ -21,35 +36,43 @@ export default function CampsClient() {
 
   return (
     <div className='pb-20 md:pb-0'>
-      {/* Hero Section */}
-      <section className='program-hero'>
-        <div className='container-custom'>
-          <div className='text-center space-y-6'>
-            <h1 className='text-4xl md:text-5xl font-display font-bold leading-tight text-shadow-sm'>
-              STEAM <span className='text-orange-300'>Adventure</span> Camps
+      <section className='bg-slate-950 py-14 text-white lg:py-20'>
+        <div className='container-custom grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14'>
+          <div>
+            <p className='text-sm font-bold uppercase tracking-[0.18em] text-cyan-300'>Neutral Bay &amp; Manly</p>
+            <h1 className='mt-4 max-w-3xl font-display text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl'>
+              School Holiday STEM Camps in Sydney
             </h1>
-            <p className='text-xl md:text-2xl font-light text-blue-100 max-w-3xl mx-auto'>
-              Hands-on learning experiences where kids explore science, technology, engineering, and math through exciting projects and experiments
+            <p className='mt-5 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl'>
+              Choose a location and book hands-on days of coding, robotics, engineering, animation and 3D design for children aged 6-16.
             </p>
-            <div className='flex flex-col sm:flex-row gap-4 justify-center items-center pt-4'>
-              <div className='flex items-center space-x-2 text-blue-100'>
-                <ClockIcon className='w-5 h-5' />
-                <span>Daily & Extended Options</span>
-              </div>
-              <div className='flex items-center space-x-2 text-blue-100'>
-                <UserGroupIcon className='w-5 h-5' />
-                <span>Ages 6-16</span>
-              </div>
-              <div className='flex items-center space-x-2 text-blue-100'>
-                <SparklesIcon className='w-5 h-5' />
-                <span>All Skill Levels</span>
-              </div>
+            <div className='mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-slate-200'>
+              <span className='flex items-center gap-2'><ClockIcon className='h-5 w-5 text-cyan-300' />9:00 AM starts</span>
+              <span className='flex items-center gap-2'><UserGroupIcon className='h-5 w-5 text-cyan-300' />Ages 6-16</span>
+              <span className='flex items-center gap-2'><ShieldCheckIcon className='h-5 w-5 text-cyan-300' />100% WWCC-checked team</span>
             </div>
-            
-            {/* Hero CTA */}
-            <div className='pt-8'>
-              <BookCampButton size="lg" variant="hero" className="mx-auto" />
+            <div className='mt-8'>
+              <BookCampButton size='lg' variant='hero' label='Choose location & dates' trackingSource='camps_hero' />
             </div>
+          </div>
+
+          <div className='space-y-4 rounded-3xl bg-white p-4 text-slate-950 shadow-2xl sm:p-6'>
+            <p className='px-1 text-sm font-bold uppercase tracking-[0.15em] text-primary-700'>Book your camp</p>
+            <CampLocationCard
+              name='Neutral Bay Studio'
+              detail='Available weekdays · 9 AM-3 PM or 5 PM'
+              address='50 Yeo St, Neutral Bay'
+              href='/camps/neutral-bay'
+              locationId='neutral-bay'
+            />
+            <CampLocationCard
+              name='Manly Library'
+              detail='29 Sep-8 Oct 2026 · 9 AM-3 PM'
+              address='Market Place, Manly'
+              href='/camps/manly'
+              locationId='manly-library'
+            />
+            <p className='px-2 pb-1 text-sm text-slate-600'>From <strong className='text-slate-950'>$119.99 per child, per day</strong>. Select multiple dates in one booking.</p>
           </div>
         </div>
       </section>
@@ -233,5 +256,46 @@ export default function CampsClient() {
         <BookCampButton size='sm' className='shadow-none' />
       </MobileActionBar>
     </div>
+  )
+}
+
+function CampLocationCard({
+  name,
+  detail,
+  address,
+  href,
+  locationId
+}: {
+  name: string
+  detail: string
+  address: string
+  href: string
+  locationId: string
+}) {
+  return (
+    <article className='rounded-2xl border border-slate-200 bg-slate-50 p-5'>
+      <div className='flex items-start gap-3'>
+        <span className='grid h-10 w-10 flex-none place-items-center rounded-xl bg-primary-100 text-primary-700'>
+          <MapPinIcon className='h-5 w-5' />
+        </span>
+        <div className='min-w-0 flex-1'>
+          <h2 className='text-lg font-bold text-slate-950'>{name}</h2>
+          <p className='mt-1 flex items-center gap-1.5 text-sm font-semibold text-slate-700'><CalendarDaysIcon className='h-4 w-4' />{detail}</p>
+          <p className='mt-1 text-sm text-slate-500'>{address}</p>
+        </div>
+      </div>
+      <div className='mt-4 flex flex-col gap-2 sm:flex-row sm:items-center'>
+        <BookCampButton
+          initialLocationId={locationId}
+          label='Choose dates'
+          size='sm'
+          trackingSource='camps_location_card'
+          className='w-full sm:w-auto'
+        />
+        <Link href={href} className='inline-flex items-center justify-center px-3 py-2 text-sm font-semibold text-primary-700 hover:text-primary-900'>
+          Location details <ArrowRightIcon className='ml-1.5 h-4 w-4' />
+        </Link>
+      </div>
+    </article>
   )
 }

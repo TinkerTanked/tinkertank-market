@@ -17,6 +17,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9
     },
     {
+      url: `${baseUrl}/camps/neutral-bay`,
+      changeFrequency: 'weekly',
+      priority: 0.9
+    },
+    {
+      url: `${baseUrl}/camps/manly`,
+      changeFrequency: 'weekly',
+      priority: 0.9
+    },
+    {
       url: `${baseUrl}/birthdays`,
       changeFrequency: 'weekly',
       priority: 0.9
