@@ -121,7 +121,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Payment Processors:</strong> Stripe processes all payments. We do not store complete credit card details.</li>
               <li><strong>Emergency Services:</strong> Medical and emergency contact information may be shared with emergency services if required.</li>
               <li><strong>Service Providers:</strong> Third-party services that help us operate (email, hosting, analytics) under strict confidentiality agreements.</li>
-              <li><strong>Advertising Measurement:</strong> Meta may receive hashed parent or guardian contact details and transaction information to attribute and deduplicate purchases. We do not send children&apos;s names, ages, medical information, or emergency contact details for advertising measurement.</li>
+              <li><strong>Advertising Measurement:</strong> Meta may receive hashed parent or guardian contact details and transaction information to attribute and deduplicate purchases. Hashing supports matching and does not make this data anonymous to Meta. We do not send children&apos;s names, ages, medical information, or emergency contact details for advertising measurement.</li>
               <li><strong>Legal Requirements:</strong> When required by law, court order, or government authority.</li>
             </ul>
             <p className='mt-4'>
@@ -147,17 +147,14 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className='text-2xl font-display font-bold text-gray-900 mt-12 mb-4'>7. Cookies and Tracking</h2>
             <p>
-              We use cookies and similar technologies to enhance your browsing experience and analyze website usage.
+              We use Plausible Analytics to understand aggregate website traffic and campaign performance. Plausible does not use cookies or create persistent visitor profiles. It receives pageviews and selected booking-funnel events, but not customer names, contact details, child information, or order IDs.
             </p>
-            <h3 className='text-xl font-display font-semibold text-gray-900 mt-8 mb-3'>Types of Cookies We Use:</h3>
+            <h3 className='text-xl font-display font-semibold text-gray-900 mt-8 mb-3'>Storage and measurement</h3>
             <ul className='list-disc pl-6 space-y-2'>
-              <li><strong>Essential Cookies:</strong> Required for the website to function (e.g., shopping cart, login sessions)</li>
-              <li><strong>Analytics Cookies:</strong> Help us understand how visitors use our website</li>
-              <li><strong>Marketing Cookies:</strong> Used to deliver relevant advertisements (only with consent)</li>
+              <li><strong>Essential Storage:</strong> Required for functions such as the shopping cart.</li>
+              <li><strong>Cookieless Analytics:</strong> Plausible helps us understand pages, campaigns and aggregate booking-funnel performance without advertising profiles.</li>
+              <li><strong>Meta Measurement:</strong> Meta Pixel cookies and server-side advertising measurement help us understand advertising and booking results.</li>
             </ul>
-            <p className='mt-4'>
-              You can control cookies through your browser settings. Disabling essential cookies may affect website functionality.
-            </p>
           </section>
 
           <section>

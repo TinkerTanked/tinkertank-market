@@ -4,7 +4,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { NotificationProvider } from '@/components/NotificationProvider'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
-import GoogleAnalytics from '@/components/analytics/GoogleAnalytics'
+import PlausibleAnalytics from '@/components/analytics/PlausibleAnalytics'
 import MetaPixel from '@/components/analytics/MetaPixel'
 import { OrganizationJsonLd, LocalBusinessJsonLd } from '@/components/seo/JsonLd'
 import './globals.css'
@@ -110,7 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LocalBusinessJsonLd />
       </head>
       <body className={`${inter.variable} ${poppins.variable} font-sans`}>
-        <GoogleAnalytics />
+        <PlausibleAnalytics />
         <MetaPixel />
         <ErrorBoundary>
           <NotificationProvider>

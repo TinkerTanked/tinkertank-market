@@ -3,19 +3,21 @@ import { cartItemsToAnalytics, trackEvent } from '@/lib/analytics'
 
 describe('analytics', () => {
   afterEach(() => {
-    delete window.gtag
+    delete window.plausible
     delete window.fbq
   })
 
-  it('sends events through gtag when analytics is configured', () => {
-    window.gtag = vi.fn()
+  it('sends privacy-friendly funnel events through Plausible', () => {
+    window.plausible = vi.fn()
 
-    trackEvent('booking_start', { program: 'camp' })
+    trackEvent('booking_start', { program: 'camp', source: 'camps_hero' })
 
-    expect(window.gtag).toHaveBeenCalledWith('event', 'booking_start', { program: 'camp' })
+    expect(window.plausible).toHaveBeenCalledWith('Camp Booking Started', {
+      props: { program: 'camp', source: 'camps_hero' }
+    })
   })
 
-  it('does nothing before gtag has loaded', () => {
+  it('does nothing before analytics scripts have loaded', () => {
     expect(() => trackEvent('booking_start')).not.toThrow()
   })
 
@@ -50,7 +52,30 @@ describe('analytics', () => {
     )
   })
 
-  it('maps cart data to GA4 ecommerce items without personal data', () => {
+  it('sends aggregate purchase revenue to Plausible without an order ID', () => {
+    window.plausible = vi.fn()
+
+    trackEvent('purchase', {
+      transaction_id: 'private-order-id',
+      currency: 'AUD',
+      value: 239.98,
+      items: [{ item_id: 'day-camp', item_name: 'Day Camp', item_category: 'camps', quantity: 2 }]
+    })
+
+    expect(window.plausible).toHaveBeenCalledWith('Purchase', {
+      props: {
+        currency: 'AUD',
+        value: 239.98,
+        product_ids: 'day-camp',
+        product_categories: 'camps',
+        item_count: 2
+      },
+      revenue: { currency: 'AUD', amount: 239.98 }
+    })
+    expect(window.plausible).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ transaction_id: expect.anything() }))
+  })
+
+  it('maps cart data to analytics items without personal data', () => {
     const items = cartItemsToAnalytics([{
       product: {
         id: 'day-camp',

@@ -11,7 +11,7 @@ import {
   HomeIcon
 } from '@heroicons/react/24/outline'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
-import { trackCampPurchaseConversion, trackEvent } from '@/lib/analytics'
+import { trackEvent } from '@/lib/analytics'
 
 interface OrderDetails {
   orderId: string
@@ -82,12 +82,6 @@ function CheckoutSuccessContent() {
               currency: 'AUD',
               items
             }, { metaEventId: data.orderId })
-            const campValue = data.items
-              .filter(item => item.product?.category === 'camps')
-              .reduce((total, item) => total + item.totalPrice, 0)
-            if (campValue > 0) {
-              trackCampPurchaseConversion(campValue, data.orderId)
-            }
             localStorage.setItem(trackedPurchaseKey(data.orderId), 'true')
           }
           // Clear cart after successful order

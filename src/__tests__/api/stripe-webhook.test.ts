@@ -263,7 +263,7 @@ describe('Stripe Webhook Route', () => {
       expect(prisma.$transaction).toHaveBeenCalled()
     })
 
-    it('should not process if order status is not PENDING', async () => {
+    it('should not re-fulfil a paid order but retries its unsent Meta Purchase', async () => {
       const mockOrder = createMockOrder({ status: 'PAID' })
       const checkoutSession = createCheckoutSession()
       const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
@@ -275,6 +275,7 @@ describe('Stripe Webhook Route', () => {
 
       expect(response.status).toBe(200)
       expect(prisma.$transaction).not.toHaveBeenCalled()
+      expect(sendMetaPurchase).toHaveBeenCalledWith(expect.objectContaining({ orderId: mockOrder.id }))
     })
 
     it('should not process if payment status is not paid', async () => {
@@ -341,6 +342,7 @@ describe('Stripe Webhook Route', () => {
         data: { metaPurchaseSentAt: expect.any(Date) }
       })
     })
+
   })
 
   describe('4. checkout.session.completed creates bookings for CAMP products', () => {

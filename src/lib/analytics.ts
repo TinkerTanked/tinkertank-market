@@ -12,19 +12,32 @@ export interface AnalyticsItem {
 
 type EventParameters = Record<string, unknown>
 type EventOptions = { metaEventId?: string }
+type PlausibleProperties = Record<string, string | number | boolean>
 
 declare global {
   interface Window {
-    dataLayer: unknown[]
-    gtag?: (...args: unknown[]) => void
     fbq?: (...args: unknown[]) => void
+    plausible?: ((eventName: string, options?: {
+      props?: PlausibleProperties
+      revenue?: { currency: string; amount: number }
+    }) => void) & { q?: unknown[][] }
   }
 }
 
 export function trackEvent(name: string, parameters: EventParameters = {}, options: EventOptions = {}) {
   if (typeof window === 'undefined') return
 
-  window.gtag?.('event', name, parameters)
+  const plausibleEvent = PLAUSIBLE_EVENTS[name]
+  if (plausibleEvent) {
+    const value = typeof parameters.value === 'number' ? parameters.value : undefined
+    const currency = typeof parameters.currency === 'string' ? parameters.currency : undefined
+    window.plausible?.(plausibleEvent, {
+      props: toPlausibleProperties(parameters),
+      ...(name === 'purchase' && value !== undefined && currency
+        ? { revenue: { currency, amount: value } }
+        : {})
+    })
+  }
 
   const metaEvent = META_STANDARD_EVENTS[name]
   const metaParameters = toMetaParameters(parameters)
@@ -45,6 +58,48 @@ const META_STANDARD_EVENTS: Record<string, string> = {
   begin_checkout: 'InitiateCheckout',
   add_payment_info: 'AddPaymentInfo',
   purchase: 'Purchase'
+}
+
+const PLAUSIBLE_EVENTS: Record<string, string> = {
+  booking_start: 'Camp Booking Started',
+  select_camp_location: 'Camp Location Selected',
+  select_camp_dates: 'Camp Dates Selected',
+  select_item: 'Camp Type Selected',
+  add_to_cart: 'Camp Added to Cart',
+  begin_checkout: 'Checkout Started',
+  add_payment_info: 'Payment Started',
+  purchase: 'Purchase'
+}
+
+const PLAUSIBLE_PROPERTY_KEYS = new Set([
+  'program',
+  'source',
+  'location_id',
+  'location_name',
+  'date_count',
+  'item_list_name',
+  'payment_type',
+  'currency',
+  'value'
+])
+
+function toPlausibleProperties(parameters: EventParameters): PlausibleProperties {
+  const properties: PlausibleProperties = {}
+
+  for (const [key, value] of Object.entries(parameters)) {
+    if (PLAUSIBLE_PROPERTY_KEYS.has(key) && (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')) {
+      properties[key] = value
+    }
+  }
+
+  const items = Array.isArray(parameters.items) ? parameters.items as AnalyticsItem[] : []
+  if (items.length > 0) {
+    properties.product_ids = [...new Set(items.map(item => item.item_id))].join(',')
+    properties.product_categories = [...new Set(items.map(item => item.item_category).filter(Boolean))].join(',')
+    properties.item_count = items.reduce((total, item) => total + (item.quantity ?? 1), 0)
+  }
+
+  return properties
 }
 
 function toMetaCustomEventName(name: string) {
@@ -74,18 +129,4 @@ export function cartItemsToAnalytics(items: EnhancedCartItem[]): AnalyticsItem[]
     price: item.pricePerItem,
     quantity: item.quantity
   }))
-}
-
-export function trackCampPurchaseConversion(value: number, transactionId: string) {
-  const conversionId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID
-  const conversionLabel = process.env.NEXT_PUBLIC_GOOGLE_ADS_CAMP_CONVERSION_LABEL
-
-  if (!conversionId || !conversionLabel) return
-
-  trackEvent('conversion', {
-    send_to: `${conversionId}/${conversionLabel}`,
-    value,
-    currency: 'AUD',
-    transaction_id: transactionId
-  })
 }
