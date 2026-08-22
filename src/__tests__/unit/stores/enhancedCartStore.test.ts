@@ -483,6 +483,27 @@ describe('Enhanced Cart Store', () => {
   })
 
   describe('Persistence', () => {
+    it('restores persisted cart dates before checkout validation', async () => {
+      const date = new Date('2026-09-28T00:00:00.000Z')
+
+      act(() => {
+        useEnhancedCartStore.getState().addItem(mockProduct, { selectedDate: date })
+        useEnhancedCartStore.getState().addItem({ ...mockProduct, id: 'product-2' }, { selectedDate: date })
+      })
+
+      const persistedCart = localStorage.getItem('tinkertank-enhanced-cart')
+      expect(persistedCart).toContain(date.toISOString())
+
+      act(() => useEnhancedCartStore.setState({ items: [] }))
+      localStorage.setItem('tinkertank-enhanced-cart', persistedCart!)
+      await act(async () => useEnhancedCartStore.persist.rehydrate())
+
+      const restored = useEnhancedCartStore.getState()
+      expect(restored.items[0].selectedDate).toBeInstanceOf(Date)
+      expect(restored.items[1].selectedDate).toBeInstanceOf(Date)
+      expect(() => restored.getValidation()).not.toThrow()
+    })
+
     it('should clear cart after successful payment', async () => {
       const { result } = renderHook(() => useEnhancedCartStore())
       
