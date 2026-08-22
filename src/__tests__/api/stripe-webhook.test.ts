@@ -275,6 +275,7 @@ describe('Stripe Webhook Route', () => {
 
       expect(response.status).toBe(200)
       expect(prisma.$transaction).not.toHaveBeenCalled()
+      expect(sendMetaPurchase).not.toHaveBeenCalled()
     })
 
     it('should not process if payment status is not paid', async () => {
@@ -296,6 +297,7 @@ describe('Stripe Webhook Route', () => {
       const checkoutSession = createCheckoutSession({
         metadata: {
           orderId: mockOrder.id,
+          metaMarketingConsent: 'granted',
           customerPhone: '0400123456',
           metaFbp: 'fb.1.123.456',
           metaFbc: 'fb.1.123.click',
@@ -340,6 +342,33 @@ describe('Stripe Webhook Route', () => {
         where: { id: mockOrder.id },
         data: { metaPurchaseSentAt: expect.any(Date) }
       })
+    })
+
+    it('does not send a server Purchase without marketing consent', async () => {
+      const mockOrder = createMockOrder()
+      const checkoutSession = createCheckoutSession({
+        metadata: { orderId: mockOrder.id, metaMarketingConsent: 'denied' }
+      })
+      const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
+
+      ;(mockStripe.webhooks.constructEvent as any).mockReturnValue(webhookEvent)
+      ;(prisma.order.findUnique as any).mockResolvedValue(mockOrder)
+      ;(prisma.$transaction as any).mockImplementation(async (callback: any) => callback({
+        order: { update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' }) },
+        booking: {
+          findFirst: vi.fn().mockResolvedValue(null),
+          count: vi.fn().mockResolvedValue(0),
+          create: vi.fn().mockResolvedValue({ id: 'booking_123' })
+        },
+        location: { findFirst: vi.fn().mockResolvedValue(mockLocation) },
+        $executeRaw: vi.fn().mockResolvedValue(1)
+      }))
+      ;(eventService.createEventsFromOrder as any).mockResolvedValue([])
+
+      const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+
+      expect(response.status).toBe(200)
+      expect(sendMetaPurchase).not.toHaveBeenCalled()
     })
   })
 

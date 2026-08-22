@@ -4,6 +4,7 @@ import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
 import { assertCampCapacity, CampCapacityExceededError, utcDateKey } from '@/lib/campCapacity'
 import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '@/lib/ignite'
+import { MARKETING_CONSENT_COOKIE } from '@/lib/marketingConsent'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -67,11 +68,15 @@ function normalizeAllergies(allergies: string | string[] | undefined): string | 
 }
 
 function getMetaCheckoutMetadata(request: NextRequest): Record<string, string> {
+  const hasMarketingConsent = request.cookies.get(MARKETING_CONSENT_COOKIE)?.value === 'granted'
+  if (!hasMarketingConsent) return { metaMarketingConsent: 'denied' }
+
   const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
   const clientIpAddress = forwardedFor || request.headers.get('x-real-ip') || ''
   const clientUserAgent = request.headers.get('user-agent')?.slice(0, 500) || ''
 
   return {
+    metaMarketingConsent: 'granted',
     metaFbp: request.cookies.get('_fbp')?.value || '',
     metaFbc: request.cookies.get('_fbc')?.value || '',
     metaClientIp: clientIpAddress,

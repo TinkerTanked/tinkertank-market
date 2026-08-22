@@ -1,8 +1,9 @@
 'use client'
 
-import { Suspense, useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
+import { getMarketingConsent, MARKETING_CONSENT_EVENT, MarketingConsent } from '@/lib/marketingConsent'
 
 const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID
 
@@ -23,11 +24,23 @@ function MetaPageViewTracker() {
 }
 
 export default function MetaPixel() {
-  if (!pixelId) return null
+  const [hasConsent, setHasConsent] = useState(false)
+
+  useEffect(() => {
+    setHasConsent(getMarketingConsent() === 'granted')
+
+    const consentChanged = (event: Event) => {
+      setHasConsent((event as CustomEvent<MarketingConsent>).detail === 'granted')
+    }
+    window.addEventListener(MARKETING_CONSENT_EVENT, consentChanged)
+    return () => window.removeEventListener(MARKETING_CONSENT_EVENT, consentChanged)
+  }, [])
+
+  if (!pixelId || !hasConsent) return null
 
   return (
     <>
-      <Script id='meta-pixel' strategy='beforeInteractive'>
+      <Script id='meta-pixel' strategy='afterInteractive'>
         {`
           !function(f,b,e,v,n,t,s)
           {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

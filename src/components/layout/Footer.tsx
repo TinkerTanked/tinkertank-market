@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import PrivacyChoicesButton from '@/components/analytics/PrivacyChoicesButton'
 import { 
   PhoneIcon, 
   EnvelopeIcon, 
@@ -114,6 +115,7 @@ export default function Footer() {
               <Link href='/privacy' className='block text-gray-300 hover:text-white transition-colors duration-200'>
                 Privacy Policy
               </Link>
+              <PrivacyChoicesButton />
               <Link href='/refunds' className='block text-gray-300 hover:text-white transition-colors duration-200'>
                 Refund Policy
               </Link>

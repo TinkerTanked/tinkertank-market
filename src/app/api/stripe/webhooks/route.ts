@@ -342,6 +342,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
       session.payment_status === 'paid' &&
       !isSubscription &&
       (order.status === 'PENDING' || order.status === 'PAID') &&
+      session.metadata?.metaMarketingConsent === 'granted' &&
       !order.metaPurchaseSentAt
     ) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
