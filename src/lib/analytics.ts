@@ -11,6 +11,7 @@ export interface AnalyticsItem {
 }
 
 type EventParameters = Record<string, unknown>
+type EventOptions = { metaEventId?: string }
 
 declare global {
   interface Window {
@@ -20,7 +21,7 @@ declare global {
   }
 }
 
-export function trackEvent(name: string, parameters: EventParameters = {}) {
+export function trackEvent(name: string, parameters: EventParameters = {}, options: EventOptions = {}) {
   if (typeof window === 'undefined') return
 
   window.gtag?.('event', name, parameters)
@@ -28,7 +29,11 @@ export function trackEvent(name: string, parameters: EventParameters = {}) {
   const metaEvent = META_STANDARD_EVENTS[name]
   const metaParameters = toMetaParameters(parameters)
   if (metaEvent) {
-    window.fbq?.('track', metaEvent, metaParameters)
+    if (options.metaEventId) {
+      window.fbq?.('track', metaEvent, metaParameters, { eventID: options.metaEventId })
+    } else {
+      window.fbq?.('track', metaEvent, metaParameters)
+    }
   } else {
     window.fbq?.('trackCustom', toMetaCustomEventName(name), metaParameters)
   }

@@ -9,6 +9,7 @@ import { notificationService } from '@/lib/notifications';
 import { IGNITE_SESSIONS } from '@/config/igniteProducts';
 import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '@/lib/ignite';
 import { assertCampCapacityForLocation, CampCapacityExceededError, lockCampCapacity } from '@/lib/campCapacity';
+import { sendMetaPurchase } from '@/lib/metaConversions';
 
 const IGNITE_SUBSCRIPTION_STATUS: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED' | 'PAST_DUE' | 'TRIALING'> = {
   active: 'ACTIVE',
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session, event.created);
         break;
 
       case 'payment_intent.succeeded':
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, eventTime: number) {
   console.log('Checkout session completed:', session.id);
 
   try {
@@ -126,11 +127,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       throw new Error(`Order ${orderId} not found for checkout session ${session.id}`);
     }
 
+    const isSubscription = session.metadata?.isSubscription === 'true'
+
     // Only process if payment was successful and order is still pending
     if (session.payment_status === 'paid' && order.status === 'PENDING') {
-      // Check if this is a subscription
-      const isSubscription = session.metadata?.isSubscription === 'true'
-      
       if (isSubscription) {
         // Handle Ignite subscription
         await handleIgniteSubscription(session, order)
@@ -336,6 +336,52 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       console.log('Order confirmed via checkout session:', order.id);
     } else {
       console.log(`Skipping order processing - payment_status: ${session.payment_status}, order status: ${order.status}`);
+    }
+
+    if (
+      session.payment_status === 'paid' &&
+      !isSubscription &&
+      (order.status === 'PENDING' || order.status === 'PAID') &&
+      !order.metaPurchaseSentAt
+    ) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
+      const sent = await withErrorHandling(
+        () => ErrorHandler.retryOperation(
+          () => sendMetaPurchase({
+            orderId: order.id,
+            value: Number(order.totalAmount),
+            currency: 'AUD',
+            email: order.customerEmail,
+            phone: session.metadata?.customerPhone,
+            customerName: order.customerName,
+            items: order.orderItems.map(item => ({
+              id: item.product.id,
+              quantity: 1,
+              price: Number(item.price)
+            })),
+            eventTime,
+            eventSourceUrl: `${appUrl}/checkout/success`,
+            clientIpAddress: session.metadata?.metaClientIp,
+            clientUserAgent: session.metadata?.metaClientUserAgent,
+            fbp: session.metadata?.metaFbp,
+            fbc: session.metadata?.metaFbc
+          }),
+          3,
+          500
+        ),
+        {
+          category: ErrorCategory.SYSTEM,
+          severity: ErrorSeverity.MEDIUM,
+          orderId: order.id
+        }
+      )
+
+      if (sent) {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { metaPurchaseSentAt: new Date() }
+        })
+      }
     }
   } catch (error) {
     if (error instanceof CampCapacityExceededError) {

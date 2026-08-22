@@ -116,6 +116,7 @@ model Order {
   stripePaymentIntentId String?     @unique
   status                OrderStatus @default(PENDING)
   totalAmount           Decimal     @db.Money
+  metaPurchaseSentAt    DateTime?
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
   orderItems            OrderItem[]
