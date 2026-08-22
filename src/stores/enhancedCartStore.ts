@@ -44,6 +44,25 @@ const validateStudent = (student: StudentDetails, product: Product): string[] =>
   return errors;
 };
 
+const reviveDate = (value: unknown): Date | undefined => {
+  if (!value) return undefined;
+  if (value instanceof Date) return value;
+
+  const date = new Date(value as string);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+};
+
+const reviveCartItemDates = (item: EnhancedCartItem): EnhancedCartItem => ({
+  ...item,
+  selectedDate: reviveDate(item.selectedDate),
+  selectedDates: item.selectedDates?.map(reviveDate).filter((date): date is Date => !!date),
+  createdAt: reviveDate(item.createdAt) ?? new Date(),
+  students: item.students.map(student => ({
+    ...student,
+    dateOfBirth: reviveDate(student.dateOfBirth)
+  }))
+});
+
 export const useEnhancedCartStore = create<EnhancedCartState>()(
   persist(
     (set, get) => ({
@@ -354,19 +373,16 @@ export const useEnhancedCartStore = create<EnhancedCartState>()(
     {
       name: 'tinkertank-enhanced-cart',
       version: 1,
-      // Transform dates when persisting/rehydrating
-      serialize: (state) => JSON.stringify(state, (key, value) => {
-        if (value instanceof Date) {
-          return { __type: 'Date', value: value.toISOString() };
-        }
-        return value;
-      }),
-      deserialize: (str) => JSON.parse(str, (key, value) => {
-        if (value && typeof value === 'object' && value.__type === 'Date') {
-          return new Date(value.value);
-        }
-        return value;
-      }),
+      // Zustand's JSON persistence restores Date values as strings. Normalize
+      // both existing production carts and future persisted carts at hydration.
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<EnhancedCartState>;
+        return {
+          ...currentState,
+          ...persisted,
+          items: Array.isArray(persisted.items) ? persisted.items.map(reviveCartItemDates) : []
+        };
+      },
     }
   )
 );
