@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   assertCampCapacityForLocation,
-  CampCapacityExceededError
+  CampCapacityExceededError,
+  resolveCampLocation
 } from '@/lib/campCapacity'
 import {
   DEFAULT_CAMP_DAILY_CAPACITY,
@@ -25,6 +26,25 @@ describe('camp capacity', () => {
     expect(DEFAULT_CAMP_DAILY_CAPACITY).toBe(35)
     expect(getDailyCapacity('TinkerTank Neutral Bay')).toBe(35)
     expect(getDailyCapacity('Manly Library')).toBe(35)
+  })
+
+  it('resolves the legacy Neutral Bay database name', async () => {
+    const db = capacityDb(0)
+    const location = { id: 'neutral-bay', name: 'Neutral Bay', capacity: 35 }
+    db.location.findFirst.mockResolvedValue(location)
+
+    await expect(resolveCampLocation(db, 'TinkerTank Neutral Bay')).resolves.toEqual(location)
+    expect(db.location.findFirst).toHaveBeenCalledWith({
+      where: {
+        name: { in: ['TinkerTank Neutral Bay', 'Neutral Bay'] },
+        isActive: true
+      },
+      select: {
+        id: true,
+        name: true,
+        capacity: true
+      }
+    })
   })
 
   it('allows the final available place', async () => {

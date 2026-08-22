@@ -43,9 +43,17 @@ export async function resolveCampLocation(db: CapacityClient, selectedLocationNa
   const configuredLocation = getLocationAvailability(selectedLocationName)
   if (!configuredLocation) return null
 
+  // Production historically stored "Neutral Bay" while the customer-facing
+  // name is "TinkerTank Neutral Bay". Accept both without changing the stored
+  // location or weakening matching for other venues.
+  const locationNames = [
+    configuredLocation.locationName,
+    configuredLocation.locationName.replace(/^TinkerTank\s+/i, '')
+  ]
+
   return db.location.findFirst({
     where: {
-      name: configuredLocation.locationName,
+      name: { in: [...new Set(locationNames)] },
       isActive: true
     },
     select: {
