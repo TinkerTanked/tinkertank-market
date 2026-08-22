@@ -37,6 +37,19 @@ describe('analytics', () => {
     }))
   })
 
+  it('adds a Meta event ID to browser purchases for Conversions API deduplication', () => {
+    window.fbq = vi.fn()
+
+    trackEvent('purchase', { currency: 'AUD', value: 119.99, items: [] }, { metaEventId: 'order_123' })
+
+    expect(window.fbq).toHaveBeenCalledWith(
+      'track',
+      'Purchase',
+      expect.objectContaining({ currency: 'AUD', value: 119.99 }),
+      { eventID: 'order_123' }
+    )
+  })
+
   it('maps cart data to GA4 ecommerce items without personal data', () => {
     const items = cartItemsToAnalytics([{
       product: {

@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
 
         <div className='space-y-4 mb-12'>
           <h1 className='text-4xl md:text-5xl font-display font-bold text-gray-900'>Privacy Policy</h1>
-          <p className='text-gray-500'>Last updated: 14 June 2026</p>
+          <p className='text-gray-500'>Last updated: 22 August 2026</p>
         </div>
 
         <div className='prose prose-lg max-w-none text-gray-700 space-y-8'>
@@ -92,6 +92,7 @@ export default function PrivacyPolicyPage() {
               <li>Communicate about bookings, schedules, and program updates</li>
               <li>Respond to medical emergencies appropriately</li>
               <li>Send newsletters and promotional materials (with your consent)</li>
+              <li>Measure advertising performance and prevent duplicate conversion reporting</li>
               <li>Improve our website and services</li>
               <li>Comply with legal obligations</li>
               <li>Maintain records as required by law</li>
@@ -120,6 +121,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Payment Processors:</strong> Stripe processes all payments. We do not store complete credit card details.</li>
               <li><strong>Emergency Services:</strong> Medical and emergency contact information may be shared with emergency services if required.</li>
               <li><strong>Service Providers:</strong> Third-party services that help us operate (email, hosting, analytics) under strict confidentiality agreements.</li>
+              <li><strong>Advertising Measurement:</strong> Meta may receive hashed parent or guardian contact details and transaction information to attribute and deduplicate purchases. We do not send children&apos;s names, ages, medical information, or emergency contact details for advertising measurement.</li>
               <li><strong>Legal Requirements:</strong> When required by law, court order, or government authority.</li>
             </ul>
             <p className='mt-4'>

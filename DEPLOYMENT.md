@@ -13,6 +13,7 @@
    - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret
    - `NEXT_PUBLIC_GA_MEASUREMENT_ID` - GA4 web stream ID (`G-...`)
    - `NEXT_PUBLIC_META_PIXEL_ID` - Meta Pixel ID
+   - `META_CONVERSIONS_API_ACCESS_TOKEN` - server-only Meta Conversions API access token
    - `NEXT_PUBLIC_GOOGLE_ADS_ID` - Google Ads tag ID (`AW-...`)
    - `NEXT_PUBLIC_GOOGLE_ADS_CAMP_CONVERSION_LABEL` - Google Ads camp purchase conversion label
 
@@ -67,7 +68,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 ### Analytics Configuration
 
-Add the analytics values above as GitHub Actions secrets before deploying. They are passed into the Docker build because Next.js embeds `NEXT_PUBLIC_*` values in the browser bundle at build time. GA4 and Meta track page views and the camp funnel (`booking_start`, location/date selection, `add_to_cart`, `begin_checkout`, `add_payment_info`, and `purchase`). Meta receives its standard `ViewContent`, `AddToCart`, `InitiateCheckout`, `AddPaymentInfo`, and `Purchase` events. The optional Google Ads conversion fires only for a confirmed paid order containing a camp.
+Add the analytics values above as GitHub Actions secrets before deploying. Public identifiers are passed into the Docker build because Next.js embeds `NEXT_PUBLIC_*` values in the browser bundle at build time. The Conversions API token is server-only and is injected into the running Kubernetes pod. GA4 and Meta track page views and the camp funnel (`booking_start`, location/date selection, `add_to_cart`, `begin_checkout`, `add_payment_info`, and `purchase`). Meta receives its standard `ViewContent`, `AddToCart`, `InitiateCheckout`, `AddPaymentInfo`, and `Purchase` events. Paid one-time orders also send a server-side Meta `Purchase`; the browser and server copies share the order ID so Meta can deduplicate them. The optional Google Ads conversion fires only for a confirmed paid order containing a camp.
 
 After deployment, use GA4 DebugView, Meta Events Manager Test Events and a Stripe test purchase to verify the funnel. Mark `purchase` as a key event in GA4 and use Meta&apos;s Purchase event as the campaign conversion.
 
@@ -134,6 +135,7 @@ The following environment variables are configured in production:
 - `NEXT_PUBLIC_APP_URL=https://market.tinkertank.academy`
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID` - GA4 web stream ID
 - `NEXT_PUBLIC_META_PIXEL_ID` - Meta Pixel ID
+- `META_CONVERSIONS_API_ACCESS_TOKEN` - server-only Meta Conversions API access token
 - `NEXT_PUBLIC_GOOGLE_ADS_ID` - Google Ads tag ID
 - `NEXT_PUBLIC_GOOGLE_ADS_CAMP_CONVERSION_LABEL` - Camp purchase conversion label
 

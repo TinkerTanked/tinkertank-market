@@ -66,6 +66,19 @@ function normalizeAllergies(allergies: string | string[] | undefined): string | 
   return Array.isArray(allergies) ? allergies.join(', ') || null : allergies || null
 }
 
+function getMetaCheckoutMetadata(request: NextRequest): Record<string, string> {
+  const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+  const clientIpAddress = forwardedFor || request.headers.get('x-real-ip') || ''
+  const clientUserAgent = request.headers.get('user-agent')?.slice(0, 500) || ''
+
+  return {
+    metaFbp: request.cookies.get('_fbp')?.value || '',
+    metaFbc: request.cookies.get('_fbc')?.value || '',
+    metaClientIp: clientIpAddress,
+    metaClientUserAgent: clientUserAgent
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -472,6 +485,7 @@ async function createRegularCheckout(
     customerName: customerInfo.name,
     customerPhone: customerInfo.phone,
     location: regularItems[0]?.location || '',
+    ...getMetaCheckoutMetadata(request)
   }
 
   const session = await stripe.checkout.sessions.create({

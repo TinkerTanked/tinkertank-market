@@ -81,7 +81,7 @@ function CheckoutSuccessContent() {
               value: data.total,
               currency: 'AUD',
               items
-            })
+            }, { metaEventId: data.orderId })
             const campValue = data.items
               .filter(item => item.product?.category === 'camps')
               .reduce((total, item) => total + item.totalPrice, 0)

@@ -60,6 +60,11 @@ vi.mock('@/lib/notifications', () => ({
   }
 }))
 
+vi.mock('@/lib/metaConversions', async importOriginal => ({
+  ...await importOriginal<typeof import('@/lib/metaConversions')>(),
+  sendMetaPurchase: vi.fn().mockResolvedValue(false)
+}))
+
 vi.mock('@/lib/error-handling', () => ({
   ErrorHandler: {
     retryOperation: vi.fn((fn) => fn()),
@@ -90,6 +95,7 @@ import { prisma } from '@/lib/prisma'
 import { eventService } from '@/lib/events'
 import { sendBookingConfirmationEmail } from '@/lib/email'
 import { notificationService } from '@/lib/notifications'
+import { sendMetaPurchase } from '@/lib/metaConversions'
 import { headers } from 'next/headers'
 import { IGNITE_SESSIONS } from '@/config/igniteProducts'
 
@@ -111,6 +117,7 @@ const createMockOrder = (overrides = {}) => ({
   totalAmount: 15000,
   currency: 'AUD',
   stripePaymentIntentId: 'pi_test_123',
+  metaPurchaseSentAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   orderItems: [
@@ -182,6 +189,7 @@ async function callWebhook(body: string, signature: string | null) {
 describe('Stripe Webhook Route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    ;(sendMetaPurchase as any).mockResolvedValue(false)
   })
 
   describe('1. Missing stripe-signature header returns 400', () => {
@@ -281,6 +289,57 @@ describe('Stripe Webhook Route', () => {
 
       expect(response.status).toBe(200)
       expect(prisma.$transaction).not.toHaveBeenCalled()
+    })
+
+    it('sends a server Purchase and records it after successful fulfilment', async () => {
+      const mockOrder = createMockOrder({ totalAmount: 119.99 })
+      const checkoutSession = createCheckoutSession({
+        metadata: {
+          orderId: mockOrder.id,
+          customerPhone: '0400123456',
+          metaFbp: 'fb.1.123.456',
+          metaFbc: 'fb.1.123.click',
+          metaClientIp: '203.0.113.1',
+          metaClientUserAgent: 'Test Browser'
+        }
+      })
+      const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
+
+      ;(mockStripe.webhooks.constructEvent as any).mockReturnValue(webhookEvent)
+      ;(prisma.order.findUnique as any).mockResolvedValue(mockOrder)
+      ;(prisma.order.update as any).mockResolvedValue({ ...mockOrder, metaPurchaseSentAt: new Date() })
+      ;(prisma.$transaction as any).mockImplementation(async (callback: any) => callback({
+        order: { update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' }) },
+        booking: {
+          findFirst: vi.fn().mockResolvedValue(null),
+          count: vi.fn().mockResolvedValue(0),
+          create: vi.fn().mockResolvedValue({ id: 'booking_123' })
+        },
+        location: { findFirst: vi.fn().mockResolvedValue(mockLocation) },
+        $executeRaw: vi.fn().mockResolvedValue(1)
+      }))
+      ;(eventService.createEventsFromOrder as any).mockResolvedValue([])
+      ;(sendMetaPurchase as any).mockResolvedValue(true)
+
+      const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+
+      expect(response.status).toBe(200)
+      expect(sendMetaPurchase).toHaveBeenCalledWith(expect.objectContaining({
+        orderId: mockOrder.id,
+        value: 119.99,
+        currency: 'AUD',
+        email: mockOrder.customerEmail,
+        phone: '0400123456',
+        eventTime: webhookEvent.created,
+        clientIpAddress: '203.0.113.1',
+        clientUserAgent: 'Test Browser',
+        fbp: 'fb.1.123.456',
+        fbc: 'fb.1.123.click'
+      }))
+      expect(prisma.order.update).toHaveBeenCalledWith({
+        where: { id: mockOrder.id },
+        data: { metaPurchaseSentAt: expect.any(Date) }
+      })
     })
   })
 
