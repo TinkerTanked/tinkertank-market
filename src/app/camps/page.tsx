@@ -5,9 +5,9 @@ import { BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
 export const metadata: Metadata = {
-  title: 'STEAM Adventure Camps for Kids',
+  title: 'School Holiday STEM Camps Sydney & Northern Beaches',
   description:
-    'Join TinkerTank STEAM camps in Sydney! Day camps and extended programs for ages 6-16. Hands-on science, technology, engineering, and math activities. School holiday programs available.',
+    'Book hands-on school holiday camps for ages 6-16 in Neutral Bay and Manly. Kids explore coding, robotics, 3D design, animation and engineering.',
   keywords: [
     'kids camps Sydney',
     'STEAM camps',
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
     canonical: `${baseUrl}/camps`
   },
   openGraph: {
-    title: 'STEAM Adventure Camps for Kids | TinkerTank Sydney',
-    description: 'Hands-on STEAM camps for ages 6-16. Day camps and extended programs during school holidays.',
+    title: 'School Holiday STEM Camps Sydney & Northern Beaches | TinkerTank',
+    description: 'Hands-on school holiday camps for ages 6-16 in Neutral Bay and Manly, with coding, robotics, 3D design, animation and engineering.',
     url: `${baseUrl}/camps`,
     type: 'website',
     images: [

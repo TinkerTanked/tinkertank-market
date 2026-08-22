@@ -196,8 +196,8 @@ export function LocalBusinessJsonLd({ name = 'TinkerTank', url = 'https://tinker
     },
     geo: {
       '@type': 'GeoCoordinates',
-      latitude: -33.8347,
-      longitude: 151.2167
+      latitude: -33.8322377,
+      longitude: 151.2229526
     },
     areaServed: [
       { '@type': 'AdministrativeArea', name: 'Lower North Shore' },
