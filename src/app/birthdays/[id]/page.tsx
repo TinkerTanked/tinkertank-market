@@ -208,7 +208,7 @@ export default function BirthdayDetailPage() {
                   </div>
                   <div>
                     <h3 className='font-medium text-gray-900'>Cake & Celebration (15 mins)</h3>
-                    <p className='text-gray-600 text-sm'>Time for cake, singing, and showing off their creations</p>
+                    <p className='text-gray-600 text-sm'>Time for cake, singing, and celebrating together</p>
                   </div>
                 </div>
 
@@ -217,8 +217,8 @@ export default function BirthdayDetailPage() {
                     5
                   </div>
                   <div>
-                    <h3 className='font-medium text-gray-900'>Take-Home & Cleanup (15 mins)</h3>
-                    <p className='text-gray-600 text-sm'>Kids pack up their projects while we handle all the cleanup</p>
+                    <h3 className='font-medium text-gray-900'>Goodbyes & Cleanup (15 mins)</h3>
+                    <p className='text-gray-600 text-sm'>Families wrap up while we handle all the cleanup</p>
                   </div>
                 </div>
               </div>

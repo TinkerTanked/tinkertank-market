@@ -166,7 +166,7 @@ export default function ConfirmationStep({ bookingData, onAddToCart }: Confirmat
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-            <span>Take-home project</span>
+            <span>Creative problem-solving</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>

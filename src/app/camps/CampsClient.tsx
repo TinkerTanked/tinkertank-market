@@ -121,10 +121,10 @@ export default function CampsClient() {
                 <span className='text-3xl'>🏆</span>
               </div>
               <h3 className='font-display font-semibold text-xl text-gray-900 mb-3'>
-                Take Home Projects
+                Skills That Stick
               </h3>
               <p className='text-gray-600'>
-                Every camper creates something awesome to take home and show family and friends.
+                Kids build confidence, creative thinking and practical STEAM skills through every challenge.
               </p>
             </div>
           </div>

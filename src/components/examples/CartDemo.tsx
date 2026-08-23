@@ -45,7 +45,7 @@ const sampleProducts: Product[] = [
         { start: '14:00', end: '16:00' }
       ]
     },
-    features: ['Robot building', 'Programming basics', 'Take home robot'],
+    features: ['Robot building', 'Programming basics', 'Team challenges'],
     images: ['/images/birthday-parties-1.jpg'],
     maxCapacity: 12,
     addOns: [

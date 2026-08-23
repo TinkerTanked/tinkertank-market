@@ -63,7 +63,7 @@ export const createProductCatalog = (): CatalogProduct[] => [
       'Robot building and programming',
       '3D design challenges',
       'Team collaboration games',
-      'Take-home projects',
+      'Guided creative challenges',
       'Healthy snacks included'
     ],
     images: ['/images/camps1.jpeg', '/images/camps2.jpeg'],
