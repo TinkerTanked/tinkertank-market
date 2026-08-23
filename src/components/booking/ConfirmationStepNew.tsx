@@ -113,7 +113,7 @@ export default function ConfirmationStepNew({ location, dates, campType }: Confi
           </div>
           <div className="flex items-start space-x-2">
             <CheckIcon className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <span className="text-blue-900">Take-home projects</span>
+            <span className="text-blue-900">Creative problem-solving</span>
           </div>
           <div className="flex items-start space-x-2">
             <CheckIcon className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />

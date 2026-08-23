@@ -96,10 +96,10 @@ export default function BirthdaysClient() {
                 <span className='text-3xl'>🏆</span>
               </div>
               <h3 className='font-display font-semibold text-lg text-gray-900 mb-2'>
-                Take-Home Gifts
+                Everyone Gets Involved
               </h3>
               <p className='text-gray-600 text-sm'>
-                Every guest creates something special to take home
+                Interactive challenges keep the whole group creating, collaborating and having fun
               </p>
             </div>
           </div>
