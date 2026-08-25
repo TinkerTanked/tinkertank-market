@@ -155,7 +155,7 @@ export default function BirthdayBookingWizard({ product, onClose, isOpen }: Birt
         return (
           <BirthdayDateStep 
             selectedDate={bookingData.date}
-            onDateSelect={(date) => updateBookingData('date', date)}
+            onDateSelect={(date) => setBookingData(prev => ({ ...prev, date, timeSlot: null }))}
             location={bookingData.location}
           />
         )
