@@ -442,7 +442,8 @@ describe('Stripe Webhook Route', () => {
         return callback({
           order: { update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' }) },
           booking: { findFirst: vi.fn().mockResolvedValue(null), create: mockBookingCreate },
-          location: { findFirst: vi.fn().mockResolvedValue(mockLocation) }
+          location: { findFirst: vi.fn().mockResolvedValue(mockLocation) },
+          $executeRaw: vi.fn().mockResolvedValue(1)
         })
       })
       ;(eventService.createEventsFromOrder as any).mockResolvedValue([])
@@ -453,7 +454,8 @@ describe('Stripe Webhook Route', () => {
       const mockTx = {
         order: { update: vi.fn() },
         booking: { findFirst: vi.fn().mockResolvedValue(null), create: mockBookingCreate },
-        location: { findFirst: vi.fn().mockResolvedValue(mockLocation) }
+        location: { findFirst: vi.fn().mockResolvedValue(mockLocation) },
+        $executeRaw: vi.fn().mockResolvedValue(1)
       }
       await transactionCallback(mockTx)
 
@@ -462,6 +464,58 @@ describe('Stripe Webhook Route', () => {
           productId: 'product_birthday_123',
           status: 'CONFIRMED'
         })
+      })
+    })
+
+    it('refunds the second paid birthday for an occupied global time slot', async () => {
+      const mockOrder = createMockOrder({
+        orderItems: [{
+          ...createMockOrder().orderItems[0],
+          id: 'item_birthday_conflict',
+          productId: 'product_birthday_123',
+          bookingDate: new Date('2026-09-19T15:30:00.000Z'),
+          product: {
+            id: 'product_birthday_123',
+            name: 'Coding Party',
+            type: 'BIRTHDAY',
+            duration: 120,
+            price: 450
+          }
+        }]
+      })
+      const checkoutSession = createCheckoutSession({ payment_intent: 'pi_birthday_conflict' })
+      const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
+
+      ;(mockStripe.webhooks.constructEvent as any).mockReturnValue(webhookEvent)
+      ;(mockStripe.refunds.create as any).mockResolvedValue({ id: 're_birthday_conflict' })
+      ;(prisma.order.findUnique as any).mockResolvedValue(mockOrder)
+      ;(prisma.order.update as any).mockResolvedValue({ ...mockOrder, status: 'REFUNDED' })
+      ;(prisma.$transaction as any).mockImplementation(async (callback: any) => callback({
+        order: { update: vi.fn() },
+        booking: {
+          findFirst: vi.fn().mockResolvedValue({ id: 'existing_birthday' }),
+          create: vi.fn()
+        },
+        location: { findFirst: vi.fn().mockResolvedValue(mockLocation) },
+        $executeRaw: vi.fn().mockResolvedValue(1)
+      }))
+
+      const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+
+      expect(response.status).toBe(200)
+      expect(mockStripe.refunds.create).toHaveBeenCalledWith(
+        {
+          payment_intent: 'pi_birthday_conflict',
+          metadata: {
+            orderId: 'order_test_123',
+            reason: 'birthday_slot_unavailable'
+          }
+        },
+        { idempotencyKey: 'birthday-slot-refund-order_test_123' }
+      )
+      expect(prisma.order.update).toHaveBeenCalledWith({
+        where: { id: 'order_test_123' },
+        data: { status: 'REFUNDED' }
       })
     })
 

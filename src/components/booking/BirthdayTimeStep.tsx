@@ -1,28 +1,33 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { ClockIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { toLocalDateString } from '@/lib/dates'
 
 interface BirthdayTimeStepProps {
   selectedTimeSlot: string | null
-  onTimeSlotSelect: (timeSlot: string) => void
+  onTimeSlotSelect: (timeSlot: string | null) => void
   selectedDate: Date | null
 }
 
 const TIME_SLOTS = [
   {
     id: 'morning',
+    start: '10:00',
     time: '10:00 AM - 12:00 PM',
     label: 'Morning Session',
     description: 'Perfect for younger children'
   },
   {
     id: 'afternoon-early',
+    start: '13:00',
     time: '1:00 PM - 3:00 PM',
     label: 'Early Afternoon',
     description: 'Most popular time slot'
   },
   {
     id: 'afternoon-late',
+    start: '15:30',
     time: '3:30 PM - 5:30 PM',
     label: 'Late Afternoon',
     description: 'Great for weekend parties'
@@ -34,6 +39,46 @@ export default function BirthdayTimeStep({
   onTimeSlotSelect,
   selectedDate
 }: BirthdayTimeStepProps) {
+  const [unavailableStartTimes, setUnavailableStartTimes] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!selectedDate) return
+
+    const controller = new AbortController()
+    setIsLoading(true)
+    setError(null)
+    setUnavailableStartTimes([])
+
+    fetch(`/api/birthday-availability?date=${toLocalDateString(selectedDate)}`, {
+      cache: 'no-store',
+      signal: controller.signal
+    })
+      .then(async response => {
+        if (!response.ok) throw new Error('Unable to check birthday availability.')
+        return response.json() as Promise<{ unavailableStartTimes: string[] }>
+      })
+      .then(data => setUnavailableStartTimes(data.unavailableStartTimes))
+      .catch(fetchError => {
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') return
+        setUnavailableStartTimes([])
+        setError('We could not check live availability. Please go back and try again.')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [selectedDate])
+
+  useEffect(() => {
+    const selectedSlot = TIME_SLOTS.find(slot => slot.time === selectedTimeSlot)
+    if (selectedSlot && unavailableStartTimes.includes(selectedSlot.start)) {
+      onTimeSlotSelect(null)
+    }
+  }, [onTimeSlotSelect, selectedTimeSlot, unavailableStartTimes])
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -58,13 +103,23 @@ export default function BirthdayTimeStep({
       )}
 
       <div className="grid gap-4">
-        {TIME_SLOTS.map((slot) => (
-          <div
+        {TIME_SLOTS.map((slot) => {
+          const isUnavailable = unavailableStartTimes.includes(slot.start)
+          const isDisabled = isLoading || !!error || isUnavailable
+
+          return (
+          <button
+            type="button"
             key={slot.id}
-            className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-              selectedTimeSlot === slot.time
-                ? 'border-purple-500 bg-purple-50 shadow-md'
-                : 'border-gray-200 bg-white hover:border-purple-300 hover:shadow-sm'
+            disabled={isDisabled}
+            className={`relative p-6 rounded-xl border-2 text-left transition-all duration-200 ${
+              isUnavailable
+                ? 'cursor-not-allowed border-gray-200 bg-gray-100 opacity-70'
+                : selectedTimeSlot === slot.time
+                  ? 'border-purple-500 bg-purple-50 shadow-md'
+                  : isDisabled
+                    ? 'cursor-wait border-gray-200 bg-white opacity-60'
+                    : 'cursor-pointer border-gray-200 bg-white hover:border-purple-300 hover:shadow-sm'
             }`}
             onClick={() => onTimeSlotSelect(slot.time)}
           >
@@ -82,9 +137,12 @@ export default function BirthdayTimeStep({
               </div>
 
               <div className="flex-1">
-                <h4 className="text-lg font-semibold text-gray-900 mb-1">
-                  {slot.label}
-                </h4>
+                <div className="mb-1 flex items-center gap-2">
+                  <h4 className="text-lg font-semibold text-gray-900">{slot.label}</h4>
+                  {isUnavailable && (
+                    <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700">Booked</span>
+                  )}
+                </div>
                 <p className="text-purple-600 font-medium mb-1">
                   {slot.time}
                 </p>
@@ -99,9 +157,16 @@ export default function BirthdayTimeStep({
                 </div>
               )}
             </div>
-          </div>
-        ))}
+          </button>
+          )
+        })}
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+          {error}
+        </div>
+      )}
 
       <div className="bg-purple-50 rounded-lg p-4">
         <div className="flex items-start space-x-3">

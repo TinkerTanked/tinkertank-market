@@ -9,6 +9,7 @@ import { notificationService } from '@/lib/notifications';
 import { IGNITE_SESSIONS } from '@/config/igniteProducts';
 import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '@/lib/ignite';
 import { assertCampCapacityForLocation, CampCapacityExceededError, lockCampCapacity } from '@/lib/campCapacity';
+import { assertBirthdaySlotAvailable, BirthdaySlotUnavailableError } from '@/lib/birthdayAvailability';
 import { sendMetaPurchase } from '@/lib/metaConversions';
 
 const IGNITE_SUBSCRIPTION_STATUS: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED' | 'PAST_DUE' | 'TRIALING'> = {
@@ -213,7 +214,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
                 endDate.setUTCHours(isAllDay ? 17 : 15, 0, 0, 0)
               }
 
-              if (orderItem.product.type === 'CAMP') {
+              if (isBirthday) {
+                // Birthday capacity is global because the same team runs studio
+                // and mobile parties. Serialize simultaneous paid checkouts for
+                // this start time, then reject the second one.
+                await assertBirthdaySlotAvailable(tx, startDate, true)
+              } else {
                 // Lock before checking for duplicates. This serializes both
                 // capacity checks and simultaneous deliveries of one webhook.
                 await lockCampCapacity(tx, bookingLocation.id, startDate)
@@ -384,25 +390,30 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
       }
     }
   } catch (error) {
-    if (error instanceof CampCapacityExceededError) {
+    if (error instanceof CampCapacityExceededError || error instanceof BirthdaySlotUnavailableError) {
       const paymentIntent = typeof session.payment_intent === 'string'
         ? session.payment_intent
         : session.payment_intent?.id
 
       if (!paymentIntent) {
-        throw new Error(`Paid camp order exceeded capacity without a payment intent: ${session.id}`)
+        throw new Error(`Paid order became unavailable without a payment intent: ${session.id}`)
       }
 
       const orderId = session.metadata?.orderId
+      const isBirthdayConflict = error instanceof BirthdaySlotUnavailableError
+      const reason = isBirthdayConflict ? 'birthday_slot_unavailable' : 'camp_capacity_exceeded'
+      const idempotencyKey = isBirthdayConflict
+        ? `birthday-slot-refund-${orderId || session.id}`
+        : `camp-capacity-refund-${orderId || session.id}`
       await stripe.refunds.create(
         {
           payment_intent: paymentIntent,
           metadata: {
             orderId: orderId || '',
-            reason: 'camp_capacity_exceeded'
+            reason
           }
         },
-        { idempotencyKey: `camp-capacity-refund-${orderId || session.id}` }
+        { idempotencyKey }
       )
 
       if (orderId) {
@@ -412,11 +423,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
         })
         await notificationService.notifyPaymentFailed(
           orderId,
-          `${error.locationName} reached its capacity of ${error.capacity} on ${error.date}; payment refunded automatically.`
+          isBirthdayConflict
+            ? `The selected birthday time was already booked; payment refunded automatically.`
+            : `${error.locationName} reached its capacity of ${error.capacity} on ${error.date}; payment refunded automatically.`
         )
       }
 
-      console.warn(`Refunded order ${orderId} because camp capacity was reached`)
+      console.warn(`Refunded order ${orderId} because ${reason}`)
       return
     }
 

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
 import { assertCampCapacity, CampCapacityExceededError, utcDateKey } from '@/lib/campCapacity'
+import { assertBirthdaySlotAvailable, birthdaySlotStart, BirthdaySlotUnavailableError } from '@/lib/birthdayAvailability'
 import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '@/lib/ignite'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -378,6 +379,50 @@ async function createRegularCheckout(
     throw error
   }
 
+  const birthdaySlots = new Map<string, Date>()
+  for (const item of regularItems) {
+    const product = products.find(candidate => candidate.id === item.productId)!
+    if (product.type !== 'BIRTHDAY') continue
+
+    const rawDate = item.selectedDate || item.selectedDates?.[0]
+    const startTime = item.selectedTimeSlot?.start
+    let dateKey: string | null = rawDate || null
+    if (rawDate?.includes('T')) {
+      const parsedDate = new Date(rawDate)
+      dateKey = Number.isNaN(parsedDate.getTime()) ? null : utcDateKey(parsedDate)
+    }
+    const startDate = dateKey && startTime ? birthdaySlotStart(dateKey, startTime) : null
+    if (!startDate) {
+      return NextResponse.json({ error: 'A valid birthday date and time are required.' }, { status: 400 })
+    }
+
+    const slotKey = startDate.toISOString()
+    if (birthdaySlots.has(slotKey)) {
+      return NextResponse.json(
+        { error: 'Only one birthday party can be booked in each time slot.' },
+        { status: 400 }
+      )
+    }
+    birthdaySlots.set(slotKey, startDate)
+  }
+
+  try {
+    for (const startDate of birthdaySlots.values()) {
+      await assertBirthdaySlotAvailable(prisma, startDate)
+    }
+  } catch (error) {
+    if (error instanceof BirthdaySlotUnavailableError) {
+      return NextResponse.json(
+        {
+          error: 'That birthday time has just been booked. Please choose another available time.',
+          code: 'BIRTHDAY_SLOT_UNAVAILABLE'
+        },
+        { status: 409 }
+      )
+    }
+    throw error
+  }
+
   let subtotal = 0
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
   const orderItems = []
@@ -437,14 +482,7 @@ async function createRegularCheckout(
       // the slot's start time into the bookingDate so the webhook and admin
       // schedule render the actual party time rather than defaulting to 9am.
       if (product.type === 'BIRTHDAY' && item.selectedTimeSlot?.start) {
-        const [hh, mm] = item.selectedTimeSlot.start.split(':').map(Number)
-        if (!Number.isNaN(hh) && !Number.isNaN(mm)) {
-          bookingDates = bookingDates.map(d => {
-            const withTime = new Date(d)
-            withTime.setUTCHours(hh, mm, 0, 0)
-            return withTime
-          })
-        }
+        bookingDates = bookingDates.map(d => birthdaySlotStart(utcDateKey(d), item.selectedTimeSlot!.start)!)
       }
 
       // For bundles, create an order item for EACH date
