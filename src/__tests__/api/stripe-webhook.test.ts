@@ -343,6 +343,29 @@ describe('Stripe Webhook Route', () => {
       })
     })
 
+    it('fails the webhook for retry instead of marking a paid order fulfilled without a location', async () => {
+      const mockOrder = createMockOrder()
+      const checkoutSession = createCheckoutSession()
+      const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
+      const bookingCreate = vi.fn()
+
+      ;(mockStripe.webhooks.constructEvent as any).mockReturnValue(webhookEvent)
+      ;(prisma.order.findUnique as any).mockResolvedValue(mockOrder)
+      ;(prisma.$transaction as any).mockImplementation(async (callback: any) =>
+        callback({
+          order: { update: vi.fn() },
+          booking: { findFirst: vi.fn(), count: vi.fn(), create: bookingCreate },
+          location: { findFirst: vi.fn().mockResolvedValue(null) },
+          $executeRaw: vi.fn()
+        })
+      )
+
+      const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+
+      expect(response.status).toBe(500)
+      expect(bookingCreate).not.toHaveBeenCalled()
+    })
+
   })
 
   describe('4. checkout.session.completed creates bookings for CAMP products', () => {

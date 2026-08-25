@@ -50,7 +50,7 @@ function CheckoutSuccessContent() {
 
       try {
         let data: OrderDetails | null = null
-        for (let attempt = 0; attempt < 5; attempt += 1) {
+        for (let attempt = 0; attempt < 10; attempt += 1) {
           const response = await fetch(`/api/orders/${orderId}`)
           if (response.ok) {
             data = await response.json()
@@ -82,9 +82,8 @@ function CheckoutSuccessContent() {
             )
             localStorage.setItem(trackedPurchaseKey(data.orderId), 'true')
           }
-          // Clear cart after successful order
-          clearCart()
           if (data.status === 'PAID') {
+            clearCart()
             await fetch('/api/booking-draft', { method: 'DELETE' }).catch(() => undefined)
           }
         }
@@ -126,6 +125,36 @@ function CheckoutSuccessContent() {
           <Link href='/camps' className='btn-primary'>
             Continue Shopping
           </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (orderDetails.status !== 'PAID') {
+    const refunded = orderDetails.status === 'REFUNDED'
+    return (
+      <div className='py-20'>
+        <div className='container-custom max-w-2xl text-center'>
+          {!refunded && (
+            <div className='mx-auto mb-6 h-10 w-10 animate-spin rounded-full border-4 border-primary-200 border-t-primary-700' />
+          )}
+          <h1 className='font-display text-3xl font-bold text-gray-900'>
+            {refunded ? 'Payment refunded' : 'We’re confirming your booking'}
+          </h1>
+          <p className='mx-auto mt-4 max-w-xl text-lg leading-7 text-gray-600'>
+            {refunded
+              ? 'Your selected place became unavailable and the payment was automatically refunded. No booking was created.'
+              : 'We have your order and are waiting for payment confirmation. Please do not pay again. Refresh this page in a moment if it does not update.'}
+          </p>
+          <p className='mt-5 text-sm font-semibold text-gray-500'>Order #{orderDetails.orderId}</p>
+          <div className='mt-8 flex flex-wrap justify-center gap-3'>
+            <button type='button' onClick={() => window.location.reload()} className='btn-primary'>
+              Check again
+            </button>
+            <a href='tel:1300670104' className='btn-outline'>
+              Call 1300 670 104
+            </a>
+          </div>
         </div>
       </div>
     )

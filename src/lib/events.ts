@@ -58,7 +58,7 @@ export class EventCreationService {
       const closureInfo = getClosureInfo(params.startDateTime)
       throw new Error(`Cannot create event on ${closureInfo?.name || 'a business closure date'}`)
     }
-    
+
     // Validate not a weekend for camps
     if (params.type === 'CAMP') {
       const dayOfWeek = params.startDateTime.getDay()
@@ -66,7 +66,7 @@ export class EventCreationService {
         throw new Error('Cannot create camp events on weekends')
       }
     }
-    
+
     return await prisma.event.create({
       data: {
         title: params.title,
@@ -113,18 +113,18 @@ export class EventCreationService {
     if (!order) throw new Error('Order not found')
 
     const events = []
-    const defaultLocationId = await this.getDefaultLocationId()
 
     for (const orderItem of order.orderItems) {
       const { product, student } = orderItem
-      
+      const locationId = await this.getBookingLocationId(orderItem)
+
       switch (product.type) {
         case 'CAMP':
           const campEvent = await this.createCampEvent({
             orderItem,
             student,
             product,
-            locationId: defaultLocationId
+            locationId
           })
           events.push(campEvent)
           break
@@ -134,7 +134,7 @@ export class EventCreationService {
             orderItem,
             student,
             product,
-            locationId: defaultLocationId
+            locationId
           })
           events.push(birthdayEvent)
           break
@@ -144,7 +144,7 @@ export class EventCreationService {
             orderItem,
             student,
             product,
-            locationId: defaultLocationId
+            locationId
           })
           events.push(...subscriptionEvents)
           break
@@ -300,14 +300,14 @@ export class EventCreationService {
 
     while (isBefore(currentDate, endDate)) {
       const dayOfWeek = currentDate.getDay()
-      
+
       if (template.daysOfWeek.includes(dayOfWeek)) {
         const startDateTime = this.createDateTimeFromTimeString(currentDate, template.startTime)
         const endDateTime = this.createDateTimeFromTimeString(currentDate, template.endTime)
 
         // Check for conflicts before creating
         const hasConflict = await this.checkEventConflict(startDateTime, endDateTime, template.locationId)
-        
+
         if (!hasConflict) {
           const event = await this.createEvent({
             title: template.name,
@@ -360,7 +360,7 @@ export class EventCreationService {
     // Check if total capacity would be exceeded
     const totalCapacity = conflictingEvents.reduce((sum, event) => sum + event.maxCapacity, 0)
     const location = await prisma.location.findUnique({ where: { id: locationId } })
-    
+
     return totalCapacity >= (location?.capacity || 20)
   }
 
@@ -426,25 +426,32 @@ export class EventCreationService {
     })
   }
 
+  private async getBookingLocationId(orderItem: any): Promise<string> {
+    const dayStart = new Date(orderItem.bookingDate)
+    dayStart.setUTCHours(0, 0, 0, 0)
+    const dayEnd = new Date(dayStart)
+    dayEnd.setUTCDate(dayEnd.getUTCDate() + 1)
+    const booking = await prisma.booking.findFirst({
+      where: {
+        studentId: orderItem.studentId,
+        productId: orderItem.productId,
+        startDate: { gte: dayStart, lt: dayEnd }
+      },
+      select: { locationId: true }
+    })
+
+    return booking?.locationId || this.getDefaultLocationId()
+  }
+
   /**
    * Utility to get default location
    */
   private async getDefaultLocationId(): Promise<string> {
-    let location = await prisma.location.findFirst({
-      where: { name: 'Neutral Bay' }
-    })
+    const location =
+      (await prisma.location.findFirst({ where: { name: 'TinkerTank Neutral Bay', isActive: true } })) ||
+      (await prisma.location.findFirst({ where: { name: 'Neutral Bay', isActive: true } }))
 
-    if (!location) {
-      // Create default location if it doesn't exist
-      location = await prisma.location.create({
-        data: {
-          name: 'Neutral Bay',
-          address: '123 Neutral Bay Road, Neutral Bay NSW 2089',
-          capacity: 20,
-          timezone: BUSINESS_CONSTANTS.LOCATION_TIMEZONE
-        }
-      })
-    }
+    if (!location) throw new Error('No active Neutral Bay location is configured')
 
     return location.id
   }
