@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 
 interface OrderWithItems {
@@ -294,6 +294,17 @@ export function generateBookingConfirmationEmail(order: OrderWithItems) {
     return format(zonedDate, 'EEEE, MMMM d, yyyy \'at\' h:mm a');
   };
 
+  const formatBookingDateTime = (item: OrderWithItems['orderItems'][number]) => {
+    // Birthday bookingDate stores Sydney wall-clock fields in UTC (for example,
+    // 3:30pm is encoded as 15:30Z). Converting it to Sydney again moves evening
+    // parties into the following day. Format those encoded fields as UTC so the
+    // customer's selected date and time are preserved exactly.
+    if (item.product.type === 'BIRTHDAY') {
+      return formatInTimeZone(item.bookingDate, 'UTC', 'EEEE, MMMM d, yyyy \'at\' h:mm a');
+    }
+    return formatDateTime(item.bookingDate);
+  };
+
   const orderItemsHtml = order.orderItems.map(item => {
     const itemLocation = resolveLocationDetails(item.location, item.venueAddress);
     const locationLabel = itemLocation.address
@@ -305,7 +316,7 @@ export function generateBookingConfirmationEmail(order: OrderWithItems) {
       <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 18px;">${item.product.name}</h3>
       <p style="margin: 0 0 4px 0; color: #6b7280; text-transform: capitalize;">${item.product.type.toLowerCase()}</p>
       <p style="margin: 0 0 4px 0; color: #374151;"><strong>Student:</strong> ${item.student.name}</p>
-      <p style="margin: 0 0 4px 0; color: #374151;"><strong>Date:</strong> ${formatDateTime(item.bookingDate)}</p>
+      <p style="margin: 0 0 4px 0; color: #374151;"><strong>Date:</strong> ${formatBookingDateTime(item)}</p>
       <p style="margin: 0 0 4px 0; color: #374151;"><strong>Location:</strong> ${locationLabel}</p>
       ${item.student.allergies ? `<p style="margin: 0 0 4px 0; color: #dc2626;"><strong>Allergies:</strong> ${item.student.allergies}</p>` : ''}
       <p style="margin: 0 0 12px 0; color: #374151; font-weight: 600;">$${item.price.toFixed(2)} AUD</p>
