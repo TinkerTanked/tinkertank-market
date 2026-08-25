@@ -11,16 +11,19 @@ export interface AnalyticsItem {
 }
 
 type EventParameters = Record<string, unknown>
-type EventOptions = { metaEventId?: string }
+type EventOptions = { metaEventId?: string; meta?: boolean }
 type PlausibleProperties = Record<string, string | number | boolean>
 
 declare global {
   interface Window {
     fbq?: (...args: unknown[]) => void
-    plausible?: ((eventName: string, options?: {
-      props?: PlausibleProperties
-      revenue?: { currency: string; amount: number }
-    }) => void) & { q?: unknown[][] }
+    plausible?: ((
+      eventName: string,
+      options?: {
+        props?: PlausibleProperties
+        revenue?: { currency: string; amount: number }
+      }
+    ) => void) & { q?: unknown[][] }
   }
 }
 
@@ -33,15 +36,15 @@ export function trackEvent(name: string, parameters: EventParameters = {}, optio
     const currency = typeof parameters.currency === 'string' ? parameters.currency : undefined
     window.plausible?.(plausibleEvent, {
       props: toPlausibleProperties(parameters),
-      ...(name === 'purchase' && value !== undefined && currency
-        ? { revenue: { currency, amount: value } }
-        : {})
+      ...(name === 'purchase' && value !== undefined && currency ? { revenue: { currency, amount: value } } : {}),
     })
   }
 
   const metaEvent = META_STANDARD_EVENTS[name]
   const metaParameters = toMetaParameters(parameters)
-  if (metaEvent) {
+  if (options.meta === false) {
+    return
+  } else if (metaEvent) {
     if (options.metaEventId) {
       window.fbq?.('track', metaEvent, metaParameters, { eventID: options.metaEventId })
     } else {
@@ -57,30 +60,42 @@ const META_STANDARD_EVENTS: Record<string, string> = {
   add_to_cart: 'AddToCart',
   begin_checkout: 'InitiateCheckout',
   add_payment_info: 'AddPaymentInfo',
-  purchase: 'Purchase'
+  purchase: 'Purchase',
 }
 
 const PLAUSIBLE_EVENTS: Record<string, string> = {
   booking_start: 'Camp Booking Started',
+  booking_started: 'Booking Started',
+  booking_step_viewed: 'Booking Step Viewed',
+  booking_step_completed: 'Booking Step Completed',
+  booking_validation_error: 'Booking Validation Error',
+  payment_cancelled: 'Payment Cancelled',
   select_camp_location: 'Camp Location Selected',
   select_camp_dates: 'Camp Dates Selected',
   select_item: 'Camp Type Selected',
   add_to_cart: 'Camp Added to Cart',
   begin_checkout: 'Checkout Started',
   add_payment_info: 'Payment Started',
-  purchase: 'Purchase'
+  purchase: 'Purchase',
 }
 
 const PLAUSIBLE_PROPERTY_KEYS = new Set([
   'program',
   'source',
+  'product_kind',
+  'product_id',
+  'step_name',
+  'step_number',
+  'field_key',
+  'error_code',
+  'child_count',
   'location_id',
   'location_name',
   'date_count',
   'item_list_name',
   'payment_type',
   'currency',
-  'value'
+  'value',
 ])
 
 function toPlausibleProperties(parameters: EventParameters): PlausibleProperties {
@@ -92,7 +107,7 @@ function toPlausibleProperties(parameters: EventParameters): PlausibleProperties
     }
   }
 
-  const items = Array.isArray(parameters.items) ? parameters.items as AnalyticsItem[] : []
+  const items = Array.isArray(parameters.items) ? (parameters.items as AnalyticsItem[]) : []
   if (items.length > 0) {
     properties.product_ids = [...new Set(items.map(item => item.item_id))].join(',')
     properties.product_categories = [...new Set(items.map(item => item.item_category).filter(Boolean))].join(',')
@@ -103,11 +118,14 @@ function toPlausibleProperties(parameters: EventParameters): PlausibleProperties
 }
 
 function toMetaCustomEventName(name: string) {
-  return name.split('_').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('')
+  return name
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('')
 }
 
 function toMetaParameters(parameters: EventParameters): EventParameters {
-  const items = Array.isArray(parameters.items) ? parameters.items as AnalyticsItem[] : []
+  const items = Array.isArray(parameters.items) ? (parameters.items as AnalyticsItem[]) : []
 
   return {
     ...parameters,
@@ -115,7 +133,7 @@ function toMetaParameters(parameters: EventParameters): EventParameters {
     content_name: items.length === 1 ? items[0].item_name : parameters.item_list_name,
     content_category: items.length === 1 ? items[0].item_category : 'camps',
     content_type: 'product',
-    contents: items.map(item => ({ id: item.item_id, quantity: item.quantity ?? 1 }))
+    contents: items.map(item => ({ id: item.item_id, quantity: item.quantity ?? 1 })),
   }
 }
 
@@ -127,6 +145,6 @@ export function cartItemsToAnalytics(items: EnhancedCartItem[]): AnalyticsItem[]
     item_variant: item.selectedDates?.length ? `${item.selectedDates.length} days` : undefined,
     location_id: item.product.location,
     price: item.pricePerItem,
-    quantity: item.quantity
+    quantity: item.quantity,
   }))
 }

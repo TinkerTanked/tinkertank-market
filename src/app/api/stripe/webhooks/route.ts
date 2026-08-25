@@ -192,8 +192,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
               }
 
               if (!bookingLocation) {
-                console.error('No active location found for booking');
-                continue;
+                throw new Error(`No active location found while fulfilling paid order ${order.id}`)
               }
 
               // Set booking start/end times:

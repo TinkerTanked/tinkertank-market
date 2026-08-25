@@ -1,25 +1,17 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { 
-  ClockIcon, 
-  UserGroupIcon, 
-  MapPinIcon, 
-  CheckIcon,
-  CalendarIcon,
-  ShoppingCartIcon
-} from '@heroicons/react/24/outline'
+import { ClockIcon, UserGroupIcon, MapPinIcon, CheckIcon, CalendarIcon } from '@heroicons/react/24/outline'
 import { getProductById } from '@/data/products'
-import CampBookingWizard from '@/components/booking/CampBookingWizard'
+import BookCampButton from '@/components/ui/BookCampButton'
 import LearningTopicsSection from '@/components/learning/LearningTopicsSection'
 import { trackEvent } from '@/lib/analytics'
 
 export default function CampDetailPage() {
   const params = useParams()
-  const [isBookingOpen, setIsBookingOpen] = useState(false)
 
   const productId = params.id as string
   const product = useMemo(() => getProductById(productId), [productId])
@@ -29,12 +21,14 @@ export default function CampDetailPage() {
     trackEvent('view_item', {
       currency: 'AUD',
       value: product.price,
-      items: [{
-        item_id: product.id,
-        item_name: product.name,
-        item_category: product.category,
-        price: product.price
-      }]
+      items: [
+        {
+          item_id: product.id,
+          item_name: product.name,
+          item_category: product.category,
+          price: product.price,
+        },
+      ],
     })
   }, [product])
 
@@ -73,12 +67,8 @@ export default function CampDetailPage() {
                   <span>•</span>
                   <span>{product.ageRange}</span>
                 </div>
-                <h1 className='text-4xl md:text-5xl font-display font-bold text-gray-900 leading-tight'>
-                  {product.name}
-                </h1>
-                <p className='text-xl text-gray-600 leading-relaxed'>
-                  {product.description}
-                </p>
+                <h1 className='text-4xl md:text-5xl font-display font-bold text-gray-900 leading-tight'>{product.name}</h1>
+                <p className='text-xl text-gray-600 leading-relaxed'>{product.description}</p>
               </div>
 
               <div className='grid grid-cols-2 gap-6'>
@@ -113,13 +103,12 @@ export default function CampDetailPage() {
               </div>
 
               <div className='pt-4'>
-                <button
-                  onClick={() => setIsBookingOpen(true)}
-                  className='btn-primary text-lg px-8 py-4 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300'
-                >
-                  <CalendarIcon className='w-5 h-5 mr-2' />
-                  Select Date & Time
-                </button>
+                <BookCampButton
+                  label='Select date & time'
+                  size='lg'
+                  trackingSource={`camp_detail_${product.id}`}
+                  className='shadow-lg hover:shadow-xl'
+                />
               </div>
             </div>
 
@@ -150,9 +139,7 @@ export default function CampDetailPage() {
           <div className='grid lg:grid-cols-2 gap-16'>
             {/* What's Included */}
             <div className='space-y-6'>
-              <h2 className='text-3xl font-display font-bold text-gray-900'>
-                What's Included
-              </h2>
+              <h2 className='text-3xl font-display font-bold text-gray-900'>What's Included</h2>
               <div className='space-y-4'>
                 {product.features?.map((feature, index) => (
                   <div key={index} className='flex items-start space-x-3'>
@@ -165,9 +152,7 @@ export default function CampDetailPage() {
 
             {/* Additional Info */}
             <div className='space-y-6'>
-              <h2 className='text-3xl font-display font-bold text-gray-900'>
-                Good to Know
-              </h2>
+              <h2 className='text-3xl font-display font-bold text-gray-900'>Good to Know</h2>
               <div className='space-y-4'>
                 <div className='bg-blue-50 rounded-lg p-4'>
                   <h3 className='font-medium text-blue-900 mb-2'>Drop-off & Pick-up</h3>
@@ -177,11 +162,8 @@ export default function CampDetailPage() {
                 </div>
                 <div className='bg-green-50 rounded-lg p-4'>
                   <h3 className='font-medium text-green-900 mb-2'>What to Bring</h3>
-                  <p className='text-green-800'>
-                    Just bring lunch, water bottle, and enthusiasm! All materials and equipment provided.
-                  </p>
+                  <p className='text-green-800'>Just bring lunch, water bottle, and enthusiasm! All materials and equipment provided.</p>
                 </div>
-
               </div>
             </div>
           </div>
@@ -191,12 +173,6 @@ export default function CampDetailPage() {
       <LearningTopicsSection
         heading='Skills Kids Explore at Camp'
         description='Every camp connects coding, robotics, 3D design and printing, animation and broader STEAM problem-solving.'
-      />
-
-      {/* Booking Modal */}
-      <CampBookingWizard 
-        isOpen={isBookingOpen}
-        onClose={() => setIsBookingOpen(false)}
       />
     </div>
   )
