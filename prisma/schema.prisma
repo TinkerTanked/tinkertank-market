@@ -10,6 +10,8 @@ datasource db {
 model Student {
   id                    String                      @id @default(cuid())
   name                  String
+  firstName             String?
+  lastName              String?
   birthdate             DateTime
   allergies             String?
   school                String?
@@ -110,18 +112,38 @@ model Booking {
 }
 
 model Order {
-  id                    String      @id @default(cuid())
-  customerEmail         String
-  customerName          String
-  stripePaymentIntentId String?     @unique
-  status                OrderStatus @default(PENDING)
-  totalAmount           Decimal     @db.Money
-  metaPurchaseSentAt    DateTime?
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
-  orderItems            OrderItem[]
+  id                           String      @id @default(cuid())
+  customerEmail                String
+  customerName                 String
+  customerFirstName            String?
+  customerLastName             String?
+  customerPhone                String?
+  emergencyContactName         String?
+  emergencyContactPhone        String?
+  emergencyContactRelationship String?
+  bookingSchemaVersion         Int?
+  stripePaymentIntentId        String?     @unique
+  status                       OrderStatus @default(PENDING)
+  totalAmount                  Decimal     @db.Money
+  metaPurchaseSentAt           DateTime?
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+  orderItems                   OrderItem[]
 
   @@map("orders")
+}
+
+model BookingDraft {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  kind      String
+  payload   Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@map("booking_drafts")
 }
 
 model OrderItem {
@@ -234,25 +256,25 @@ enum EventStatus {
 }
 
 model IgniteSubscription {
-  id                    String                      @id @default(cuid())
-  stripeSubscriptionId  String                      @unique
-  stripeCustomerId      String
-  stripePriceId         String
-  customerEmail         String
-  customerName          String?
-  igniteSessionId       String?
-  studentNames          Json?
-  quantity              Int                         @default(1)
-  status                IgniteSubscriptionStatus    @default(ACTIVE)
-  currentPeriodStart    DateTime?
-  currentPeriodEnd      DateTime?
-  canceledAt            DateTime?
-  cancelAtPeriodEnd     Boolean                     @default(false)
-  weeklyAmount          Decimal                     @db.Money
-  createdAt             DateTime                    @default(now())
-  updatedAt             DateTime                    @updatedAt
-  students              IgniteSubscriptionStudent[]
-  bookings              Booking[]
+  id                   String                      @id @default(cuid())
+  stripeSubscriptionId String                      @unique
+  stripeCustomerId     String
+  stripePriceId        String
+  customerEmail        String
+  customerName         String?
+  igniteSessionId      String?
+  studentNames         Json?
+  quantity             Int                         @default(1)
+  status               IgniteSubscriptionStatus    @default(ACTIVE)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  canceledAt           DateTime?
+  cancelAtPeriodEnd    Boolean                     @default(false)
+  weeklyAmount         Decimal                     @db.Money
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  students             IgniteSubscriptionStudent[]
+  bookings             Booking[]
 
   @@map("ignite_subscriptions")
 }

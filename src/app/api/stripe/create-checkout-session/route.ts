@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { assertCampCapacity, CampCapacityExceededError, utcDateKey } from '@/lib/campCapacity'
 import { assertBirthdaySlotAvailable, birthdaySlotStart, BirthdaySlotUnavailableError } from '@/lib/birthdayAvailability'
 import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '@/lib/ignite'
+import { calculateAgeOnDate } from '@/lib/bookingSchema'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -14,49 +15,67 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const MAX_IGNITE_STUDENTS = 20
 
 const CreateCheckoutSessionSchema = z.object({
-  items: z.array(z.object({
-    productId: z.string(),
-    quantity: z.number().min(1),
-    students: z.array(z.object({
-      firstName: z.string().min(1),
-      lastName: z.string().min(1),
-      // Camps send age; Ignite sends dateOfBirth. Both optional at the schema
-      // level and validated per-flow below.
-      age: z.number().min(1).max(99).optional(),
-      dateOfBirth: z.string().optional(),
-      school: z.string().optional(),
-      parentName: z.string().min(1),
-      // Ignite captures the emergency contact instead of a per-child parent
-      // email, so allow an empty string there.
-      parentEmail: z.union([z.string().email(), z.literal('')]).optional(),
-      parentPhone: z.string().min(1),
-      allergies: z.union([z.string(), z.array(z.string())]).optional(),
-      medicalNotes: z.string().optional(),
-      emergencyContact: z.object({
-        name: z.string(),
-        phone: z.string(),
-        relationship: z.string().optional()
-      }).optional(),
-    })),
-    selectedDate: z.string().optional(),
-    selectedDates: z.array(z.string()).optional(),
-    selectedTimeSlot: z.object({
-      start: z.string(),
-      end: z.string(),
-    }).optional(),
-    isSubscription: z.boolean().optional(),
-    stripePriceId: z.string().optional(),
-    productName: z.string().optional(),
-    productPrice: z.number().optional(),
-    location: z.string().optional(),
-    venueAddress: z.string().optional(),
-    notes: z.string().optional(),
-  })),
+  bookingSchemaVersion: z.literal(1).optional(),
+  items: z.array(
+    z.object({
+      productId: z.string(),
+      quantity: z.number().min(1),
+      students: z.array(
+        z.object({
+          firstName: z.string().min(1),
+          lastName: z.string().min(1),
+          // Camps send age; Ignite sends dateOfBirth. Both optional at the schema
+          // level and validated per-flow below.
+          age: z.number().min(1).max(99).optional(),
+          dateOfBirth: z.string().optional(),
+          school: z.string().optional(),
+          parentName: z.string().min(1),
+          // Ignite captures the emergency contact instead of a per-child parent
+          // email, so allow an empty string there.
+          parentEmail: z.union([z.string().email(), z.literal('')]).optional(),
+          parentPhone: z.string().min(1),
+          allergies: z.union([z.string(), z.array(z.string())]).optional(),
+          medicalNotes: z.string().optional(),
+          emergencyContact: z
+            .object({
+              name: z.string(),
+              phone: z.string(),
+              relationship: z.string().optional(),
+            })
+            .optional(),
+        })
+      ),
+      selectedDate: z.string().optional(),
+      selectedDates: z.array(z.string()).optional(),
+      selectedTimeSlot: z
+        .object({
+          start: z.string(),
+          end: z.string(),
+        })
+        .optional(),
+      isSubscription: z.boolean().optional(),
+      stripePriceId: z.string().optional(),
+      productName: z.string().optional(),
+      productPrice: z.number().optional(),
+      location: z.string().optional(),
+      venueAddress: z.string().optional(),
+      notes: z.string().optional(),
+    })
+  ),
   customerInfo: z.object({
     name: z.string().min(1),
+    firstName: z.string().min(1).optional(),
+    lastName: z.string().min(1).optional(),
     email: z.string().email(),
     phone: z.string().min(1),
   }),
+  emergencyContact: z
+    .object({
+      name: z.string().min(1),
+      phone: z.string().min(1),
+      relationship: z.string().optional(),
+    })
+    .optional(),
 })
 
 type CheckoutItem = z.infer<typeof CreateCheckoutSessionSchema>['items'][number]
@@ -76,7 +95,7 @@ function getMetaCheckoutMetadata(request: NextRequest): Record<string, string> {
     metaFbp: request.cookies.get('_fbp')?.value || '',
     metaFbc: request.cookies.get('_fbc')?.value || '',
     metaClientIp: clientIpAddress,
-    metaClientUserAgent: clientUserAgent
+    metaClientUserAgent: clientUserAgent,
   }
 }
 
@@ -100,21 +119,21 @@ export async function POST(request: NextRequest) {
       return await createIgniteSubscriptionCheckout(subscriptionItems, validatedData.customerInfo, request)
     }
 
-    return await createRegularCheckout(regularItems, validatedData.customerInfo, request)
+    return await createRegularCheckout(
+      regularItems,
+      validatedData.customerInfo,
+      validatedData.emergencyContact,
+      validatedData.bookingSchemaVersion,
+      request
+    )
   } catch (error) {
     console.error('Create checkout session error:', error)
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid request data', details: error.issues },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid request data', details: error.issues }, { status: 400 })
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -126,16 +145,9 @@ export async function POST(request: NextRequest) {
 // are created up front (PENDING order); the webhook reads them to create the
 // subscription links + bookings after payment. See src/app/api/stripe/webhooks.
 // -----------------------------------------------------------------------------
-async function createIgniteSubscriptionCheckout(
-  subscriptionItems: CheckoutItem[],
-  customerInfo: CustomerInfo,
-  request: NextRequest
-) {
+async function createIgniteSubscriptionCheckout(subscriptionItems: CheckoutItem[], customerInfo: CustomerInfo, request: NextRequest) {
   if (subscriptionItems.length > 1) {
-    return NextResponse.json(
-      { error: 'Please purchase Ignite subscriptions one at a time.' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'Please purchase Ignite subscriptions one at a time.' }, { status: 400 })
   }
 
   const item = subscriptionItems[0]
@@ -171,10 +183,7 @@ async function createIgniteSubscriptionCheckout(
     where: { id: igniteProductId(session.id), isActive: true },
   })
   if (!product) {
-    return NextResponse.json(
-      { error: 'This Ignite program is not set up yet. Please contact us.' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'This Ignite program is not set up yet. Please contact us.' }, { status: 400 })
   }
 
   // Resolve the location BEFORE charging — never silently fall back.
@@ -182,20 +191,14 @@ async function createIgniteSubscriptionCheckout(
     where: { name: { equals: session.location, mode: 'insensitive' }, isActive: true },
   })
   if (!location) {
-    return NextResponse.json(
-      { error: 'This Ignite location is not available for booking yet. Please contact us.' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'This Ignite location is not available for booking yet. Please contact us.' }, { status: 400 })
   }
 
   // Schedule the current/next term. The first future occurrence is the
   // enrollment effective date stored on the OrderItem.
   const schedule = getIgniteScheduleFrom(session, new Date())
   if (!schedule || schedule.occurrences.length === 0) {
-    return NextResponse.json(
-      { error: 'There are no upcoming sessions for this program yet. Please contact us.' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'There are no upcoming sessions for this program yet. Please contact us.' }, { status: 400 })
   }
   const firstOccurrence = schedule.occurrences[0].start
   const weeklyPerChild = Number(product.price)
@@ -209,15 +212,12 @@ async function createIgniteSubscriptionCheckout(
   ) {
     console.error('Ignite Stripe price does not match product configuration', {
       sessionId: session.id,
-      stripePriceId: session.stripePriceId
+      stripePriceId: session.stripePriceId,
     })
-    return NextResponse.json(
-      { error: 'This Ignite program is temporarily unavailable. Please contact us.' },
-      { status: 503 }
-    )
+    return NextResponse.json({ error: 'This Ignite program is temporarily unavailable. Please contact us.' }, { status: 503 })
   }
 
-  const order = await prisma.$transaction(async (tx) => {
+  const order = await prisma.$transaction(async tx => {
     const createdOrder = await tx.order.create({
       data: {
         customerEmail: customerInfo.email,
@@ -302,29 +302,48 @@ async function createIgniteSubscriptionCheckout(
 async function createRegularCheckout(
   regularItems: CheckoutItem[],
   customerInfo: CustomerInfo,
+  emergencyContact: { name: string; phone: string; relationship?: string } | undefined,
+  bookingSchemaVersion: 1 | undefined,
   request: NextRequest
 ) {
   for (const item of regularItems) {
     for (const student of item.students) {
-      if (!student.age || !student.parentEmail) {
-        return NextResponse.json(
-          { error: 'Age and parent email are required for every camp or birthday participant.' },
-          { status: 400 }
-        )
+      if (bookingSchemaVersion === 1) {
+        if (!student.dateOfBirth) {
+          return NextResponse.json({ error: 'Date of birth is required for every camp participant.' }, { status: 400 })
+        }
+      } else if (!student.age || !student.parentEmail) {
+        return NextResponse.json({ error: 'Age and parent email are required for every camp or birthday participant.' }, { status: 400 })
       }
     }
   }
 
   const productIds = regularItems.map(item => item.productId)
-  const products = productIds.length > 0 ? await prisma.product.findMany({
-    where: { id: { in: productIds }, isActive: true },
-  }) : []
+  const products =
+    productIds.length > 0
+      ? await prisma.product.findMany({
+          where: { id: { in: productIds }, isActive: true },
+        })
+      : []
 
   if (regularItems.length > 0 && products.length !== productIds.length) {
-    return NextResponse.json(
-      { error: 'One or more products not found or inactive' },
-      { status: 404 }
-    )
+    return NextResponse.json({ error: 'One or more products not found or inactive' }, { status: 404 })
+  }
+
+  if (bookingSchemaVersion === 1) {
+    if (products.some(product => product.type !== 'CAMP')) {
+      return NextResponse.json({ error: 'This booking flow only supports camps.' }, { status: 400 })
+    }
+    for (const item of regularItems) {
+      const product = products.find(candidate => candidate.id === item.productId)!
+      const activityDates = item.selectedDates?.length ? item.selectedDates : item.selectedDate ? [item.selectedDate] : []
+      for (const student of item.students) {
+        const ages = activityDates.map(date => calculateAgeOnDate(student.dateOfBirth!, date.slice(0, 10)))
+        if (ages.length === 0 || ages.some(age => age === null || age < product.ageMin || age > product.ageMax)) {
+          return NextResponse.json({ error: `${product.name} is for children aged ${product.ageMin}–${product.ageMax}.` }, { status: 400 })
+        }
+      }
+    }
   }
 
   // Validate the combined number of children across every camp product for a
@@ -354,7 +373,7 @@ async function createRegularCheckout(
       capacityRequests.set(key, {
         location: item.location,
         date,
-        spots: (existing?.spots ?? 0) + item.students.length
+        spots: (existing?.spots ?? 0) + item.students.length,
       })
     }
   }
@@ -367,11 +386,12 @@ async function createRegularCheckout(
     if (error instanceof CampCapacityExceededError) {
       return NextResponse.json(
         {
-          error: error.remaining === 0
-            ? `${error.locationName} is sold out on ${error.date}.`
-            : `Only ${error.remaining} camp place${error.remaining === 1 ? '' : 's'} remain at ${error.locationName} on ${error.date}.`,
+          error:
+            error.remaining === 0
+              ? `${error.locationName} is sold out on ${error.date}.`
+              : `Only ${error.remaining} camp place${error.remaining === 1 ? '' : 's'} remain at ${error.locationName} on ${error.date}.`,
           code: 'CAMP_CAPACITY_EXCEEDED',
-          remaining: error.remaining
+          remaining: error.remaining,
         },
         { status: 409 }
       )
@@ -398,10 +418,7 @@ async function createRegularCheckout(
 
     const slotKey = startDate.toISOString()
     if (birthdaySlots.has(slotKey)) {
-      return NextResponse.json(
-        { error: 'Only one birthday party can be booked in each time slot.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Only one birthday party can be booked in each time slot.' }, { status: 400 })
     }
     birthdaySlots.set(slotKey, startDate)
   }
@@ -415,7 +432,7 @@ async function createRegularCheckout(
       return NextResponse.json(
         {
           error: 'That birthday time has just been booked. Please choose another available time.',
-          code: 'BIRTHDAY_SLOT_UNAVAILABLE'
+          code: 'BIRTHDAY_SLOT_UNAVAILABLE',
         },
         { status: 409 }
       )
@@ -442,7 +459,7 @@ async function createRegularCheckout(
       price_data: {
         currency: 'aud',
         product_data: {
-          name: isBundle ? product.name : (numberOfDays > 1 ? `${product.name} (${numberOfDays} days)` : product.name),
+          name: isBundle ? product.name : numberOfDays > 1 ? `${product.name} (${numberOfDays} days)` : product.name,
           description: product.description,
         },
         unit_amount: Math.round(unitPrice * 100),
@@ -451,13 +468,23 @@ async function createRegularCheckout(
     })
 
     for (const student of item.students) {
-      const birthdate = new Date(new Date().getFullYear() - student.age!, 0, 1)
+      const birthdate =
+        bookingSchemaVersion === 1
+          ? new Date(`${student.dateOfBirth}T00:00:00.000Z`)
+          : new Date(new Date().getFullYear() - student.age!, 0, 1)
+      const studentEmergencyContact = student.emergencyContact || emergencyContact
       const createdStudent = await prisma.student.create({
         data: {
           name: `${student.firstName} ${student.lastName}`,
+          firstName: bookingSchemaVersion === 1 ? student.firstName : null,
+          lastName: bookingSchemaVersion === 1 ? student.lastName : null,
           birthdate,
           allergies: normalizeAllergies(student.allergies),
-        }
+          school: student.school?.trim() || null,
+          medicalNotes: student.medicalNotes?.trim() || null,
+          emergencyContactName: studentEmergencyContact?.name || student.parentName || null,
+          emergencyContactPhone: studentEmergencyContact?.phone || student.parentPhone || null,
+        },
       })
 
       // Get all booking dates
@@ -465,11 +492,9 @@ async function createRegularCheckout(
       if (item.selectedDates && item.selectedDates.length > 0) {
         bookingDates = item.selectedDates
           .filter(d => d && d !== 'undefined')
-          .map(d => d.includes('T') ? new Date(d) : new Date(d + 'T00:00:00.000Z'))
+          .map(d => (d.includes('T') ? new Date(d) : new Date(d + 'T00:00:00.000Z')))
       } else if (item.selectedDate && item.selectedDate !== 'undefined') {
-        const date = item.selectedDate.includes('T')
-          ? new Date(item.selectedDate)
-          : new Date(item.selectedDate + 'T00:00:00.000Z')
+        const date = item.selectedDate.includes('T') ? new Date(item.selectedDate) : new Date(item.selectedDate + 'T00:00:00.000Z')
         bookingDates = [date]
       }
 
@@ -509,12 +534,22 @@ async function createRegularCheckout(
     data: {
       customerEmail: customerInfo.email,
       customerName: customerInfo.name,
+      customerFirstName: customerInfo.firstName || null,
+      customerLastName: customerInfo.lastName || null,
+      customerPhone: customerInfo.phone,
+      emergencyContactName: emergencyContact?.name || customerInfo.name,
+      emergencyContactPhone: emergencyContact?.phone || customerInfo.phone,
+      emergencyContactRelationship: emergencyContact?.relationship || null,
+      bookingSchemaVersion: bookingSchemaVersion || null,
       status: 'PENDING',
       totalAmount: subtotal,
       stripePaymentIntentId: null,
-      orderItems: orderItems.length > 0 ? {
-        create: orderItems,
-      } : undefined,
+      orderItems:
+        orderItems.length > 0
+          ? {
+              create: orderItems,
+            }
+          : undefined,
     },
   })
 
@@ -523,7 +558,7 @@ async function createRegularCheckout(
     customerName: customerInfo.name,
     customerPhone: customerInfo.phone,
     location: regularItems[0]?.location || '',
-    ...getMetaCheckoutMetadata(request)
+    ...getMetaCheckoutMetadata(request),
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -533,7 +568,7 @@ async function createRegularCheckout(
     client_reference_id: order.id,
     metadata,
     success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
-    cancel_url: `${appUrl}/checkout?canceled=true`,
+    cancel_url: bookingSchemaVersion === 1 ? `${appUrl}/book/camps?canceled=true` : `${appUrl}/checkout?canceled=true`,
   })
 
   await prisma.order.update({

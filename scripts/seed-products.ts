@@ -12,9 +12,10 @@ async function main() {
       type: ProductType.CAMP,
       price: 119.99,
       duration: 360,
-      description: 'Join us for an exciting day of coding, robotics, and tech adventures! Our day camps provide the perfect introduction to STEAM learning in a fun, engaging environment.',
+      description:
+        'Join us for an exciting day of coding, robotics, and tech adventures! Our day camps provide the perfect introduction to STEAM learning in a fun, engaging environment.',
       ageMin: 6,
-      ageMax: 12,
+      ageMax: 16,
       isActive: true,
     },
     {
@@ -23,9 +24,10 @@ async function main() {
       type: ProductType.CAMP,
       price: 149.99,
       duration: 480,
-      description: 'Extended learning with our comprehensive all-day program! Includes everything from day camp plus additional project time, advanced challenges, and extended care.',
+      description:
+        'Extended learning with our comprehensive all-day program! Includes everything from day camp plus additional project time, advanced challenges, and extended care.',
       ageMin: 6,
-      ageMax: 12,
+      ageMax: 16,
       isActive: true,
     },
     {
@@ -36,7 +38,7 @@ async function main() {
       duration: 360,
       description: 'Save with our 3-day bundle! Three full days of coding, robotics, and tech adventures with a discounted rate.',
       ageMin: 6,
-      ageMax: 12,
+      ageMax: 16,
       isActive: true,
     },
     {
@@ -45,9 +47,10 @@ async function main() {
       type: ProductType.CAMP,
       price: 399.99,
       duration: 480,
-      description: 'The ultimate camp experience! Three full all-day sessions with extended project time and advanced challenges at a discounted rate.',
+      description:
+        'The ultimate camp experience! Three full all-day sessions with extended project time and advanced challenges at a discounted rate.',
       ageMin: 6,
-      ageMax: 12,
+      ageMax: 16,
       isActive: true,
     },
     {
@@ -114,14 +117,14 @@ async function main() {
 
   for (const productData of products) {
     const existing = await prisma.product.findUnique({ where: { id: productData.id } })
-    
+
     if (!existing) {
       await prisma.product.create({ data: productData })
       console.log(`✅ Created: ${productData.name}`)
     } else {
       await prisma.product.update({
         where: { id: productData.id },
-        data: productData
+        data: productData,
       })
       console.log(`✅ Updated: ${productData.name}`)
     }
@@ -131,7 +134,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error(e)
     process.exit(1)
   })
