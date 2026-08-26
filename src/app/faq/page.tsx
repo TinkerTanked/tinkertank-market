@@ -35,7 +35,7 @@ const questions = [
   },
   {
     question: 'How can I ask a question before booking?',
-    answer: 'Call 1300 670 104, email hello@tinkertank.rocks or use the contact form and our team will help you choose the right program.'
+    answer: 'Call 0455 400 261, email hello@tinkertank.rocks or use the contact form and our team will help you choose the right program.'
   }
 ]
 

@@ -218,7 +218,7 @@ export default function PrivacyPolicyPage() {
               <p className='font-semibold'>TinkerTank Pty Ltd</p>
               <p>Neutral Bay, NSW 2089, Australia</p>
               <p>Email: <a href='mailto:privacy@tinkertank.rocks' className='text-primary-600 hover:underline'>privacy@tinkertank.rocks</a></p>
-              <p>Phone: <a href='tel:1300670104' className='text-primary-600 hover:underline'>1300 670 104</a></p>
+              <p>Phone: <a href='tel:+61455400261' className='text-primary-600 hover:underline'>0455 400 261</a></p>
             </div>
             <p className='mt-4'>
               If you are not satisfied with our response, you may lodge a complaint with the 

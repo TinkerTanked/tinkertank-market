@@ -131,7 +131,7 @@ export const NEUTRAL_BAY_LOCATION: Omit<Location, 'id' | 'createdAt' | 'updatedA
     longitude: 151.2243,
   },
   contact: {
-    phone: '1300 670 104', // Placeholder
+    phone: '0455 400 261',
     email: 'neutralbay@tinkertank.rocks', // Placeholder
   },
   facilities: [

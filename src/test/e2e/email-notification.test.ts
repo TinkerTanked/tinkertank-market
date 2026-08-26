@@ -177,7 +177,7 @@ describe('Email Notification Integration Tests', () => {
                     <h3>📞 Contact Information</h3>
                     <p>If you have any questions or need to make changes to your booking:</p>
                     <p><strong>Email:</strong> hello@tinkertank.rocks</p>
-                    <p><strong>Phone:</strong> 1300 670 104</p>
+                    <p><strong>Phone:</strong> 0455 400 261</p>
                     <p><strong>Emergency Contact:</strong> +61 400 123 456</p>
                   </div>
 
@@ -423,7 +423,7 @@ describe('Email Notification Integration Tests', () => {
                 </ul>
               </div>
               
-              <p>If you need to make any changes or have questions, please contact us at hello@tinkertank.rocks or call 1300 670 104.</p>
+              <p>If you need to make any changes or have questions, please contact us at hello@tinkertank.rocks or call 0455 400 261.</p>
               
               <p>See you tomorrow!</p>
               <p>The TinkerTank Team 🚀</p>
@@ -620,14 +620,14 @@ describe('Email Notification Integration Tests', () => {
                   <li>🔄 Credit toward any other TinkerTank program</li>
                   <li>📞 Priority booking for similar future events</li>
                 </ul>
-                <p><strong>To discuss alternatives, please reply to this email or call us at 1300 670 104.</strong></p>
+                <p><strong>To discuss alternatives, please reply to this email or call us at 0455 400 261.</strong></p>
               </div>
               
               <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
                 <h3>📞 Need Assistance?</h3>
                 <p>Our team is here to help:</p>
                 <p><strong>Email:</strong> hello@tinkertank.rocks</p>
-                <p><strong>Phone:</strong> 1300 670 104</p>
+                <p><strong>Phone:</strong> 0455 400 261</p>
                 <p><strong>Hours:</strong> Monday-Friday 9AM-6PM, Saturday 9AM-4PM</p>
               </div>
               
@@ -729,7 +729,7 @@ describe('Email Notification Integration Tests', () => {
               
               <p>We apologize for any inconvenience these changes may cause and appreciate your flexibility.</p>
               
-              <p>Questions? Contact us at hello@tinkertank.rocks or 1300 670 104.</p>
+              <p>Questions? Contact us at hello@tinkertank.rocks or 0455 400 261.</p>
               
               <p>Looking forward to seeing ${student.name} at the updated time!</p>
               <p>Best regards,<br>The TinkerTank Team</p>

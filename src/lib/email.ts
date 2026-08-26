@@ -67,7 +67,7 @@ LOCATION_DETAILS['tinkertank neutral bay'] = LOCATION_DETAILS['neutral bay'];
 
 const UNKNOWN_LOCATION_NOTES =
   "We'll be in touch shortly to confirm your location and arrival details. " +
-  'If you need anything sooner please reply to this email or call us on 1300 670 104.';
+  'If you need anything sooner please reply to this email or call us on 0455 400 261.';
 
 /**
  * Resolve display info for a single order item's location. Handles the special
@@ -153,7 +153,7 @@ function buildCalendarUrl(
     `Student: ${item.student.name}`,
     `Booking: ${item.product.name}`,
     `Order: TinkerTank Booking #${orderId.slice(-8).toUpperCase()}`,
-    'Questions? Reply to your confirmation email or contact hello@tinkertank.rocks / 1300 670 104.'
+    'Questions? Reply to your confirmation email or contact hello@tinkertank.rocks / 0455 400 261.'
   ].join('\n\n');
 
   const params = new URLSearchParams({
@@ -417,7 +417,7 @@ export function generateBookingConfirmationEmail(order: OrderWithItems) {
 
     <div style="text-align: center; color: #6b7280; font-size: 14px;">
       <p>Questions? Reply to this email or contact us:</p>
-      <p>📧 hello@tinkertank.rocks | 📞 1300 670 104</p>
+      <p>📧 hello@tinkertank.rocks | 📞 0455 400 261</p>
       <p style="margin-top: 20px;">
         <a href="https://tinkertank.rocks" style="color: #2563eb;">TinkerTank</a> - 
         Where imagination meets innovation

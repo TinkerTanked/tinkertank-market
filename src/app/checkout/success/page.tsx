@@ -151,8 +151,8 @@ function CheckoutSuccessContent() {
             <button type='button' onClick={() => window.location.reload()} className='btn-primary'>
               Check again
             </button>
-            <a href='tel:1300670104' className='btn-outline'>
-              Call 1300 670 104
+            <a href='tel:+61455400261' className='btn-outline'>
+              Call 0455 400 261
             </a>
           </div>
         </div>
@@ -263,8 +263,8 @@ function CheckoutSuccessContent() {
             <div className='space-y-3'>
               <div className='flex items-center space-x-3'>
                 <PhoneIcon className='w-5 h-5 text-primary-500' />
-                <a href='tel:1300670104' className='text-primary-600 hover:text-primary-700'>
-                  1300 670 104
+                <a href='tel:+61455400261' className='text-primary-600 hover:text-primary-700'>
+                  0455 400 261
                 </a>
               </div>
               <div className='flex items-center space-x-3'>

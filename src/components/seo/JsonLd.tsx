@@ -30,7 +30,7 @@ export function OrganizationJsonLd({
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-      telephone: '+61 1300 670 104',
+      telephone: '+61455400261',
       email: 'hello@tinkertank.rocks'
     },
     sameAs: [
@@ -183,7 +183,7 @@ export function LocalBusinessJsonLd({ name = 'TinkerTank', url = 'https://tinker
     name,
     url,
     description: 'STEAM education programs for kids aged 5-16',
-    telephone: '+61 1300 670 104',
+    telephone: '+61455400261',
     email: 'hello@tinkertank.rocks',
     image: 'https://tinkertank.rocks/images/home-hero.jpg',
     address: {

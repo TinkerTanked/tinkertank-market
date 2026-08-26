@@ -88,10 +88,10 @@ export default function ContactClient() {
                     <h3 className='font-display font-semibold text-lg text-gray-900'>Phone</h3>
                     <p className='text-gray-600'>Give us a call for immediate assistance</p>
                     <a 
-                      href='tel:1300670104' 
+                      href='tel:+61455400261'
                       className='text-primary-600 hover:text-primary-700 font-medium transition-colors duration-200'
                     >
-                      1300 670 104
+                      0455 400 261
                     </a>
                   </div>
                 </div>
@@ -282,8 +282,8 @@ export default function ContactClient() {
               <p className='text-gray-600 mb-4'>
                 Speak directly with our team for immediate assistance
               </p>
-              <a href='tel:1300670104' className='btn-primary'>
-                1300 670 104
+              <a href='tel:+61455400261' className='btn-primary'>
+                0455 400 261
               </a>
             </div>
 
