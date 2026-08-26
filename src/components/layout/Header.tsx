@@ -38,9 +38,9 @@ export default function Header() {
               <ShieldCheckIcon className='h-4 w-4 text-blue-300' />
               Child safety comes first
             </Link>
-            <a href='tel:1300670104' className='flex items-center gap-1.5 hover:text-white'>
+            <a href='tel:+61455400261' className='flex items-center gap-1.5 hover:text-white'>
               <PhoneIcon className='h-4 w-4 text-blue-300' />
-              1300 670 104
+              0455 400 261
             </a>
           </div>
         </div>
