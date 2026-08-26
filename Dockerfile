@@ -32,6 +32,15 @@ RUN npx esbuild scripts/seed-ignite-products-locations.ts \
   --packages=external \
   --outfile=/app/seed-ignite-products-locations.js
 
+# Bundle the default-dry-run roster repair utility. Roster data is supplied at
+# runtime and is never copied into the image.
+RUN npx esbuild scripts/repair-ignite-roster.ts \
+  --bundle \
+  --platform=node \
+  --format=cjs \
+  --external:@prisma/client \
+  --outfile=/app/repair-ignite-roster.js
+
 # Build the application
 ENV NODE_ENV=production
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
@@ -70,6 +79,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modul
 # Copy scripts for database operations
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/seed-ignite-products-locations.js ./seed-ignite-products-locations.js
+COPY --from=builder --chown=nextjs:nodejs /app/repair-ignite-roster.js ./repair-ignite-roster.js
 
 USER nextjs
 

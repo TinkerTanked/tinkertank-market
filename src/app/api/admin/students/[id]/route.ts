@@ -145,6 +145,7 @@ interface UpdateStudentBody {
   firstName?: string
   lastName?: string
   dateOfBirth?: string
+  birthdateEstimated?: boolean
   school?: string
   allergies?: string
   medicalNotes?: string
@@ -165,6 +166,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const updateData: {
       name?: string
       birthdate?: Date
+      birthdateEstimated?: boolean
       school?: string | null
       allergies?: string | null
       medicalNotes?: string | null
@@ -181,6 +183,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (body.dateOfBirth !== undefined) {
       updateData.birthdate = new Date(body.dateOfBirth)
+      updateData.birthdateEstimated = body.birthdateEstimated ?? false
+    } else if (body.birthdateEstimated !== undefined) {
+      updateData.birthdateEstimated = body.birthdateEstimated
     }
 
     if (body.school !== undefined) {

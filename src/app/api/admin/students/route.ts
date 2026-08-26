@@ -30,6 +30,7 @@ interface CreateStudentBody {
   firstName: string
   lastName: string
   dateOfBirth: string
+  birthdateEstimated?: boolean
   school?: string
   allergies?: string
   medicalNotes?: string
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: fullName,
         birthdate: new Date(body.dateOfBirth),
+        birthdateEstimated: body.birthdateEstimated ?? false,
         school: body.school || null,
         allergies: body.allergies || null,
         medicalNotes: body.medicalNotes || null,

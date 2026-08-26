@@ -84,7 +84,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
       for (const studentInfo of body.studentNames) {
         const fullName = `${studentInfo.firstName} ${studentInfo.lastName}`.trim()
-        const birthdate = studentInfo.dateOfBirth ? new Date(studentInfo.dateOfBirth) : new Date(2015, 0, 1)
+        const birthdateEstimated = !studentInfo.dateOfBirth
+        const birthdate = studentInfo.dateOfBirth ? new Date(studentInfo.dateOfBirth) : new Date('2018-01-01T00:00:00.000Z')
 
         let student
         if (studentInfo.id) {
@@ -92,7 +93,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             where: { id: studentInfo.id },
             data: {
               name: fullName,
-              birthdate,
+              ...(studentInfo.dateOfBirth ? { birthdate, birthdateEstimated: false } : {}),
               allergies: studentInfo.allergies || null,
               school: studentInfo.school || null,
               medicalNotes: studentInfo.medicalNotes || null,
@@ -105,6 +106,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             data: {
               name: fullName,
               birthdate,
+              birthdateEstimated,
               allergies: studentInfo.allergies || null,
               school: studentInfo.school || null,
               medicalNotes: studentInfo.medicalNotes || null,
@@ -273,16 +275,31 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                   const eventDateEnd = new Date(event.startDateTime)
                   eventDateEnd.setHours(23, 59, 59, 999)
 
-                  const existingBooking = await tx.booking.findFirst({
+                  let existingBooking = await tx.booking.findUnique({
                     where: {
-                      studentId: student.id,
-                      startDate: {
-                        gte: eventDateStart,
-                        lte: eventDateEnd
-                      },
-                      product: { type: 'SUBSCRIPTION' }
+                      igniteSubscriptionId_studentId_startDate: {
+                        igniteSubscriptionId: subscription.id,
+                        studentId: student.id,
+                        startDate: event.startDateTime
+                      }
                     }
                   })
+
+                  // Adopt only an unlinked legacy occurrence. Never move a
+                  // booking owned by another Stripe subscription.
+                  if (!existingBooking) {
+                    existingBooking = await tx.booking.findFirst({
+                      where: {
+                        studentId: student.id,
+                        igniteSubscriptionId: null,
+                        startDate: {
+                          gte: eventDateStart,
+                          lte: eventDateEnd
+                        },
+                        product: { type: 'SUBSCRIPTION' }
+                      }
+                    })
+                  }
 
                   if (!existingBooking) {
                     await tx.booking.create({
@@ -291,6 +308,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                         productId: subscriptionProduct.id,
                         locationId: event.locationId,
                         eventId: event.id,
+                        igniteSubscriptionId: subscription.id,
                         startDate: event.startDateTime,
                         endDate: event.endDateTime,
                         status: 'CONFIRMED',
@@ -303,6 +321,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                       where: { id: existingBooking.id },
                       data: {
                         eventId: event.id,
+                        igniteSubscriptionId: subscription.id,
                         startDate: event.startDateTime,
                         endDate: event.endDateTime,
                         locationId: event.locationId

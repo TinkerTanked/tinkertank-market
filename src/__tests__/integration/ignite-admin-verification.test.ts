@@ -19,6 +19,9 @@ vi.mock('@/lib/prisma', () => ({
     },
     event: {
       findMany: vi.fn()
+    },
+    igniteSubscription: {
+      findMany: vi.fn()
     }
   }
 }));
@@ -278,34 +281,36 @@ describe('Admin Schedule API for Ignite', () => {
     (prisma.orderItem.findMany as any).mockResolvedValue([]);
   });
 
+  const scheduleBooking = (overrides: Record<string, unknown> = {}) => ({
+    id: 'booking_ignite',
+    studentId: 'student_ignite_1',
+    locationId: 'location_nb_123',
+    startDate: new Date('2026-10-16T23:00:00.000Z'),
+    endDate: new Date('2026-10-17T01:00:00.000Z'),
+    status: 'CONFIRMED',
+    rosterOverride: false,
+    student: {
+      name: 'Test Student',
+      emergencyContactName: 'Test Parent',
+      emergencyContactPhone: '+61400000000'
+    },
+    product: {
+      name: 'Drop-Off Studio Ignite - Neutral Bay',
+      type: 'SUBSCRIPTION',
+      duration: 120
+    },
+    location: { name: 'Neutral Bay Studio' },
+    attendance: null,
+    igniteSubscription: {
+      status: 'ACTIVE',
+      customerName: 'Test Parent',
+      customerEmail: 'parent@test.com'
+    },
+    ...overrides
+  });
+
   it('buckets and formats Ignite bookings in Sydney time on a UTC server', async () => {
-    (prisma.booking.findMany as any).mockResolvedValue([{
-      id: 'booking_saturday_ignite',
-      studentId: 'student_ignite_1',
-      locationId: 'location_nb_123',
-      startDate: new Date('2026-10-16T23:00:00.000Z'),
-      endDate: new Date('2026-10-17T01:00:00.000Z'),
-      status: 'CONFIRMED',
-      student: {
-        name: 'Test Student',
-        emergencyContactName: 'Test Parent',
-        emergencyContactPhone: '+61400000000'
-      },
-      product: {
-        name: 'Drop-Off Studio Ignite - Neutral Bay',
-        type: 'SUBSCRIPTION',
-        duration: 120
-      },
-      location: {
-        name: 'Neutral Bay Studio'
-      },
-      attendance: null,
-      igniteSubscription: {
-        status: 'ACTIVE',
-        customerName: 'Test Parent',
-        customerEmail: 'parent@test.com'
-      }
-    }]);
+    (prisma.booking.findMany as any).mockResolvedValue([scheduleBooking()]);
 
     const { GET } = await import('@/app/api/admin/schedule/route');
     const request = new NextRequest('http://localhost:3000/api/admin/schedule?date=2026-10-17&mode=day');
@@ -319,6 +324,36 @@ describe('Admin Schedule API for Ignite', () => {
       productType: 'IGNITE',
       timeSlot: '10:00am - 12:00pm'
     }));
+  });
+
+  it('shows intentional manual Ignite enrollments without a Stripe subscription', async () => {
+    (prisma.booking.findMany as any).mockResolvedValue([
+      scheduleBooking({ igniteSubscription: null, rosterOverride: true })
+    ]);
+
+    const { GET } = await import('@/app/api/admin/schedule/route');
+    const request = new NextRequest('http://localhost:3000/api/admin/schedule?date=2026-10-17&mode=day');
+    const response = await GET(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].parentName).toBe('Test Parent');
+  });
+
+  it('hides stale standalone and inactive linked Ignite bookings', async () => {
+    (prisma.booking.findMany as any).mockResolvedValue([
+      scheduleBooking({ id: 'stale', igniteSubscription: null, rosterOverride: false }),
+      scheduleBooking({ id: 'canceled', igniteSubscription: { status: 'CANCELED' } })
+    ]);
+
+    const { GET } = await import('@/app/api/admin/schedule/route');
+    const request = new NextRequest('http://localhost:3000/api/admin/schedule?date=2026-10-17&mode=day');
+    const response = await GET(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.items).toHaveLength(0);
   });
 
   it('keeps the final Sydney calendar day inside the school term', () => {
@@ -437,6 +472,8 @@ describe('Admin Bookings Display', () => {
 describe('Admin Calendar View for Ignite', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (prisma.booking.findMany as any).mockResolvedValue([]);
+    (prisma.igniteSubscription.findMany as any).mockResolvedValue([]);
   });
 
   const createMockEvent = (overrides: any) => ({
@@ -478,11 +515,12 @@ describe('Admin Calendar View for Ignite', () => {
 
     const response = await GET(request);
     const data = await response.json();
+    const databaseEvents = data.filter((event: any) => event.id.startsWith('event_'));
 
     expect(response.status).toBe(200);
-    expect(data).toHaveLength(3);
+    expect(databaseEvents).toHaveLength(3);
 
-    data.forEach((event: any) => {
+    databaseEvents.forEach((event: any) => {
       const date = new Date(event.start);
       expect(date.getUTCDay()).toBe(3); // Wednesday (UTC)
     });
@@ -504,11 +542,12 @@ describe('Admin Calendar View for Ignite', () => {
 
     const response = await GET(request);
     const data = await response.json();
+    const databaseEvents = data.filter((event: any) => event.id.startsWith('event_'));
 
     expect(response.status).toBe(200);
-    expect(data).toHaveLength(5);
+    expect(databaseEvents).toHaveLength(5);
 
-    const daysOfWeek = data.map((event: any) => new Date(event.start).getUTCDay());
+    const daysOfWeek = databaseEvents.map((event: any) => new Date(event.start).getUTCDay());
     expect(daysOfWeek).toContain(1); // Monday
     expect(daysOfWeek).toContain(2); // Tuesday
     expect(daysOfWeek).toContain(3); // Wednesday
@@ -532,11 +571,12 @@ describe('Admin Calendar View for Ignite', () => {
 
     const response = await GET(request);
     const data = await response.json();
+    const databaseEvents = data.filter((event: any) => event.id.startsWith('event_'));
 
     expect(response.status).toBe(200);
-    expect(data).toHaveLength(3);
+    expect(databaseEvents).toHaveLength(3);
 
-    data.forEach((event: any) => {
+    databaseEvents.forEach((event: any) => {
       const date = new Date(event.start);
       expect(date.getUTCDay()).toBe(2); // Tuesday (UTC)
     });
@@ -555,23 +595,24 @@ describe('Admin Calendar View for Ignite', () => {
 
     const response = await GET(request);
     const data = await response.json();
+    const databaseEvents = data.filter((event: any) => event.id.startsWith('event_'));
 
     expect(response.status).toBe(200);
-    expect(data).toHaveLength(2);
+    expect(databaseEvents).toHaveLength(2);
 
-    data.forEach((event: any) => {
+    databaseEvents.forEach((event: any) => {
       expect(event).toHaveProperty('start');
       expect(event).toHaveProperty('end');
       expect(event).toHaveProperty('title');
     });
 
-    const inSchoolEvent = data.find((e: any) => e.title.includes('In-School'));
+    const inSchoolEvent = databaseEvents.find((e: any) => e.title.includes('In-School'));
     const inSchoolStart = new Date(inSchoolEvent.start);
     const inSchoolEnd = new Date(inSchoolEvent.end);
     const inSchoolDuration = (inSchoolEnd.getTime() - inSchoolStart.getTime()) / (1000 * 60);
     expect(inSchoolDuration).toBe(60); // 1 hour
 
-    const dropOffEvent = data.find((e: any) => e.title.includes('Drop-Off'));
+    const dropOffEvent = databaseEvents.find((e: any) => e.title.includes('Drop-Off'));
     const dropOffStart = new Date(dropOffEvent.start);
     const dropOffEnd = new Date(dropOffEvent.end);
     const dropOffDuration = (dropOffEnd.getTime() - dropOffStart.getTime()) / (1000 * 60);
@@ -612,5 +653,25 @@ describe('Admin Calendar View for Ignite', () => {
     const data = await response.json();
 
     expect(data[0].extendedProps?.location).toBe('Balgowlah Heights Public School');
+  });
+
+  it('includes approved roster overrides in generated Ignite sessions', async () => {
+    (prisma.event.findMany as any).mockResolvedValue([]);
+    (prisma.booking.findMany as any).mockResolvedValue([{
+      startDate: new Date('2024-10-16T01:45:00.000Z'),
+      student: { id: 'manual_student', name: 'Manual Student' },
+      product: { id: 'ignite-balgowlah-wed' }
+    }]);
+
+    const { GET } = await import('@/app/api/events/fullcalendar/route');
+    const request = new NextRequest('http://localhost:3000/api/events/fullcalendar?start=2024-10-16T00:00:00Z&end=2024-10-16T23:59:59Z&view=admin');
+    const response = await GET(request);
+    const data = await response.json();
+    const session = data.find((event: any) => event.id === 'ignite-ignite-balgowlah-wed-2024-10-16');
+
+    expect(response.status).toBe(200);
+    expect(session.extendedProps.students).toEqual([
+      expect.objectContaining({ id: 'manual_student', name: 'Manual Student' })
+    ]);
   });
 });

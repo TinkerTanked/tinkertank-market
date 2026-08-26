@@ -4,7 +4,7 @@ import { getBookingStatusColor, getPaymentStatusColor, PaymentStatus } from '@/t
 import { z } from 'zod'
 import { IGNITE_SESSIONS } from '@/config/igniteProducts'
 import { format } from 'date-fns'
-import { fromZonedTime } from 'date-fns-tz'
+import { formatInTimeZone, fromZonedTime } from 'date-fns-tz'
 
 const SYDNEY_TZ = 'Australia/Sydney'
 
@@ -117,6 +117,34 @@ export async function GET(request: NextRequest) {
         }
         current.setDate(current.getDate() + 1)
       }
+    })
+
+    // Include invoice/complimentary enrollments and explicit attendance
+    // overrides for paused billing. Only approved overrides are included, so
+    // stale standalone subscription bookings cannot reappear in the calendar.
+    const rosterOverrides = await prisma.booking.findMany({
+      where: {
+        rosterOverride: true,
+        status: 'CONFIRMED',
+        startDate: { gte: query.start, lte: query.end },
+        product: { type: 'SUBSCRIPTION' }
+      },
+      include: {
+        student: { select: { id: true, name: true } },
+        product: { select: { id: true } }
+      }
+    })
+
+    rosterOverrides.forEach(booking => {
+      if (!IGNITE_SESSIONS.some(session => session.id === booking.product.id)) return
+
+      const dateKey = formatInTimeZone(booking.startDate, SYDNEY_TZ, 'yyyy-MM-dd')
+      const key = `${booking.product.id}-${dateKey}`
+      const students = subscriberMap.get(key) || []
+      if (!students.some(student => student.id === booking.student.id)) {
+        students.push(booking.student)
+      }
+      subscriberMap.set(key, students)
     })
 
     // Generate Ignite session events

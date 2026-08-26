@@ -156,10 +156,13 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
     }
   });
 
-  // Only show Ignite occurrences for subscriptions that are currently active or
-  // trialing (matches how the Ignite calendars render live subscribers).
+  // Linked Ignite occurrences normally follow their subscription status.
+  // Approved invoice/complimentary/paused-billing roster overrides remain
+  // visible, while stale standalone subscription bookings stay hidden.
   const visibleBookings = bookings.filter(booking => {
     if (booking.product.type !== 'SUBSCRIPTION') return true;
+    if (booking.rosterOverride) return true;
+    if (!booking.igniteSubscription) return false;
     const status = booking.igniteSubscription?.status;
     return status === 'ACTIVE' || status === 'TRIALING';
   });
