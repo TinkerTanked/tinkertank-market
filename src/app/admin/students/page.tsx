@@ -9,6 +9,7 @@ interface Student {
   id: string
   name: string
   birthdate: string
+  birthdateEstimated: boolean
   school: string | null
   allergies: string | null
   medicalNotes: string | null
@@ -30,6 +31,7 @@ interface StudentFormData {
   firstName: string
   lastName: string
   dateOfBirth: string
+  birthdateEstimated: boolean
   school: string
   allergies: string
   medicalNotes: string
@@ -41,6 +43,7 @@ const emptyForm: StudentFormData = {
   firstName: '',
   lastName: '',
   dateOfBirth: '',
+  birthdateEstimated: false,
   school: '',
   allergies: '',
   medicalNotes: '',
@@ -66,6 +69,7 @@ function StudentModal({
         firstName: nameParts[0] || '',
         lastName: nameParts.slice(1).join(' ') || '',
         dateOfBirth: student.birthdate ? student.birthdate.split('T')[0] : '',
+        birthdateEstimated: student.birthdateEstimated,
         school: student.school || '',
         allergies: student.allergies || '',
         medicalNotes: student.medicalNotes || '',
@@ -129,7 +133,7 @@ function StudentModal({
               <input
                 type="date"
                 value={form.dateOfBirth}
-                onChange={(e) => updateField('dateOfBirth', e.target.value)}
+                onChange={(e) => setForm(prev => ({ ...prev, dateOfBirth: e.target.value, birthdateEstimated: false }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
               />
@@ -371,6 +375,9 @@ export default function AdminStudents() {
                         <div className="mt-2 flex flex-wrap items-center text-sm text-gray-500 gap-x-4 gap-y-1">
                           <span>Age: {calculateAge(student.birthdate)} years</span>
                           <span>Born: {new Date(student.birthdate).toLocaleDateString()}</span>
+                          {student.birthdateEstimated && (
+                            <span className="font-medium text-amber-700">Estimated DOB</span>
+                          )}
                           {student.school && <span>School: {student.school}</span>}
                           {student.allergies && (
                             <span className="text-red-600 font-medium">⚠️ {student.allergies}</span>

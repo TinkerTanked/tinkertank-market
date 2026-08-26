@@ -72,6 +72,7 @@ interface StudentProfile {
   id: string
   name: string
   birthdate: string
+  birthdateEstimated: boolean
   school: string | null
   allergies: string | null
   medicalNotes: string | null
@@ -245,7 +246,9 @@ export default function StudentProfilePage() {
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Date of Birth</dt>
-              <dd className="text-sm text-gray-900">{formatDate(student.birthdate)}</dd>
+              <dd className="text-sm text-gray-900">
+                {formatDate(student.birthdate)}{student.birthdateEstimated ? ' (estimated)' : ''}
+              </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">School</dt>

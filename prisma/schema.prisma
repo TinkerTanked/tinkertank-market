@@ -13,6 +13,8 @@ model Student {
   firstName             String?
   lastName              String?
   birthdate             DateTime
+  birthdateEstimated    Boolean                     @default(false)
+  importReference       String?                     @unique
   allergies             String?
   school                String?
   medicalNotes          String?
@@ -90,6 +92,7 @@ model Booking {
   locationId           String
   eventId              String?
   igniteSubscriptionId String?
+  rosterOverride       Boolean             @default(false)
   startDate            DateTime
   endDate              DateTime
   status               BookingStatus       @default(PENDING)
