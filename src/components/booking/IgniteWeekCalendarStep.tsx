@@ -82,13 +82,15 @@ export default function IgniteWeekCalendarStep({ selectedSession, onSessionSelec
       byDay[day] = []
     })
 
-    IGNITE_SESSIONS.filter(session => getIgniteCheckoutPlan(session, new Date()) !== null).forEach(session => {
-      session.dayOfWeek.forEach(day => {
-        if (byDay[day]) {
-          byDay[day].push({ ...session, displayDay: day })
-        }
+    IGNITE_SESSIONS
+      .filter(session => session.isBookable !== false && getIgniteCheckoutPlan(session, new Date()) !== null)
+      .forEach(session => {
+        session.dayOfWeek.forEach(day => {
+          if (byDay[day]) {
+            byDay[day].push({ ...session, displayDay: day })
+          }
+        })
       })
-    })
 
     // Sort each day's sessions by start time
     Object.keys(byDay).forEach(day => {

@@ -22,6 +22,7 @@ export interface IgniteSessionConfig {
   lastSessionDate?: string
   prepayNextSession?: boolean
   allowFinalSessionOneTime?: boolean
+  isBookable?: boolean
   stripePriceId: string
   stripeProductId: string
 }
@@ -132,7 +133,8 @@ const BASE_SESSIONS: Omit<IgniteSessionConfig, 'stripePriceId' | 'stripeProductI
     dayOfWeek: ['monday'],
     startTime: '15:30',
     endTime: '17:30',
-    priceWeekly: 39.99
+    priceWeekly: 39.99,
+    isBookable: false
   },
   {
     id: 'ignite-manly-library',
@@ -154,7 +156,8 @@ const BASE_SESSIONS: Omit<IgniteSessionConfig, 'stripePriceId' | 'stripeProductI
     dayOfWeek: ['monday'],
     startTime: '15:00',
     endTime: '17:30',
-    priceWeekly: 44.99
+    priceWeekly: 44.99,
+    isBookable: false
   },
   {
     id: 'ignite-manly-village',

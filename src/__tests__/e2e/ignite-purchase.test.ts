@@ -221,11 +221,19 @@ test.describe('Session Selection', () => {
     await page.goto('/ignite')
     await page.click('button:has-text("Subscribe Now")')
     
-    // Click on a School Pickup session
-    await page.click('button:has-text("Brookvale Public School")')
+    // Click on an active School Pickup session
+    await page.click('button:has-text("Manly Village Public School")')
     
     await expect(page.locator('text=Selected Session')).toBeVisible()
-    await expect(page.locator('text=$44.99')).toBeVisible()
+    await expect(page.locator('text=$54.99')).toBeVisible()
+  })
+
+  test('should hide retired Brookvale Monday sessions', async ({ page }) => {
+    await page.goto('/ignite')
+    await page.click('button:has-text("Subscribe Now")')
+
+    await expect(page.locator('button:has-text("Brookvale Community Centre")')).toHaveCount(0)
+    await expect(page.locator('button:has-text("Brookvale Public School")')).toHaveCount(0)
   })
 })
 
@@ -310,7 +318,7 @@ test.describe('Complete Purchase Flow', () => {
   const testProducts = [
     { id: 'ignite-balgowlah-wed', location: 'Balgowlah Heights Public', price: '$25.99' },
     { id: 'ignite-nb-monfri', location: 'Neutral Bay Studio', price: '$39.99' },
-    { id: 'ignite-brookvale-ps', location: 'Brookvale Public School', price: '$44.99' }
+    { id: 'ignite-manly-village', location: 'Manly Village Public School', price: '$54.99' }
   ]
 
   for (const product of testProducts) {
