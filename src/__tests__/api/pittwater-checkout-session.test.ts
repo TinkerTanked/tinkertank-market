@@ -47,12 +47,12 @@ function body() {
   }
 }
 
-async function checkout() {
+async function checkout(payload = body()) {
   const { POST } = await import('@/app/api/stripe/create-checkout-session/route')
   return POST(new NextRequest('http://localhost:3000/api/stripe/create-checkout-session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body())
+    body: JSON.stringify(payload)
   }))
 }
 
@@ -134,4 +134,19 @@ describe('Pittwater fixed-term checkout', () => {
     expect(prisma.$transaction).not.toHaveBeenCalled()
     expect(mockStripe.checkout.sessions.create).not.toHaveBeenCalled()
   })
+
+  it.each(['ignite-brookvale-cc', 'ignite-brookvale-ps'])(
+    'rejects retired session %s from stale or direct checkout requests',
+    async productId => {
+      const payload = body()
+      payload.items[0].productId = productId
+
+      const response = await checkout(payload)
+
+      expect(response.status).toBe(410)
+      await expect(response.json()).resolves.toEqual({ error: 'This Ignite session is no longer available.' })
+      expect(prisma.product.findFirst).not.toHaveBeenCalled()
+      expect(mockStripe.checkout.sessions.create).not.toHaveBeenCalled()
+    }
+  )
 })

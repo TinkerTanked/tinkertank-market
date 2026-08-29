@@ -156,6 +156,9 @@ async function createIgniteSubscriptionCheckout(subscriptionItems: CheckoutItem[
   if (!session) {
     return NextResponse.json({ error: 'Ignite session not found' }, { status: 404 })
   }
+  if (session.isBookable === false) {
+    return NextResponse.json({ error: 'This Ignite session is no longer available.' }, { status: 410 })
+  }
 
   const students = item.students
   if (students.length < 1 || students.length > MAX_IGNITE_STUDENTS) {
