@@ -15,6 +15,13 @@ export interface IgniteSessionConfig {
   startTime: string
   endTime: string
   priceWeekly: number
+  ageMin?: number
+  ageMax?: number
+  capacity?: number
+  firstSessionDate?: string
+  lastSessionDate?: string
+  prepayNextSession?: boolean
+  allowFinalSessionOneTime?: boolean
   stripePriceId: string
   stripeProductId: string
 }
@@ -32,7 +39,8 @@ const TEST_STRIPE_IDS = {
   'ignite-manly-village': { priceId: 'price_1StKPIDqupgKyrhoYd0u5j2S', productId: 'prod_Tr2UHCCqGtGvCB' },
   'ignite-nb-ps': { priceId: 'price_1StKPKDqupgKyrho5L0t4yPu', productId: 'prod_Tr2U80JbdBmEQS' },
   'ignite-redlands': { priceId: 'price_1StKPLDqupgKyrhoXcJwf3Bp', productId: 'prod_Tr2UjbbOsxA9Yu' },
-  'ignite-stmarys': { priceId: 'price_1StKPMDqupgKyrho5Yb1KWKj', productId: 'prod_Tr2UU6GWX0k98g' }
+  'ignite-stmarys': { priceId: 'price_1StKPMDqupgKyrho5Yb1KWKj', productId: 'prod_Tr2UU6GWX0k98g' },
+  'ignite-pittwater-house': { priceId: 'price_1U9iS3DqupgKyrhopm4jcweu', productId: 'prod_VA2XrJbFaBQvkR' }
 } as const
 
 // Stripe PRODUCTION mode IDs (for production deployment)
@@ -48,7 +56,8 @@ const PROD_STRIPE_IDS = {
   'ignite-manly-village': { priceId: 'price_1Su9JeDqupgKyrhoC822jky2', productId: 'prod_Trt5JJHA2nTXxV' },
   'ignite-nb-ps': { priceId: 'price_1Su9JfDqupgKyrhoeKneIv7H', productId: 'prod_Trt5Uer7uihqjb' },
   'ignite-redlands': { priceId: 'price_1Su9JgDqupgKyrhoudkyZNhg', productId: 'prod_Trt5IodbfvxFMA' },
-  'ignite-stmarys': { priceId: 'price_1Su9JiDqupgKyrho6sG10bqE', productId: 'prod_Trt5Z8qkkm8dbm' }
+  'ignite-stmarys': { priceId: 'price_1Su9JiDqupgKyrho6sG10bqE', productId: 'prod_Trt5Z8qkkm8dbm' },
+  'ignite-pittwater-house': { priceId: 'price_1U9iSFDqupgKyrhoqkjjaeda', productId: 'prod_VA2X6L1a4KPkmq' }
 } as const
 
 type SessionId = keyof typeof TEST_STRIPE_IDS
@@ -186,6 +195,24 @@ const BASE_SESSIONS: Omit<IgniteSessionConfig, 'stripePriceId' | 'stripeProductI
     startTime: '15:00',
     endTime: '17:30',
     priceWeekly: 54.99
+  },
+  {
+    id: 'ignite-pittwater-house',
+    name: 'In-School Ignite - Pittwater House',
+    programType: 'in-school',
+    location: 'Pittwater House',
+    address: '70 South Creek Rd, Collaroy NSW 2097',
+    dayOfWeek: ['monday'],
+    startTime: '15:30',
+    endTime: '17:00',
+    priceWeekly: 39.99,
+    ageMin: 7,
+    ageMax: 16,
+    capacity: 20,
+    firstSessionDate: '2026-10-19',
+    lastSessionDate: '2026-12-07',
+    prepayNextSession: true,
+    allowFinalSessionOneTime: true
   }
 ]
 

@@ -9,6 +9,12 @@ const mockStripe = {
   subscriptions: {
     retrieve: vi.fn()
   },
+  customers: {
+    retrieve: vi.fn()
+  },
+  prices: {
+    retrieve: vi.fn()
+  },
   refunds: {
     create: vi.fn()
   }
@@ -749,6 +755,100 @@ describe('Stripe Webhook Route', () => {
       const retryResponse = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
       expect(retryResponse.status).toBe(200)
       expect(createMany).toHaveBeenCalledWith(expect.objectContaining({ skipDuplicates: true }))
+    })
+
+    it('fulfils the final Pittwater session once without creating recurring events', async () => {
+      const igniteSession = IGNITE_SESSIONS.find(session => session.id === 'ignite-pittwater-house')!
+      const bookingDate = new Date('2026-12-07T04:30:00.000Z')
+      const igniteOrder = createMockOrder({
+        id: 'order_pittwater_final',
+        totalAmount: 39.99,
+        orderItems: [{
+          ...createMockOrder().orderItems[0],
+          id: 'item_pittwater_final',
+          productId: igniteSession.id,
+          studentId: 'student_1',
+          bookingDate,
+          price: 39.99,
+          student: { id: 'student_1', name: 'Ada Lovelace', allergies: null },
+          product: { id: igniteSession.id, name: igniteSession.name, type: 'SUBSCRIPTION' }
+        }]
+      })
+      const checkoutSession = createCheckoutSession({
+        id: 'cs_pittwater_final',
+        payment_intent: 'pi_pittwater_final',
+        metadata: {
+          orderId: igniteOrder.id,
+          isSubscription: 'false',
+          isIgniteSingleSession: 'true',
+          igniteSessionId: igniteSession.id,
+          locationId: mockLocation.id
+        }
+      })
+      const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
+      const createMany = vi.fn().mockResolvedValue({ count: 1 })
+
+      ;(mockStripe.webhooks.constructEvent as any).mockReturnValue(webhookEvent)
+      ;(prisma.order.findUnique as any).mockResolvedValue(igniteOrder)
+      ;(prisma.$transaction as any).mockImplementationOnce(async (callback: any) => callback({
+        order: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        location: { findUnique: vi.fn().mockResolvedValue(mockLocation), findFirst: vi.fn() },
+        booking: { count: vi.fn().mockResolvedValue(19), createMany },
+        $executeRaw: vi.fn().mockResolvedValue(1)
+      }))
+
+      const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+
+      expect(response.status).toBe(200)
+      expect(createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({
+          productId: igniteSession.id,
+          rosterOverride: true,
+          startDate: bookingDate,
+          endDate: new Date('2026-12-07T06:00:00.000Z'),
+          status: 'CONFIRMED'
+        })]
+      })
+      expect(eventService.createEventsFromOrder).not.toHaveBeenCalled()
+      expect(sendBookingConfirmationEmail).toHaveBeenCalled()
+      expect(notificationService.notifyBookingConfirmed).toHaveBeenCalled()
+    })
+  })
+
+  describe('9. Ignite subscription lifecycle', () => {
+    it('maps Stripe pause_collection to local PAUSED status', async () => {
+      const igniteSession = IGNITE_SESSIONS.find(session => session.id === 'ignite-pittwater-house')!
+      const subscription = {
+        id: 'sub_pittwater_paused',
+        customer: 'cus_pittwater',
+        status: 'active',
+        pause_collection: { behavior: 'void' },
+        metadata: { igniteSessionId: igniteSession.id },
+        current_period_start: 1795996800,
+        current_period_end: 1796601600,
+        canceled_at: null,
+        cancel_at_period_end: false,
+        items: { data: [{ quantity: 1, price: { id: igniteSession.stripePriceId } }] }
+      }
+      const webhookEvent = createWebhookEvent('customer.subscription.updated', subscription)
+
+      ;(mockStripe.webhooks.constructEvent as any).mockReturnValue(webhookEvent)
+      ;(mockStripe.subscriptions.retrieve as any).mockResolvedValue(subscription)
+      ;(mockStripe.customers.retrieve as any).mockResolvedValue({ id: 'cus_pittwater', deleted: false, email: 'parent@example.com' })
+      ;(mockStripe.prices.retrieve as any).mockResolvedValue({
+        id: igniteSession.stripePriceId,
+        unit_amount: 3999,
+        recurring: { interval: 'week' }
+      })
+      ;(prisma.igniteSubscription.upsert as any).mockResolvedValue({ id: 'local_pittwater' })
+
+      const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+
+      expect(response.status).toBe(200)
+      expect(prisma.igniteSubscription.upsert).toHaveBeenCalledWith(expect.objectContaining({
+        create: expect.objectContaining({ status: 'PAUSED' }),
+        update: expect.objectContaining({ status: 'PAUSED' })
+      }))
     })
   })
 

@@ -41,6 +41,15 @@ RUN npx esbuild scripts/repair-ignite-roster.ts \
   --external:@prisma/client \
   --outfile=/app/repair-ignite-roster.js
 
+# Bundle the Pittwater-only end-of-term audit/pause utility. It is dry-run by
+# default and requires explicit session/date confirmation before Stripe writes.
+RUN npx esbuild scripts/pause-pittwater-term4.ts \
+  --bundle \
+  --platform=node \
+  --format=cjs \
+  --external:@prisma/client \
+  --outfile=/app/pause-pittwater-term4.js
+
 # Build the application
 ENV NODE_ENV=production
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
@@ -80,6 +89,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modul
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/seed-ignite-products-locations.js ./seed-ignite-products-locations.js
 COPY --from=builder --chown=nextjs:nodejs /app/repair-ignite-roster.js ./repair-ignite-roster.js
+COPY --from=builder --chown=nextjs:nodejs /app/pause-pittwater-term4.js ./pause-pittwater-term4.js
 
 USER nextjs
 

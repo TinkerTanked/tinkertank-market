@@ -39,9 +39,11 @@ async function main() {
         type: ProductType.SUBSCRIPTION,
         price: session.priceWeekly,
         duration: durationMinutes(session.startTime, session.endTime),
-        description: `${session.name} — weekly Ignite subscription`,
-        ageMin: 5,
-        ageMax: 16,
+        description: session.firstSessionDate
+          ? `${session.name} — ${session.firstSessionDate} to ${session.lastSessionDate}`
+          : `${session.name} — weekly Ignite subscription`,
+        ageMin: session.ageMin ?? 5,
+        ageMax: session.ageMax ?? 16,
         isActive: true
       },
       update: {
@@ -49,6 +51,11 @@ async function main() {
         type: ProductType.SUBSCRIPTION,
         price: session.priceWeekly,
         duration: durationMinutes(session.startTime, session.endTime),
+        description: session.firstSessionDate
+          ? `${session.name} — ${session.firstSessionDate} to ${session.lastSessionDate}`
+          : `${session.name} — weekly Ignite subscription`,
+        ageMin: session.ageMin ?? 5,
+        ageMax: session.ageMax ?? 16,
         isActive: true
       }
     })
@@ -56,22 +63,26 @@ async function main() {
   }
 
   // 2. Locations — ensure an active row per distinct session location.
-  const byLocation = new Map<string, string | undefined>()
+  const byLocation = new Map<string, { address?: string; capacity?: number }>()
   for (const session of IGNITE_SESSIONS) {
     if (!byLocation.has(session.location)) {
-      byLocation.set(session.location, session.address)
+      byLocation.set(session.location, { address: session.address, capacity: session.capacity })
     }
   }
 
   console.log('')
-  for (const [name, address] of byLocation) {
+  for (const [name, { address, capacity }] of byLocation) {
     const existing = await prisma.location.findFirst({
       where: { name: { equals: name, mode: 'insensitive' } }
     })
     if (existing) {
       await prisma.location.update({
         where: { id: existing.id },
-        data: { isActive: true, ...(address && !existing.address ? { address } : {}) }
+        data: {
+          isActive: true,
+          ...(address && !existing.address ? { address } : {}),
+          ...(capacity !== undefined ? { capacity } : {})
+        }
       })
       console.log(`  ✓ Location activated: ${existing.name}`)
     } else {
@@ -79,7 +90,7 @@ async function main() {
         data: {
           name,
           address: address || name,
-          capacity: 20,
+          capacity: capacity ?? 20,
           isActive: true
         }
       })
