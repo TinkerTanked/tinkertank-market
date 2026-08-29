@@ -23,6 +23,13 @@ const IGNITE_SUBSCRIPTION_STATUS: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED
   unpaid: 'PAST_DUE',
 };
 
+function igniteSubscriptionStatus(subscription: Stripe.Subscription) {
+  // Stripe keeps status=active while invoice collection is paused. Mirror the
+  // collection state so paused Pittwater enrolments are not shown as billable.
+  if (subscription.pause_collection) return 'PAUSED' as const
+  return IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE'
+}
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia',
 });
@@ -129,6 +136,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
     }
 
     const isSubscription = session.metadata?.isSubscription === 'true'
+    const isIgniteSingleSession = session.metadata?.isIgniteSingleSession === 'true'
 
     // Only process if payment was successful and order is still pending
     if (session.payment_status === 'paid' && order.status === 'PENDING') {
@@ -136,8 +144,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
         // Handle Ignite subscription
         await handleIgniteSubscription(session, order)
       } else {
-        // Handle regular camp/birthday bookings
-        await prisma.$transaction(async (tx) => {
+        if (isIgniteSingleSession) {
+          await handleIgniteSingleSession(session, order)
+        } else {
+          // Handle regular camp/birthday bookings
+          await prisma.$transaction(async (tx) => {
           // Update order status to PAID
           await tx.order.update({
             where: { id: order.id },
@@ -268,25 +279,26 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
               });
             }
           }
-        });
+          });
+        }
 
         // Camps/birthdays only. Ignite subscriptions are fully handled in
         // handleIgniteSubscription above and must NOT run eventService here — it
         // would create incorrect per-student recurring events. (Phase 2 adds
         // dedicated Ignite confirmation emails.)
         // Create calendar events with retry logic
-        const calendarEvents = await withErrorHandling(
-        () => ErrorHandler.retryOperation(
-          () => eventService.createEventsFromOrder(order.id),
-          3,
-          2000
-        ),
-        {
-          category: ErrorCategory.CALENDAR,
-          severity: ErrorSeverity.MEDIUM,
-          orderId: order.id
-        }
-      );
+        const calendarEvents = isIgniteSingleSession ? [] : await withErrorHandling(
+          () => ErrorHandler.retryOperation(
+            () => eventService.createEventsFromOrder(order.id),
+            3,
+            2000
+          ),
+          {
+            category: ErrorCategory.CALENDAR,
+            severity: ErrorSeverity.MEDIUM,
+            orderId: order.id
+          }
+        );
 
       if (calendarEvents) {
         console.log(`Created ${calendarEvents.length} calendar events for order ${order.id}`);
@@ -632,6 +644,91 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
 }
 
 /**
+ * Fulfil the final Pittwater class sold as a one-time payment. These bookings
+ * intentionally have no IgniteSubscription, so rosterOverride keeps them on
+ * the admin schedule while the paid Order remains the financial source.
+ */
+async function handleIgniteSingleSession(
+  session: Stripe.Checkout.Session,
+  order: {
+    id: string
+    orderItems: Array<{
+      bookingDate: Date
+      price: unknown
+      productId: string
+      studentId: string
+    }>
+  }
+) {
+  const igniteSessionId = session.metadata?.igniteSessionId
+  const config = igniteSessionId ? getIgniteSessionConfig(igniteSessionId) : undefined
+  if (!config || !config.allowFinalSessionOneTime) {
+    throw new Error(`Invalid one-time Ignite session for order ${order.id}`)
+  }
+  if (order.orderItems.length === 0 || order.orderItems.some(item => item.productId !== igniteProductId(config.id))) {
+    throw new Error(`One-time Ignite order items do not match ${config.id} for order ${order.id}`)
+  }
+
+  await prisma.$transaction(async tx => {
+    const flipped = await tx.order.updateMany({
+      where: { id: order.id, status: 'PENDING' },
+      data: { status: 'PAID' }
+    })
+    if (flipped.count === 0) return
+
+    const locationId = session.metadata?.locationId
+    const location = locationId
+      ? await tx.location.findUnique({ where: { id: locationId } })
+      : await tx.location.findFirst({
+          where: { name: { equals: config.location, mode: 'insensitive' }, isActive: true }
+        })
+    if (!location) {
+      throw new Error(`Ignite location not found for order ${order.id} (${config.location})`)
+    }
+
+    const occurrence = getIgniteScheduleFrom(config, order.orderItems[0].bookingDate)?.occurrences[0]
+    if (!occurrence || occurrence.start.getTime() !== order.orderItems[0].bookingDate.getTime()) {
+      throw new Error(`Invalid one-time Ignite occurrence for order ${order.id}`)
+    }
+
+    if (config.capacity !== undefined) {
+      await lockCampCapacity(tx, location.id, occurrence.start)
+      const startOfDay = new Date(`${occurrence.start.toISOString().slice(0, 10)}T00:00:00.000Z`)
+      const booked = await tx.booking.count({
+        where: {
+          locationId: location.id,
+          productId: igniteProductId(config.id),
+          startDate: { gte: startOfDay, lt: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000) },
+          status: { in: ['CONFIRMED', 'PENDING'] }
+        }
+      })
+      if (booked + order.orderItems.length > config.capacity) {
+        throw new CampCapacityExceededError(
+          location.name,
+          occurrence.start.toISOString().slice(0, 10),
+          config.capacity,
+          Math.max(0, config.capacity - booked)
+        )
+      }
+    }
+
+    await tx.booking.createMany({
+      data: order.orderItems.map(item => ({
+        studentId: item.studentId,
+        productId: item.productId,
+        locationId: location.id,
+        rosterOverride: true,
+        startDate: occurrence.start,
+        endDate: occurrence.end,
+        status: 'CONFIRMED' as const,
+        totalPrice: item.price as number,
+        notes: `Ignite one-time session: ${config.name} | Order: ${order.id}`
+      }))
+    })
+  })
+}
+
+/**
  * Handle Ignite subscription fulfilment (checkout.session.completed).
  *
  * Reads the students created at checkout from the order, then in a single
@@ -744,7 +841,7 @@ async function handleIgniteSubscription(
           igniteSessionId: config.id,
           studentNames,
           quantity,
-          status: IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE',
+          status: igniteSubscriptionStatus(subscription),
           currentPeriodStart: new Date(subscription.current_period_start * 1000),
           currentPeriodEnd: new Date(subscription.current_period_end * 1000),
           weeklyAmount: unitAmount * quantity,
@@ -753,7 +850,7 @@ async function handleIgniteSubscription(
           igniteSessionId: config.id,
           studentNames,
           quantity,
-          status: IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE',
+          status: igniteSubscriptionStatus(subscription),
           currentPeriodStart: new Date(subscription.current_period_start * 1000),
           currentPeriodEnd: new Date(subscription.current_period_end * 1000),
           weeklyAmount: unitAmount * quantity,
@@ -860,7 +957,7 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         igniteSessionId: igniteSession.id,
         studentNames: legacyStudentNames,
         quantity,
-        status: IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE',
+        status: igniteSubscriptionStatus(subscription),
         currentPeriodStart: new Date(subscription.current_period_start * 1000),
         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
@@ -875,7 +972,7 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         customerName: customer.name || undefined,
         igniteSessionId: igniteSession.id,
         quantity,
-        status: IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE',
+        status: igniteSubscriptionStatus(subscription),
         currentPeriodStart: new Date(subscription.current_period_start * 1000),
         currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,

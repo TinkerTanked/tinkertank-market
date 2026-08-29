@@ -1,6 +1,7 @@
 import { test, expect, Page } from '@playwright/test'
 
-// All 12 Ignite products with their Stripe TEST price IDs
+// Established Ignite products with their Stripe TEST price IDs. Fixed-term
+// products are covered separately because their billing mode changes by date.
 // Note: These are Stripe TEST mode IDs, not production. Production IDs are in IgniteWeekCalendarStep.tsx
 const IGNITE_PRODUCTS = {
   // In-School (green)
@@ -130,7 +131,7 @@ test.describe('Ignite Booking Wizard UI', () => {
     await page.click('button:has-text("Subscribe Now")')
     
     // Verify wizard is open
-    await expect(page.locator('text=Subscribe to Ignite')).toBeVisible()
+    await expect(page.locator('text=Book Ignite')).toBeVisible()
     await expect(page.locator('text=Select Your Session')).toBeVisible()
   })
 
@@ -142,7 +143,7 @@ test.describe('Ignite Booking Wizard UI', () => {
     await page.click('.fixed.inset-0.bg-black', { position: { x: 10, y: 10 } })
     
     // Wizard should be closed
-    await expect(page.locator('text=Subscribe to Ignite')).not.toBeVisible()
+    await expect(page.locator('text=Book Ignite')).not.toBeVisible()
   })
 
   test('should show step progress indicator', async ({ page }) => {
@@ -338,7 +339,7 @@ test.describe('Complete Purchase Flow', () => {
       await page.click('button:has-text("Subscribe")')
       
       // Wizard should close
-      await expect(page.locator('text=Subscribe to Ignite')).not.toBeVisible()
+      await expect(page.locator('text=Book Ignite')).not.toBeVisible()
     })
   }
 
@@ -371,7 +372,7 @@ test.describe('Ignite Detail Pages', () => {
     
     await page.click('button:has-text("Subscribe Now")')
     
-    await expect(page.locator('text=Subscribe to Ignite')).toBeVisible()
+    await expect(page.locator('text=Book Ignite')).toBeVisible()
   })
 
   test('should open wizard from Drop-Off Ignite detail page', async ({ page }) => {
@@ -379,7 +380,7 @@ test.describe('Ignite Detail Pages', () => {
     
     await page.click('button:has-text("Subscribe Now")')
     
-    await expect(page.locator('text=Subscribe to Ignite')).toBeVisible()
+    await expect(page.locator('text=Book Ignite')).toBeVisible()
   })
 
   test('should open wizard from School Pickup detail page', async ({ page }) => {
@@ -387,6 +388,6 @@ test.describe('Ignite Detail Pages', () => {
     
     await page.click('button:has-text("Subscribe Now")')
     
-    await expect(page.locator('text=Subscribe to Ignite')).toBeVisible()
+    await expect(page.locator('text=Book Ignite')).toBeVisible()
   })
 })

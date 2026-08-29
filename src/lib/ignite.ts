@@ -1,6 +1,6 @@
-import { fromZonedTime } from 'date-fns-tz'
+import { formatInTimeZone, fromZonedTime } from 'date-fns-tz'
 import { IGNITE_SESSIONS, type IgniteSessionConfig } from '@/config/igniteProducts'
-import { DAY_NAME_TO_NUMBER, getSubscriptionStartTerm, type SchoolTerm } from '@/config/schoolTerms'
+import { DAY_NAME_TO_NUMBER, getSubscriptionStartTerm, SCHOOL_TERMS_2026, type SchoolTerm } from '@/config/schoolTerms'
 
 export const SYDNEY_TZ = 'Australia/Sydney'
 
@@ -28,6 +28,13 @@ export function igniteDurationMinutes(session: IgniteSessionConfig): number {
 export interface IgniteOccurrence {
   start: Date
   end: Date
+}
+
+export interface IgniteCheckoutPlan {
+  kind: 'standard-subscription' | 'prepaid-subscription' | 'one-time'
+  firstOccurrence: IgniteOccurrence
+  occurrences: IgniteOccurrence[]
+  recurringStartsAt?: Date
 }
 
 /**
@@ -60,6 +67,11 @@ export function getIgniteOccurrences(
       const m = String(cursor.getUTCMonth() + 1).padStart(2, '0')
       const d = String(cursor.getUTCDate()).padStart(2, '0')
       const dateStr = `${y}-${m}-${d}`
+      if (session.firstSessionDate && dateStr < session.firstSessionDate) {
+        cursor.setUTCDate(cursor.getUTCDate() + 1)
+        continue
+      }
+      if (session.lastSessionDate && dateStr > session.lastSessionDate) break
       const start = fromZonedTime(`${dateStr}T${session.startTime}:00`, SYDNEY_TZ)
       const end = fromZonedTime(`${dateStr}T${session.endTime}:00`, SYDNEY_TZ)
       if (start >= from) {
@@ -81,7 +93,42 @@ export function getIgniteScheduleFrom(
   session: IgniteSessionConfig,
   from: Date = new Date()
 ): { term: SchoolTerm; occurrences: IgniteOccurrence[] } | null {
-  const term = getSubscriptionStartTerm(from)
+  const term = session.firstSessionDate
+    ? SCHOOL_TERMS_2026.find(candidate => {
+        const start = candidate.startDate.toISOString().slice(0, 10)
+        const end = candidate.endDate.toISOString().slice(0, 10)
+        return session.firstSessionDate! >= start && session.firstSessionDate! <= end
+      }) || null
+    : getSubscriptionStartTerm(from)
   if (!term) return null
   return { term, occurrences: getIgniteOccurrences(session, term, from) }
+}
+
+export function getIgniteCheckoutPlan(session: IgniteSessionConfig, from: Date = new Date()): IgniteCheckoutPlan | null {
+  const schedule = getIgniteScheduleFrom(session, from)
+  // A fixed-term class can be purchased only before it starts. Keep the
+  // schedule helper inclusive because webhook fulfilment intentionally passes
+  // the stored occurrence start as its enrollment anchor.
+  const occurrences = session.prepayNextSession
+    ? (schedule?.occurrences || []).filter(occurrence => occurrence.start > from)
+    : schedule?.occurrences || []
+  if (occurrences.length === 0) return null
+
+  if (!session.prepayNextSession) {
+    return { kind: 'standard-subscription', firstOccurrence: occurrences[0], occurrences }
+  }
+
+  if (occurrences.length === 1) {
+    if (!session.allowFinalSessionOneTime) return null
+    return { kind: 'one-time', firstOccurrence: occurrences[0], occurrences }
+  }
+
+  const dateInSydney = formatInTimeZone(occurrences[1].start, SYDNEY_TZ, 'yyyy-MM-dd')
+
+  return {
+    kind: 'prepaid-subscription',
+    firstOccurrence: occurrences[0],
+    occurrences,
+    recurringStartsAt: fromZonedTime(`${dateInSydney}T00:00:00`, SYDNEY_TZ)
+  }
 }

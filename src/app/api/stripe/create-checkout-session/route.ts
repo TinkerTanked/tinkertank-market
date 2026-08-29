@@ -4,8 +4,9 @@ import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
 import { assertCampCapacity, CampCapacityExceededError, utcDateKey } from '@/lib/campCapacity'
 import { assertBirthdaySlotAvailable, birthdaySlotStart, BirthdaySlotUnavailableError } from '@/lib/birthdayAvailability'
-import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '@/lib/ignite'
+import { getIgniteCheckoutPlan, getIgniteSessionConfig, igniteProductId, SYDNEY_TZ } from '@/lib/ignite'
 import { calculateAgeOnDate } from '@/lib/bookingSchema'
+import { formatInTimeZone } from 'date-fns-tz'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -194,14 +195,44 @@ async function createIgniteSubscriptionCheckout(subscriptionItems: CheckoutItem[
     return NextResponse.json({ error: 'This Ignite location is not available for booking yet. Please contact us.' }, { status: 400 })
   }
 
-  // Schedule the current/next term. The first future occurrence is the
-  // enrollment effective date stored on the OrderItem.
-  const schedule = getIgniteScheduleFrom(session, new Date())
-  if (!schedule || schedule.occurrences.length === 0) {
+  // Resolve the next payable occurrence and billing mode. Fixed-term sessions
+  // can charge the next class immediately, anchor recurring billing to the
+  // following class, and fall back to one-time checkout for their final class.
+  const checkoutPlan = getIgniteCheckoutPlan(session, new Date())
+  if (!checkoutPlan) {
     return NextResponse.json({ error: 'There are no upcoming sessions for this program yet. Please contact us.' }, { status: 400 })
   }
-  const firstOccurrence = schedule.occurrences[0].start
+  const firstOccurrence = checkoutPlan.firstOccurrence.start
   const weeklyPerChild = Number(product.price)
+
+  if (session.ageMin !== undefined || session.ageMax !== undefined) {
+    const activityDate = formatInTimeZone(firstOccurrence, SYDNEY_TZ, 'yyyy-MM-dd')
+    const ineligible = students.some(student => {
+      const age = calculateAgeOnDate(student.dateOfBirth!, activityDate)
+      return age === null || age < (session.ageMin ?? 0) || age > (session.ageMax ?? 99)
+    })
+    if (ineligible) {
+      return NextResponse.json(
+        { error: `${session.name} is for children aged ${session.ageMin}–${session.ageMax}.` },
+        { status: 400 }
+      )
+    }
+  }
+
+  if (session.capacity !== undefined) {
+    const startOfDay = new Date(`${firstOccurrence.toISOString().slice(0, 10)}T00:00:00.000Z`)
+    const booked = await prisma.booking.count({
+      where: {
+        productId: igniteProductId(session.id),
+        locationId: location.id,
+        startDate: { gte: startOfDay, lt: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000) },
+        status: { in: ['CONFIRMED', 'PENDING'] }
+      }
+    })
+    if (booked + students.length > session.capacity) {
+      return NextResponse.json({ error: 'This Ignite session is sold out.' }, { status: 409 })
+    }
+  }
 
   const stripePrice = await stripe.prices.retrieve(session.stripePriceId)
   if (
@@ -258,26 +289,51 @@ async function createIgniteSubscriptionCheckout(subscriptionItems: CheckoutItem[
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${request.headers.get('host')}`
 
+  const isOneTime = checkoutPlan.kind === 'one-time'
+  const isPrepaidSubscription = checkoutPlan.kind === 'prepaid-subscription'
+  const oneTimeLineItem: Stripe.Checkout.SessionCreateParams.LineItem = {
+    price_data: {
+      currency: 'aud',
+      product: session.stripeProductId,
+      unit_amount: Math.round(weeklyPerChild * 100)
+    },
+    quantity: students.length
+  }
+  const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = isOneTime
+    ? [oneTimeLineItem]
+    : isPrepaidSubscription
+      ? [oneTimeLineItem, { price: session.stripePriceId, quantity: students.length }]
+      : [{ price: session.stripePriceId, quantity: students.length }]
+
   const stripeSession = await stripe.checkout.sessions.create(
     {
-      mode: 'subscription',
-      line_items: [{ price: session.stripePriceId, quantity: students.length }],
+      mode: isOneTime ? 'payment' : 'subscription',
+      line_items: lineItems,
       customer_email: customerInfo.email,
       client_reference_id: order.id,
       // No child PII in Stripe metadata — only stable IDs the webhook needs.
       metadata: {
         orderId: order.id,
-        isSubscription: 'true',
+        isSubscription: String(!isOneTime),
+        isIgniteSingleSession: String(isOneTime),
+        igniteSessionId: session.id,
         subscriptionProductId: session.id,
         locationId: location.id,
+        customerPhone: customerInfo.phone,
+        ...getMetaCheckoutMetadata(request),
       },
-      subscription_data: {
-        metadata: {
-          orderId: order.id,
-          igniteSessionId: session.id,
-          locationId: location.id,
-        },
-      },
+      ...(!isOneTime ? {
+        subscription_data: {
+          ...(checkoutPlan.recurringStartsAt ? {
+            trial_end: Math.floor(checkoutPlan.recurringStartsAt.getTime() / 1000)
+          } : {}),
+          metadata: {
+            orderId: order.id,
+            igniteSessionId: session.id,
+            locationId: location.id,
+          },
+        }
+      } : {}),
       success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
       cancel_url: `${appUrl}/checkout?canceled=true`,
     },

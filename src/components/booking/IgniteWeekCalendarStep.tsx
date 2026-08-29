@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { IGNITE_SESSIONS, type IgniteSessionConfig } from '@/config/igniteProducts'
+import { getIgniteCheckoutPlan } from '@/lib/ignite'
 
 // Re-export the type for use in other components
 export type IgniteSession = IgniteSessionConfig
@@ -81,7 +82,7 @@ export default function IgniteWeekCalendarStep({ selectedSession, onSessionSelec
       byDay[day] = []
     })
 
-    IGNITE_SESSIONS.forEach(session => {
+    IGNITE_SESSIONS.filter(session => getIgniteCheckoutPlan(session, new Date()) !== null).forEach(session => {
       session.dayOfWeek.forEach(day => {
         if (byDay[day]) {
           byDay[day].push({ ...session, displayDay: day })

@@ -15,6 +15,12 @@ export interface IgniteSession {
   startTime: string
   endTime: string
   pricePerWeek: number
+  ageMin?: number
+  firstSessionDate?: string
+  lastSessionDate?: string
+  billingKind?: 'standard-subscription' | 'prepaid-subscription' | 'one-time'
+  nextSessionAt?: Date
+  recurringStartsAt?: Date
 }
 
 interface IgniteConfirmStepProps {
@@ -60,11 +66,16 @@ function formatWeekDays(weekDays: number[]): string {
 export default function IgniteConfirmStep({ session, students, onSubscribe }: IgniteConfirmStepProps) {
   const badge = PROGRAM_BADGES[session.programType]
   const weeklyTotal = session.pricePerWeek * students.length
+  const isOneTime = session.billingKind === 'one-time'
+  const isFixedTerm = Boolean(session.firstSessionDate && session.lastSessionDate)
+  const formatDate = (date: Date | string | undefined) => date
+    ? new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long', timeZone: 'Australia/Sydney' }).format(new Date(date))
+    : ''
 
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Review Your Subscription</h3>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">Review Your Booking</h3>
         <p className="text-gray-600">Check the details before adding to cart</p>
       </div>
 
@@ -93,7 +104,9 @@ export default function IgniteConfirmStep({ session, students, onSubscribe }: Ig
           </div>
           <div className="flex items-center space-x-2">
             <CalendarIcon className="w-4 h-4 text-primary-600 flex-shrink-0" />
-            <span className="text-gray-700">{formatWeekDays(session.weekDays)}</span>
+            <span className="text-gray-700">
+              {formatWeekDays(session.weekDays)}{session.ageMin ? ` · Ages ${session.ageMin}+` : ''}
+            </span>
           </div>
           <div className="flex items-start space-x-2">
             <UserIcon className="w-4 h-4 text-primary-600 flex-shrink-0 mt-0.5" />
@@ -113,12 +126,23 @@ export default function IgniteConfirmStep({ session, students, onSubscribe }: Ig
       <div className="bg-blue-50 rounded-lg p-4 flex items-start space-x-3">
         <InformationCircleIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm text-blue-900 font-medium">Weekly Subscription</p>
-          <p className="text-sm text-blue-800 mt-1">
-            This is a weekly subscription. You will be charged ${session.pricePerWeek} per child each week
-            {students.length > 1 ? ` (${students.length} children = $${weeklyTotal.toFixed(2)}/week)` : ''}.
-            You can cancel anytime from your account.
+          <p className="text-sm text-blue-900 font-medium">
+            {isOneTime ? 'Final Session — One-Time Payment' : isFixedTerm ? 'Term 4 Weekly Program' : 'Weekly Subscription'}
           </p>
+          {isOneTime ? (
+            <p className="text-sm text-blue-800 mt-1">
+              This books the final session on {formatDate(session.nextSessionAt)}. You will be charged ${weeklyTotal.toFixed(2)} once, with no subscription.
+            </p>
+          ) : isFixedTerm ? (
+            <p className="text-sm text-blue-800 mt-1">
+              Your {formatDate(session.nextSessionAt)} session is charged now. Weekly payments begin {formatDate(session.recurringStartsAt)} and cover sessions through {formatDate(session.lastSessionDate)}. Billing is paused after the final week is paid.
+            </p>
+          ) : (
+            <p className="text-sm text-blue-800 mt-1">
+              This is a weekly subscription. You will be charged ${session.pricePerWeek} per child each week
+              {students.length > 1 ? ` (${students.length} children = $${weeklyTotal.toFixed(2)}/week)` : ''}. You can cancel anytime from your account.
+            </p>
+          )}
         </div>
       </div>
 
@@ -127,7 +151,7 @@ export default function IgniteConfirmStep({ session, students, onSubscribe }: Ig
         className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
       >
         <ShoppingCartIcon className="w-5 h-5" />
-        Add to Cart - ${weeklyTotal.toFixed(2)}/week
+        Add to Cart — ${weeklyTotal.toFixed(2)}{isOneTime ? ' once' : '/week'}
       </button>
 
       <p className="text-xs text-center text-gray-500">

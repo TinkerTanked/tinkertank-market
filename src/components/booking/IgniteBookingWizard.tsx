@@ -6,6 +6,7 @@ import IgniteWeekCalendarStep, { IgniteSession } from './IgniteWeekCalendarStep'
 import IgniteStudentStep, { StudentInfo, emptyStudent, isStudentValid } from './IgniteStudentStep'
 import IgniteConfirmStep, { IgniteSession as ConfirmIgniteSession } from './IgniteConfirmStep'
 import { useEnhancedCartStore } from '@/stores/enhancedCartStore'
+import { getIgniteCheckoutPlan } from '@/lib/ignite'
 
 interface IgniteBookingData {
   session: IgniteSession | null
@@ -23,6 +24,7 @@ const DAY_NAME_TO_NUMBER: Record<string, number> = {
 }
 
 function convertSessionForConfirm(session: IgniteSession): ConfirmIgniteSession {
+  const plan = getIgniteCheckoutPlan(session, new Date())
   return {
     id: session.id,
     name: session.name,
@@ -32,7 +34,13 @@ function convertSessionForConfirm(session: IgniteSession): ConfirmIgniteSession 
     weekDays: session.dayOfWeek.map(day => DAY_NAME_TO_NUMBER[day.toLowerCase()] || 1),
     startTime: session.startTime,
     endTime: session.endTime,
-    pricePerWeek: session.priceWeekly
+    pricePerWeek: session.priceWeekly,
+    ageMin: session.ageMin,
+    firstSessionDate: session.firstSessionDate,
+    lastSessionDate: session.lastSessionDate,
+    billingKind: plan?.kind,
+    nextSessionAt: plan?.firstOccurrence.start,
+    recurringStartsAt: plan?.recurringStartsAt
   }
 }
 
@@ -88,11 +96,11 @@ export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWi
       const cartItem = {
         id: session.id,
         name: session.name,
-        shortDescription: `Ignite ${session.programType} subscription`,
+        shortDescription: session.firstSessionDate ? `Ignite ${session.programType} Term 4 program` : `Ignite ${session.programType} subscription`,
         price: session.priceWeekly,
         category: 'ignite' as const,
         type: 'IGNITE' as const,
-        ageRange: '6-12 years',
+        ageRange: session.ageMin ? `${session.ageMin}+ years` : '5-16 years',
         features: ['Weekly STEAM sessions', 'Expert instructors', 'Hands-on projects', 'Flexible subscription'],
         images: ['/images/ignite.jpeg'],
         location: session.location,
@@ -101,8 +109,8 @@ export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWi
         description: `${session.name} at ${session.location}`,
         image: '/images/ignite.jpeg',
         isActive: true,
-        availableCapacity: 20,
-        maxCapacity: 20,
+        availableCapacity: session.capacity ?? 20,
+        maxCapacity: session.capacity ?? 20,
         pricing: { basePrice: session.priceWeekly },
         isSubscription: true,
         stripePriceId: session.stripePriceId,
@@ -200,7 +208,7 @@ export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWi
           {/* Header */}
           <div className="bg-gradient-to-r from-green-500 to-blue-500 px-6 py-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Subscribe to Ignite</h2>
+              <h2 className="text-2xl font-bold text-white">Book Ignite</h2>
               <button
                 onClick={onClose}
                 className="text-white hover:text-green-100 transition-colors"
