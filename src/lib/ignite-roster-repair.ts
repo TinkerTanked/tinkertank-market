@@ -1,7 +1,45 @@
 import { createHash } from 'node:crypto'
-import { formatInTimeZone } from 'date-fns-tz'
+import { formatInTimeZone, fromZonedTime } from 'date-fns-tz'
+import { SCHOOL_TERMS_2026 } from '@/config/schoolTerms'
 
 const SYDNEY_TZ = 'Australia/Sydney'
+
+export interface IgniteRosterOccurrence {
+  start: Date
+  end: Date
+}
+
+/**
+ * Expands an approved weekly roster occurrence through the end of its school
+ * term. Rebuilding each Sydney wall-clock time avoids a one-hour shift when a
+ * term crosses a daylight-saving boundary.
+ */
+export function buildWeeklyRosterOccurrences(start: Date, end: Date): IgniteRosterOccurrence[] {
+  const seedDate = formatInTimeZone(start, SYDNEY_TZ, 'yyyy-MM-dd')
+  const term = SCHOOL_TERMS_2026.find(candidate => {
+    const termStart = candidate.startDate.toISOString().slice(0, 10)
+    const termEnd = candidate.endDate.toISOString().slice(0, 10)
+    return seedDate >= termStart && seedDate <= termEnd
+  })
+  if (!term) throw new Error(`No configured school term contains ${seedDate}`)
+
+  const startTime = formatInTimeZone(start, SYDNEY_TZ, 'HH:mm:ss')
+  const endTime = formatInTimeZone(end, SYDNEY_TZ, 'HH:mm:ss')
+  const termEnd = term.endDate.toISOString().slice(0, 10)
+  const cursor = new Date(`${seedDate}T00:00:00.000Z`)
+  const occurrences: IgniteRosterOccurrence[] = []
+
+  while (cursor.toISOString().slice(0, 10) <= termEnd) {
+    const date = cursor.toISOString().slice(0, 10)
+    occurrences.push({
+      start: fromZonedTime(`${date}T${startTime}`, SYDNEY_TZ),
+      end: fromZonedTime(`${date}T${endTime}`, SYDNEY_TZ)
+    })
+    cursor.setUTCDate(cursor.getUTCDate() + 7)
+  }
+
+  return occurrences
+}
 
 export interface IgniteRosterReport {
   summary: {

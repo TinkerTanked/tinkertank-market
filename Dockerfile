@@ -41,6 +41,15 @@ RUN npx esbuild scripts/repair-ignite-roster.ts \
   --external:@prisma/client \
   --outfile=/app/repair-ignite-roster.js
 
+# Bundle the dry-run-by-default recovery utility for approved roster imports
+# that predate term recurrence support.
+RUN npx esbuild scripts/backfill-ignite-roster-recurrence.ts \
+  --bundle \
+  --platform=node \
+  --format=cjs \
+  --external:@prisma/client \
+  --outfile=/app/backfill-ignite-roster-recurrence.js
+
 # Bundle the Pittwater-only end-of-term audit/pause utility. It is dry-run by
 # default and requires explicit session/date confirmation before Stripe writes.
 RUN npx esbuild scripts/pause-pittwater-term4.ts \
@@ -89,6 +98,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modul
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/seed-ignite-products-locations.js ./seed-ignite-products-locations.js
 COPY --from=builder --chown=nextjs:nodejs /app/repair-ignite-roster.js ./repair-ignite-roster.js
+COPY --from=builder --chown=nextjs:nodejs /app/backfill-ignite-roster-recurrence.js ./backfill-ignite-roster-recurrence.js
 COPY --from=builder --chown=nextjs:nodejs /app/pause-pittwater-term4.js ./pause-pittwater-term4.js
 
 USER nextjs

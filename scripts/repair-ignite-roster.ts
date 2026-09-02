@@ -12,7 +12,12 @@
 import { readFileSync, statSync } from 'node:fs'
 import { Prisma, PrismaClient, IgniteSubscriptionStatus } from '@prisma/client'
 import Stripe from 'stripe'
-import { buildIgniteRosterPlan, IgniteRosterPlanRow, IgniteRosterReport } from '../src/lib/ignite-roster-repair'
+import {
+  buildIgniteRosterPlan,
+  buildWeeklyRosterOccurrences,
+  IgniteRosterPlanRow,
+  IgniteRosterReport
+} from '../src/lib/ignite-roster-repair'
 
 const prisma = new PrismaClient()
 
@@ -196,53 +201,56 @@ async function applyPlan(plan: IgniteRosterPlanRow[], stripeImports: Map<string,
         })
       }
 
-      const bookingData = {
-        studentId: student.id,
-        productId: row.product_id,
-        locationId: row.location_id,
-        igniteSubscriptionId: subscriptionId,
-        rosterOverride: row.rosterOverride,
-        startDate: new Date(row.start_utc),
-        endDate: new Date(row.end_utc),
-        status: 'CONFIRMED' as const,
-        totalPrice: new Prisma.Decimal(0),
-        notes: 'Approved Ignite roster repair'
-      }
+      const occurrences = buildWeeklyRosterOccurrences(new Date(row.start_utc), new Date(row.end_utc))
+      for (const occurrence of occurrences) {
+        const bookingData = {
+          studentId: student.id,
+          productId: row.product_id,
+          locationId: row.location_id,
+          igniteSubscriptionId: subscriptionId,
+          rosterOverride: row.rosterOverride,
+          startDate: occurrence.start,
+          endDate: occurrence.end,
+          status: 'CONFIRMED' as const,
+          totalPrice: new Prisma.Decimal(0),
+          notes: 'Approved Ignite roster repair'
+        }
 
-      if (subscriptionId) {
-        await tx.booking.upsert({
-          where: {
-            igniteSubscriptionId_studentId_startDate: {
-              igniteSubscriptionId: subscriptionId,
-              studentId: student.id,
-              startDate: bookingData.startDate
+        if (subscriptionId) {
+          await tx.booking.upsert({
+            where: {
+              igniteSubscriptionId_studentId_startDate: {
+                igniteSubscriptionId: subscriptionId,
+                studentId: student.id,
+                startDate: bookingData.startDate
+              }
+            },
+            create: bookingData,
+            update: {
+              productId: bookingData.productId,
+              locationId: bookingData.locationId,
+              endDate: bookingData.endDate,
+              status: bookingData.status,
+              rosterOverride: bookingData.rosterOverride
             }
-          },
-          create: bookingData,
-          update: {
-            productId: bookingData.productId,
-            locationId: bookingData.locationId,
-            endDate: bookingData.endDate,
-            status: bookingData.status,
-            rosterOverride: bookingData.rosterOverride
-          }
-        })
-      } else {
-        const existing = await tx.booking.findFirst({
-          where: {
-            studentId: student.id,
-            productId: row.product_id,
-            startDate: bookingData.startDate,
-            igniteSubscriptionId: null
-          }
-        })
-        if (existing) {
-          await tx.booking.update({
-            where: { id: existing.id },
-            data: { locationId: bookingData.locationId, endDate: bookingData.endDate, status: 'CONFIRMED', rosterOverride: true }
           })
         } else {
-          await tx.booking.create({ data: bookingData })
+          const existing = await tx.booking.findFirst({
+            where: {
+              studentId: student.id,
+              productId: row.product_id,
+              startDate: bookingData.startDate,
+              igniteSubscriptionId: null
+            }
+          })
+          if (existing) {
+            await tx.booking.update({
+              where: { id: existing.id },
+              data: { locationId: bookingData.locationId, endDate: bookingData.endDate, status: 'CONFIRMED', rosterOverride: true }
+            })
+          } else {
+            await tx.booking.create({ data: bookingData })
+          }
         }
       }
     }
