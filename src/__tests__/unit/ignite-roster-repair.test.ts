@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { buildIgniteRosterPlan, IgniteRosterReport, IgniteRosterRow, studentImportReference } from '@/lib/ignite-roster-repair'
+import {
+  buildIgniteRosterPlan,
+  buildWeeklyRosterOccurrences,
+  IgniteRosterReport,
+  IgniteRosterRow,
+  studentImportReference
+} from '@/lib/ignite-roster-repair'
 
 function row(overrides: Partial<IgniteRosterRow> = {}): IgniteRosterRow {
   return {
@@ -36,6 +42,21 @@ function report(rows: IgniteRosterRow[]): IgniteRosterReport {
 }
 
 describe('Ignite roster repair planning', () => {
+  it('expands a weekly occurrence through the end of its school term', () => {
+    const occurrences = buildWeeklyRosterOccurrences(
+      new Date('2026-08-26T02:45:00.000Z'),
+      new Date('2026-08-26T03:45:00.000Z')
+    )
+
+    expect(occurrences.map(occurrence => occurrence.start.toISOString())).toEqual([
+      '2026-08-26T02:45:00.000Z',
+      '2026-09-02T02:45:00.000Z',
+      '2026-09-09T02:45:00.000Z',
+      '2026-09-16T02:45:00.000Z',
+      '2026-09-23T02:45:00.000Z'
+    ])
+  })
+
   it('turns ambiguous matches into deterministic canonical student imports', () => {
     const input = row({ proposed_action: 'REVIEW_STUDENT_MATCH', match_status: 'AMBIGUOUS_DUPLICATE_STUDENTS' })
     const [plan] = buildIgniteRosterPlan(report([input]))
