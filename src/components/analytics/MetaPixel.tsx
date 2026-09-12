@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
+import { captureMetaClickId } from '@/lib/analytics'
 
 const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID
 
@@ -12,6 +13,8 @@ function MetaPageViewTracker() {
   const isInitialPage = useRef(true)
 
   useEffect(() => {
+    captureMetaClickId(searchParams)
+
     if (isInitialPage.current) {
       isInitialPage.current = false
       return

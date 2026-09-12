@@ -55,6 +55,23 @@ export function trackEvent(name: string, parameters: EventParameters = {}, optio
   }
 }
 
+export function captureMetaClickId(searchParams: Pick<URLSearchParams, 'get'>, now = Date.now()) {
+  if (typeof document === 'undefined') return
+
+  const fbclid = searchParams.get('fbclid')?.trim()
+  if (!fbclid || fbclid.length > 500 || !/^[A-Za-z0-9._~-]+$/.test(fbclid)) return
+
+  const existingFbc = document.cookie
+    .split('; ')
+    .find(cookie => cookie.startsWith('_fbc='))
+    ?.slice('_fbc='.length)
+  if (existingFbc?.endsWith(`.${fbclid}`)) return
+
+  const fbc = `fb.1.${Math.floor(now / 1000)}.${fbclid}`
+  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `_fbc=${fbc}; Max-Age=7776000; Path=/; SameSite=Lax${secure}`
+}
+
 const META_STANDARD_EVENTS: Record<string, string> = {
   view_item: 'ViewContent',
   add_to_cart: 'AddToCart',
