@@ -1,10 +1,32 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cartItemsToAnalytics, trackEvent } from '@/lib/analytics'
+import { captureMetaClickId, cartItemsToAnalytics, trackEvent } from '@/lib/analytics'
 
 describe('analytics', () => {
   afterEach(() => {
     delete window.plausible
     delete window.fbq
+    document.cookie = '_fbc=; Max-Age=0; Path=/'
+  })
+
+  it('persists a Meta click ID as a first-party fbc cookie', () => {
+    captureMetaClickId(new URLSearchParams('fbclid=real_click_123'), 1789200000123)
+
+    expect(document.cookie).toContain('_fbc=fb.1.1789200000.real_click_123')
+  })
+
+  it('ignores missing or unsafe Meta click IDs', () => {
+    captureMetaClickId(new URLSearchParams())
+    captureMetaClickId(new URLSearchParams('fbclid=unsafe%3Bclick'))
+
+    expect(document.cookie).not.toContain('_fbc=')
+  })
+
+  it('does not reset the click timestamp when the same Meta click is captured again', () => {
+    const searchParams = new URLSearchParams('fbclid=real_click_123')
+    captureMetaClickId(searchParams, 1789200000123)
+    captureMetaClickId(searchParams, 1789209999123)
+
+    expect(document.cookie).toContain('_fbc=fb.1.1789200000.real_click_123')
   })
 
   it('sends privacy-friendly funnel events through Plausible', () => {
