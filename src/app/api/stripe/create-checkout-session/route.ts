@@ -77,10 +77,19 @@ const CreateCheckoutSessionSchema = z.object({
       relationship: z.string().optional(),
     })
     .optional(),
+  attribution: z
+    .object({
+      utmSource: z.string().trim().max(200).optional(),
+      utmMedium: z.string().trim().max(200).optional(),
+      utmCampaign: z.string().trim().max(200).optional(),
+      utmContent: z.string().trim().max(200).optional(),
+    })
+    .optional(),
 })
 
 type CheckoutItem = z.infer<typeof CreateCheckoutSessionSchema>['items'][number]
 type CustomerInfo = z.infer<typeof CreateCheckoutSessionSchema>['customerInfo']
+type CheckoutAttribution = z.infer<typeof CreateCheckoutSessionSchema>['attribution']
 
 function normalizeAllergies(allergies: string | string[] | undefined): string | null {
   if (!allergies) return null
@@ -98,6 +107,12 @@ function getMetaCheckoutMetadata(request: NextRequest): Record<string, string> {
     metaClientIp: clientIpAddress,
     metaClientUserAgent: clientUserAgent,
   }
+}
+
+function getCampaignMetadata(attribution: CheckoutAttribution): Record<string, string> {
+  if (!attribution) return {}
+
+  return Object.fromEntries(Object.entries(attribution).filter((entry): entry is [string, string] => Boolean(entry[1])))
 }
 
 export async function POST(request: NextRequest) {
@@ -125,6 +140,7 @@ export async function POST(request: NextRequest) {
       validatedData.customerInfo,
       validatedData.emergencyContact,
       validatedData.bookingSchemaVersion,
+      validatedData.attribution,
       request
     )
   } catch (error) {
@@ -215,10 +231,7 @@ async function createIgniteSubscriptionCheckout(subscriptionItems: CheckoutItem[
       return age === null || age < (session.ageMin ?? 0) || age > (session.ageMax ?? 99)
     })
     if (ineligible) {
-      return NextResponse.json(
-        { error: `${session.name} is for children aged ${session.ageMin}–${session.ageMax}.` },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: `${session.name} is for children aged ${session.ageMin}–${session.ageMax}.` }, { status: 400 })
     }
   }
 
@@ -229,8 +242,8 @@ async function createIgniteSubscriptionCheckout(subscriptionItems: CheckoutItem[
         productId: igniteProductId(session.id),
         locationId: location.id,
         startDate: { gte: startOfDay, lt: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000) },
-        status: { in: ['CONFIRMED', 'PENDING'] }
-      }
+        status: { in: ['CONFIRMED', 'PENDING'] },
+      },
     })
     if (booked + students.length > session.capacity) {
       return NextResponse.json({ error: 'This Ignite session is sold out.' }, { status: 409 })
@@ -298,9 +311,9 @@ async function createIgniteSubscriptionCheckout(subscriptionItems: CheckoutItem[
     price_data: {
       currency: 'aud',
       product: session.stripeProductId,
-      unit_amount: Math.round(weeklyPerChild * 100)
+      unit_amount: Math.round(weeklyPerChild * 100),
     },
-    quantity: students.length
+    quantity: students.length,
   }
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = isOneTime
     ? [oneTimeLineItem]
@@ -325,18 +338,22 @@ async function createIgniteSubscriptionCheckout(subscriptionItems: CheckoutItem[
         customerPhone: customerInfo.phone,
         ...getMetaCheckoutMetadata(request),
       },
-      ...(!isOneTime ? {
-        subscription_data: {
-          ...(checkoutPlan.recurringStartsAt ? {
-            trial_end: Math.floor(checkoutPlan.recurringStartsAt.getTime() / 1000)
-          } : {}),
-          metadata: {
-            orderId: order.id,
-            igniteSessionId: session.id,
-            locationId: location.id,
-          },
-        }
-      } : {}),
+      ...(!isOneTime
+        ? {
+            subscription_data: {
+              ...(checkoutPlan.recurringStartsAt
+                ? {
+                    trial_end: Math.floor(checkoutPlan.recurringStartsAt.getTime() / 1000),
+                  }
+                : {}),
+              metadata: {
+                orderId: order.id,
+                igniteSessionId: session.id,
+                locationId: location.id,
+              },
+            },
+          }
+        : {}),
       success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
       cancel_url: `${appUrl}/checkout?canceled=true`,
     },
@@ -363,6 +380,7 @@ async function createRegularCheckout(
   customerInfo: CustomerInfo,
   emergencyContact: { name: string; phone: string; relationship?: string } | undefined,
   bookingSchemaVersion: 1 | undefined,
+  attribution: CheckoutAttribution,
   request: NextRequest
 ) {
   for (const item of regularItems) {
@@ -618,6 +636,7 @@ async function createRegularCheckout(
     customerPhone: customerInfo.phone,
     location: regularItems[0]?.location || '',
     ...getMetaCheckoutMetadata(request),
+    ...getCampaignMetadata(attribution),
   }
 
   const session = await stripe.checkout.sessions.create({

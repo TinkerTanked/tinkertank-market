@@ -5,9 +5,9 @@ import { BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
 export const metadata: Metadata = {
-  title: 'School Holiday STEM Camps Sydney & Northern Beaches',
+  title: 'Spring Holiday Camps 2026 | Sydney & Northern Beaches',
   description:
-    'Book hands-on school holiday camps for ages 6-16 in Neutral Bay and Manly. Kids explore coding, robotics, 3D design, animation and engineering.',
+    'Book spring holiday camps from 28 September to 9 October 2026 for ages 6-16 in Neutral Bay and Manly. Coding, robotics, 3D design, animation and engineering.',
   keywords: [
     'kids camps Sydney',
     'STEAM camps',
@@ -15,23 +15,23 @@ export const metadata: Metadata = {
     'science camps for kids',
     'technology camps',
     'Neutral Bay camps',
-    'day camps Sydney'
+    'day camps Sydney',
   ],
   alternates: {
-    canonical: `${baseUrl}/camps`
+    canonical: `${baseUrl}/camps`,
   },
   openGraph: {
-    title: 'School Holiday STEM Camps Sydney & Northern Beaches | TinkerTank',
-    description: 'Hands-on school holiday camps for ages 6-16 in Neutral Bay and Manly, with coding, robotics, 3D design, animation and engineering.',
+    title: 'Spring Holiday Camps 2026 | TinkerTank',
+    description: 'Hands-on spring holiday camps from 28 September to 9 October for ages 6-16 in Neutral Bay and Manly.',
     url: `${baseUrl}/camps`,
     type: 'website',
     images: [
       {
         url: `${baseUrl}/images/camps.jpg`,
-        alt: 'TinkerTank STEAM Camps'
-      }
-    ]
-  }
+        alt: 'TinkerTank STEAM Camps',
+      },
+    ],
+  },
 }
 
 export default function CampsPage() {
@@ -40,7 +40,7 @@ export default function CampsPage() {
       <BreadcrumbJsonLd
         items={[
           { name: 'Home', url: baseUrl },
-          { name: 'Camps', url: `${baseUrl}/camps` }
+          { name: 'Camps', url: `${baseUrl}/camps` },
         ]}
       />
       <CampsClient />

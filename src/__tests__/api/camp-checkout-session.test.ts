@@ -81,6 +81,12 @@ function checkoutBody(dateOfBirth = '2010-07-14') {
       phone: '0412 345 678',
     },
     emergencyContact: { name: 'Jamie McDowell', phone: '0412 345 678' },
+    attribution: {
+      utmSource: 'meta',
+      utmMedium: 'paid_social',
+      utmCampaign: 'spring_camps_2026',
+      utmContent: 'wk8_robotics_feed',
+    },
   }
 }
 
@@ -150,6 +156,12 @@ describe('camp checkout session', () => {
         mode: 'payment',
         customer_email: 'jamie@example.com',
         client_reference_id: 'order-1',
+        metadata: expect.objectContaining({
+          utmSource: 'meta',
+          utmMedium: 'paid_social',
+          utmCampaign: 'spring_camps_2026',
+          utmContent: 'wk8_robotics_feed',
+        }),
         line_items: [
           expect.objectContaining({
             price_data: expect.objectContaining({ unit_amount: 11999 }),
