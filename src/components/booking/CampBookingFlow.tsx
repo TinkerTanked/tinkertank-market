@@ -80,6 +80,7 @@ export default function CampBookingFlow() {
   const [isContinuing, setIsContinuing] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasTrackedStart = useRef(false)
+  const trackedSelection = useRef<string | null>(null)
 
   const saveDraft = useCallback(async (value: CampBookingDraft) => {
     const response = await fetch('/api/booking-draft', {
@@ -210,6 +211,21 @@ export default function CampBookingFlow() {
     if (!validateStep(draft.currentStep)) return
 
     if (draft.currentStep < 4) {
+      if (draft.currentStep === 1) {
+        const selectionKey = JSON.stringify({
+          location: draft.selection.location?.id,
+          dates: draft.selection.dates,
+          campType: draft.selection.campType?.id,
+        })
+        if (trackedSelection.current !== selectionKey) {
+          trackedSelection.current = selectionKey
+          trackEvent('add_to_cart', {
+            currency: 'AUD',
+            value: total,
+            items: analyticsItems(draft),
+          })
+        }
+      }
       trackEvent(
         'booking_step_completed',
         {
@@ -302,6 +318,12 @@ export default function CampBookingFlow() {
             phone: draft.contact.mobile.trim(),
           },
           emergencyContact: defaultEmergency,
+          attribution: {
+            utmSource: searchParams.get('utm_source') || undefined,
+            utmMedium: searchParams.get('utm_medium') || undefined,
+            utmCampaign: searchParams.get('utm_campaign') || undefined,
+            utmContent: searchParams.get('utm_content') || undefined,
+          },
         }),
       })
       const data = await response.json()
@@ -441,9 +463,10 @@ function CampSelectionStep({
   )
 }
 
-function analyticsItems(draft: CampBookingDraft) {
+export function analyticsItems(draft: CampBookingDraft) {
   const { campType, location, dates } = draft.selection
   if (!campType) return []
+  const childCount = Math.max(draft.children.length, 1)
   return [
     {
       item_id: campType.id,
@@ -452,7 +475,7 @@ function analyticsItems(draft: CampBookingDraft) {
       item_variant: `${dates.length} ${dates.length === 1 ? 'day' : 'days'}`,
       location_id: location?.id,
       price: campType.price,
-      quantity: campType.isBundle ? draft.children.length : draft.children.length * dates.length,
+      quantity: campType.isBundle ? childCount : childCount * dates.length,
     },
   ]
 }

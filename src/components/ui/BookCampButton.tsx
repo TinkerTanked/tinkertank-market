@@ -31,6 +31,11 @@ export default function BookCampButton({
     })
     const params = new URLSearchParams({ source: trackingSource })
     if (initialLocationId) params.set('location', initialLocationId)
+    const searchParams = new URLSearchParams(window.location.search)
+    for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content']) {
+      const value = searchParams.get(key)
+      if (value) params.set(key, value)
+    }
     router.push(`/book/camps?${params.toString()}`)
   }
 
