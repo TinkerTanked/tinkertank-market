@@ -7,7 +7,11 @@ const mockStripe = {
   checkout: { sessions: { create: vi.fn() } }
 }
 
-vi.mock('stripe', () => ({ default: vi.fn(() => mockStripe) }))
+vi.mock('stripe', () => ({
+  default: function StripeMock() {
+    return mockStripe
+  }
+}))
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     product: { findFirst: vi.fn() },

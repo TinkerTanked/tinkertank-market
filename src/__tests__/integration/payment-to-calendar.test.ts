@@ -5,14 +5,16 @@ import { useEnhancedCartStore } from '@/stores/enhancedCartStore';
 
 // Mock Stripe
 vi.mock('stripe', () => ({
-  default: vi.fn(() => ({
+  default: function StripeMock() {
+    return {
     webhooks: {
       constructEvent: vi.fn()
     },
     paymentIntents: {
       retrieve: vi.fn()
     }
-  }))
+    }
+  }
 }));
 
 // Mock Prisma
