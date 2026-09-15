@@ -5,9 +5,9 @@ import { BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
 export const metadata: Metadata = {
-  title: 'Ignite STEAM Program - Weekly Learning',
+  title: 'After-School Coding & Robotics Classes Sydney',
   description:
-    'Build confidence and creativity with TinkerTank Ignite! Weekly STEAM sessions throughout the school term. Curriculum-aligned programs for ages 5-16 in Sydney.',
+    'Weekly after-school coding, robotics and STEAM classes for ages 5-16. Choose studio drop-off, school pickup or in-school programs across Northern Sydney.',
   keywords: [
     'weekly STEAM program Sydney',
     'after school STEAM',
@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     canonical: `${baseUrl}/ignite`
   },
   openGraph: {
-    title: 'Ignite STEAM Program | TinkerTank Sydney',
-    description: 'Weekly STEAM sessions that build confidence and creativity. Curriculum-aligned programs for ages 5-16.',
+    title: 'After-School Coding & Robotics Classes | TinkerTank Sydney',
+    description: 'Weekly coding, robotics and STEAM programs for ages 5-16 across Northern Sydney.',
     url: `${baseUrl}/ignite`,
     type: 'website',
     images: [

@@ -3,6 +3,7 @@ export interface LearningTopic {
   navLabel: string
   title: string
   shortDescription: string
+  metaDescription?: string
   description: string
   image: string
   imageAlt: string
@@ -30,11 +31,13 @@ export const learningTopics: LearningTopic[] = [
     faqs: [
       {
         question: 'What is the difference between STEM and STEAM?',
-        answer: 'STEM brings together science, technology, engineering and mathematics. STEAM adds arts and design, helping children combine technical thinking with creativity and communication.'
+        answer:
+          'STEM brings together science, technology, engineering and mathematics. STEAM adds arts and design, helping children combine technical thinking with creativity and communication.'
       },
       {
         question: 'Does my child need previous STEM experience?',
-        answer: 'No. Projects are adapted to each child’s age, interests and experience, so beginners can start confidently while experienced makers take on deeper challenges.'
+        answer:
+          'No. Projects are adapted to each child’s age, interests and experience, so beginners can start confidently while experienced makers take on deeper challenges.'
       },
       {
         question: 'Which TinkerTank programs include STEM and STEAM?',
@@ -45,8 +48,10 @@ export const learningTopics: LearningTopic[] = [
   {
     slug: 'robotics-for-kids',
     navLabel: 'Robotics',
-    title: 'Robotics for Kids in Sydney',
-    shortDescription: 'Build, program, test and improve robots through hands-on challenges.',
+    title: 'Robotics for Kids Sydney - Classes, Camps & Parties',
+    shortDescription: 'Build, code and test robots in beginner-friendly programs for ages 5-16.',
+    metaDescription:
+      'Build, code and test robots in hands-on, beginner-friendly programs for ages 5-16. Explore camps, weekly classes, parties and school programs in Sydney.',
     description:
       'Children learn robotics by making things move, respond and solve challenges. They connect building and programming, test what happens in the real world and improve their designs when the first attempt does not work as planned.',
     image: '/images/battle.jpg',
@@ -60,11 +65,13 @@ export const learningTopics: LearningTopic[] = [
     faqs: [
       {
         question: 'What ages are TinkerTank robotics activities for?',
-        answer: 'TinkerTank programs serve children aged 5-16, with robotics equipment and challenges adapted to each age group and level of experience.'
+        answer:
+          'TinkerTank programs serve children aged 5-16, with robotics equipment and challenges adapted to each age group and level of experience.'
       },
       {
         question: 'Does my child need to own a robotics kit?',
-        answer: 'No. TinkerTank supplies the equipment and materials needed for activities delivered at our venues or through participating schools.'
+        answer:
+          'No. TinkerTank supplies the equipment and materials needed for activities delivered at our venues or through participating schools.'
       },
       {
         question: 'Where can children learn robotics with TinkerTank?',
@@ -75,8 +82,10 @@ export const learningTopics: LearningTopic[] = [
   {
     slug: 'coding-for-kids',
     navLabel: 'Coding',
-    title: 'Coding for Kids in Sydney',
-    shortDescription: 'Create games, stories and interactive projects while learning how code works.',
+    title: 'Coding & Minecraft Programs for Kids in Sydney',
+    shortDescription: 'Creative coding with Scratch, Minecraft and age-appropriate AI tools.',
+    metaDescription:
+      'Learn coding through Scratch, Minecraft, games and age-appropriate AI tools. Explore camps, weekly classes, parties and school programs for ages 5-16.',
     description:
       'TinkerTank makes coding tangible and creative. Children plan what they want a project to do, break the problem into steps, build their solution and debug it through experimentation rather than simply following instructions.',
     image: '/images/code-1.jpg',
@@ -90,11 +99,13 @@ export const learningTopics: LearningTopic[] = [
     faqs: [
       {
         question: 'Is TinkerTank coding suitable for beginners?',
-        answer: 'Yes. Facilitators adapt activities for beginners and experienced young coders, helping each child progress from their current level.'
+        answer:
+          'Yes. Facilitators adapt activities for beginners and experienced young coders, helping each child progress from their current level.'
       },
       {
         question: 'What coding platforms does TinkerTank use?',
-        answer: 'Activities can include platforms and creative environments such as Scratch, Minecraft and AI tools. The exact project varies by program, age group and session.'
+        answer:
+          'Activities can include platforms and creative environments such as Scratch, Minecraft and AI tools. The exact project varies by program, age group and session.'
       },
       {
         question: 'Which programs include coding?',
@@ -120,11 +131,13 @@ export const learningTopics: LearningTopic[] = [
     faqs: [
       {
         question: 'Do children need 3D design experience?',
-        answer: 'No. Children can begin with accessible design challenges and progress toward more detailed models as their confidence grows.'
+        answer:
+          'No. Children can begin with accessible design challenges and progress toward more detailed models as their confidence grows.'
       },
       {
         question: 'Do children get to use 3D printers?',
-        answer: 'TinkerTank activities connect digital modelling with the 3D printing process. The exact printing activity and whether a project is completed during the session depend on the program and available time.'
+        answer:
+          'TinkerTank activities connect digital modelling with the 3D printing process. The exact printing activity and whether a project is completed during the session depend on the program and available time.'
       },
       {
         question: 'Which TinkerTank programs include 3D design and printing?',
@@ -150,11 +163,13 @@ export const learningTopics: LearningTopic[] = [
     faqs: [
       {
         question: 'Is animation suitable for children with no experience?',
-        answer: 'Yes. Activities can begin with simple movement and storytelling concepts, then become more detailed as children build confidence.'
+        answer:
+          'Yes. Activities can begin with simple movement and storytelling concepts, then become more detailed as children build confidence.'
       },
       {
         question: 'What do children learn through animation?',
-        answer: 'Animation develops planning, sequencing, design, timing, communication and technical problem-solving while giving children a creative way to express ideas.'
+        answer:
+          'Animation develops planning, sequencing, design, timing, communication and technical problem-solving while giving children a creative way to express ideas.'
       },
       {
         question: 'Which TinkerTank programs include animation?',
