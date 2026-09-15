@@ -135,7 +135,8 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 vi.mock('stripe', () => ({
-  default: vi.fn(() => ({
+  default: function StripeMock() {
+    return {
     webhooks: {
       constructEvent: vi.fn()
     },
@@ -149,7 +150,8 @@ vi.mock('stripe', () => ({
       create: vi.fn(),
       retrieve: vi.fn()
     }
-  }))
+    }
+  }
 }));
 
 vi.mock('@stripe/stripe-js', () => ({

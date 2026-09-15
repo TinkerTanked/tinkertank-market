@@ -12,7 +12,8 @@ vi.mock('@/lib/prisma');
 
 // Mock Stripe
 vi.mock('stripe', () => ({
-  default: vi.fn(() => ({
+  default: function StripeMock() {
+    return {
     paymentIntents: {
       create: vi.fn(),
       retrieve: vi.fn(),
@@ -21,7 +22,8 @@ vi.mock('stripe', () => ({
     webhooks: {
       constructEvent: vi.fn()
     }
-  }))
+    }
+  }
 }));
 
 describe('API Routes Integration Tests', () => {

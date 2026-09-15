@@ -12,7 +12,9 @@ const mockStripe = {
 }
 
 vi.mock('stripe', () => ({
-  default: vi.fn(() => mockStripe)
+  default: function StripeMock() {
+    return mockStripe
+  }
 }))
 
 vi.mock('@/lib/prisma', () => ({
