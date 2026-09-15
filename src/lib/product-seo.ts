@@ -21,6 +21,29 @@ const categoryDetails = {
   }
 } as const
 
+const productMetadataOverrides: Record<string, { title: string; description: string }> = {
+  'coding-party': {
+    title: 'Kids Coding Party Sydney - Minecraft & Scratch',
+    description:
+      'Book a hands-on coding birthday party with Minecraft, Scratch and age-appropriate AI activities. Two hours for ages 6+ at Neutral Bay or your Sydney venue.'
+  },
+  'in-school-ignite': {
+    title: 'Coding & Robotics Programs for Sydney Schools',
+    description:
+      'Bring weekly coding, robotics and STEAM learning to your Sydney school. TinkerTank supplies experienced facilitators, equipment and age-appropriate projects.'
+  },
+  'drop-off-ignite': {
+    title: 'After-School Coding & Robotics Neutral Bay',
+    description:
+      'Weekly after-school coding, robotics and STEAM classes for ages 5-16 at the TinkerTank Neutral Bay studio, with equipment and project support included.'
+  },
+  'school-pickup-ignite': {
+    title: 'School Pickup & STEAM Program Neutral Bay',
+    description:
+      'Combine selected school pickup with weekly coding, robotics and STEAM learning at TinkerTank Neutral Bay. Explore current schools, sessions and availability.'
+  }
+}
+
 export type SeoProductCategory = keyof typeof categoryDetails
 
 export function getProductLandingDetails(product: Product, category: SeoProductCategory) {
@@ -37,8 +60,11 @@ export function createProductMetadata(product: Product, category: SeoProductCate
   const details = getProductLandingDetails(product, category)
   if (!details) return {}
 
-  const title = `${product.name} - ${details.titleSuffix}`
-  const description = `${product.shortDescription}. For ages ${product.ageRange} in ${product.location}. View program details and book with TinkerTank.`
+  const metadataOverride = productMetadataOverrides[product.id]
+  const title = metadataOverride?.title || `${product.name} - ${details.titleSuffix}`
+  const description =
+    metadataOverride?.description ||
+    `${product.shortDescription}. For ages ${product.ageRange} in ${product.location}. View program details and book with TinkerTank.`
 
   return {
     title,

@@ -6,16 +6,18 @@ import type { LearningTopic } from '@/data/learningTopics'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
-export default function TopicLandingPage({ topic }: { topic: LearningTopic }) {
+export default function TopicLandingPage({ topic, children }: { topic: LearningTopic; children?: React.ReactNode }) {
   const url = `${baseUrl}/${topic.slug}`
 
   return (
     <>
-      <BreadcrumbJsonLd items={[
-        { name: 'Home', url: baseUrl },
-        { name: 'What Kids Learn', url: `${baseUrl}/what-kids-learn` },
-        { name: topic.navLabel, url }
-      ]} />
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: baseUrl },
+          { name: 'What Kids Learn', url: `${baseUrl}/what-kids-learn` },
+          { name: topic.navLabel, url }
+        ]}
+      />
       <FAQJsonLd questions={topic.faqs} />
 
       <section className='bg-gradient-to-br from-primary-700 via-primary-600 to-accent-600 text-white py-16 lg:py-24'>
@@ -25,11 +27,22 @@ export default function TopicLandingPage({ topic }: { topic: LearningTopic }) {
             <h1 className='text-4xl md:text-5xl font-display font-bold'>{topic.title}</h1>
             <p className='text-xl text-blue-100 leading-relaxed'>{topic.description}</p>
             <div className='flex flex-col sm:flex-row gap-4'>
-              <Link href='/camps' className='btn-secondary'>Explore Holiday Camps</Link>
-              <Link href='/ignite' className='btn-outline-inverse'>Explore Weekly Programs</Link>
+              <Link href='/camps' className='btn-secondary'>
+                Explore Holiday Camps
+              </Link>
+              <Link href='/ignite' className='btn-outline-inverse'>
+                Explore Weekly Programs
+              </Link>
             </div>
           </div>
-          <Image src={topic.image} alt={topic.imageAlt} width={900} height={650} className='rounded-2xl shadow-2xl w-full h-80 object-cover' priority />
+          <Image
+            src={topic.image}
+            alt={topic.imageAlt}
+            width={900}
+            height={650}
+            className='rounded-2xl shadow-2xl w-full h-80 object-cover'
+            priority
+          />
         </div>
       </section>
 
@@ -50,12 +63,16 @@ export default function TopicLandingPage({ topic }: { topic: LearningTopic }) {
             <h2 className='text-3xl font-display font-bold text-gray-900 mb-6'>Skills Developed Along the Way</h2>
             <div className='grid sm:grid-cols-2 gap-4'>
               {topic.skills.map(skill => (
-                <div key={skill} className='bg-primary-50 rounded-xl p-5 font-semibold text-primary-900'>{skill}</div>
+                <div key={skill} className='bg-primary-50 rounded-xl p-5 font-semibold text-primary-900'>
+                  {skill}
+                </div>
               ))}
             </div>
           </div>
         </div>
       </section>
+
+      {children}
 
       <section className='py-20 bg-gray-50'>
         <div className='container-custom'>
@@ -64,10 +81,26 @@ export default function TopicLandingPage({ topic }: { topic: LearningTopic }) {
             <p className='text-lg text-gray-600'>Choose the format that works for your child, family or school.</p>
           </div>
           <div className='grid sm:grid-cols-2 lg:grid-cols-4 gap-6'>
-            <ProgramLink title='Holiday Camps' description='Full days of collaborative making during selected NSW school holidays.' href='/camps' />
-            <ProgramLink title='Weekly Ignite' description='Ongoing projects that build skills and confidence from week to week.' href='/ignite' />
-            <ProgramLink title='Birthday Parties' description='A social, hands-on technology experience for a memorable celebration.' href='/birthdays' />
-            <ProgramLink title='School Programs' description='Project-based STEAM learning delivered with participating schools.' href='/schools' />
+            <ProgramLink
+              title='Holiday Camps'
+              description='Full days of collaborative making during selected NSW school holidays.'
+              href='/camps'
+            />
+            <ProgramLink
+              title='Weekly Ignite'
+              description='Ongoing projects that build skills and confidence from week to week.'
+              href='/ignite'
+            />
+            <ProgramLink
+              title='Birthday Parties'
+              description='A social, hands-on technology experience for a memorable celebration.'
+              href='/birthdays'
+            />
+            <ProgramLink
+              title='School Programs'
+              description='Project-based STEAM learning delivered with participating schools.'
+              href='/schools'
+            />
           </div>
         </div>
       </section>
@@ -90,7 +123,9 @@ export default function TopicLandingPage({ topic }: { topic: LearningTopic }) {
         <div className='container-custom text-center space-y-6'>
           <h2 className='text-3xl font-display font-bold'>Find the Right TinkerTank Experience</h2>
           <p className='text-lg text-blue-100'>Ask our team which current program best matches your child&apos;s age and interests.</p>
-          <Link href='/contact' className='btn-secondary'>Contact TinkerTank</Link>
+          <Link href='/contact' className='btn-secondary'>
+            Contact TinkerTank
+          </Link>
         </div>
       </section>
     </>
@@ -99,7 +134,10 @@ export default function TopicLandingPage({ topic }: { topic: LearningTopic }) {
 
 function ProgramLink({ title, description, href }: { title: string; description: string; href: string }) {
   return (
-    <Link href={href} className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-primary-300 transition-all'>
+    <Link
+      href={href}
+      className='bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-primary-300 transition-all'
+    >
       <h3 className='text-xl font-display font-semibold text-gray-900'>{title}</h3>
       <p className='text-gray-600 mt-3'>{description}</p>
       <span className='inline-block text-primary-600 font-semibold mt-5'>Explore {title} →</span>
