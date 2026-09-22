@@ -6,6 +6,7 @@ import { assertCampCapacity, CampCapacityExceededError, utcDateKey } from '@/lib
 import { assertBirthdaySlotAvailable, birthdaySlotStart, BirthdaySlotUnavailableError } from '@/lib/birthdayAvailability'
 import { getIgniteCheckoutPlan, getIgniteSessionConfig, igniteProductId, SYDNEY_TZ } from '@/lib/ignite'
 import { calculateAgeOnDate } from '@/lib/bookingSchema'
+import { isDateKeyAvailableForLocation } from '@/data/locationAvailability'
 import { formatInTimeZone } from 'date-fns-tz'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -443,6 +444,17 @@ async function createRegularCheckout(
       const date = new Date(rawDate.includes('T') ? rawDate : `${rawDate}T00:00:00.000Z`)
       if (Number.isNaN(date.getTime())) {
         return NextResponse.json({ error: 'A valid camp date is required.' }, { status: 400 })
+      }
+
+      const dateKey = rawDate.slice(0, 10)
+      if (!isDateKeyAvailableForLocation(dateKey, item.location)) {
+        return NextResponse.json(
+          {
+            error: `${item.location} is unavailable for camps on ${formatInTimeZone(date, SYDNEY_TZ, 'd MMMM yyyy')}.`,
+            code: 'CAMP_DATE_UNAVAILABLE'
+          },
+          { status: 409 }
+        )
       }
 
       const key = `${item.location}:${utcDateKey(date)}`
