@@ -184,6 +184,37 @@ describe('camp checkout session', () => {
     expect(mockStripe.checkout.sessions.create).not.toHaveBeenCalled()
   })
 
+  it.each(['2026-09-23', '2026-09-24', '2026-09-25'])(
+    'rejects Neutral Bay camp bookings on unavailable date %s',
+    async date => {
+      const body = checkoutBody()
+      body.items[0].selectedDate = date
+      body.items[0].selectedDates = [date]
+
+      const response = await postCheckout(body)
+
+      expect(response.status).toBe(409)
+      await expect(response.json()).resolves.toEqual({
+        error: `TinkerTank Neutral Bay is unavailable for camps on ${Number(date.slice(-2))} September 2026.`,
+        code: 'CAMP_DATE_UNAVAILABLE'
+      })
+      expect(assertCampCapacity).not.toHaveBeenCalled()
+      expect(prisma.order.create).not.toHaveBeenCalled()
+      expect(mockStripe.checkout.sessions.create).not.toHaveBeenCalled()
+    }
+  )
+
+  it('keeps nearby Neutral Bay camp dates bookable', async () => {
+    const body = checkoutBody()
+    body.items[0].selectedDate = '2026-09-28'
+    body.items[0].selectedDates = ['2026-09-28']
+
+    const response = await postCheckout(body)
+
+    expect(response.status).toBe(200)
+    expect(assertCampCapacity).toHaveBeenCalledWith(prisma, 'TinkerTank Neutral Bay', new Date('2026-09-28T00:00:00.000Z'), 1)
+  })
+
   it('prices multiple children and dates from the database without losing order items', async () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([
       { ...campProduct, id: 'all-day-camp', name: 'All Day Camp', price: 149.99 },

@@ -7,6 +7,7 @@ export interface LocationAvailability {
   campPage: string
   availableCampTypes: ('day' | 'allday')[]
   availableDates?: string[]
+  unavailableDates?: string[]
   /** Maximum number of camp bookings per day at this location. */
   dailyCapacity?: number
 }
@@ -27,6 +28,8 @@ export const MANLY_LIBRARY_SPRING_2026_DATES = [
   '2026-10-08'
 ]
 
+export const NEUTRAL_BAY_CAMP_UNAVAILABLE_DATES = ['2026-09-23', '2026-09-24', '2026-09-25']
+
 export const LOCATION_AVAILABILITY: LocationAvailability[] = [
   {
     locationId: 'neutral-bay',
@@ -36,6 +39,7 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
     image: '/images/YEO.jpg',
     campPage: '/camps/neutral-bay',
     availableCampTypes: ['day', 'allday'],
+    unavailableDates: NEUTRAL_BAY_CAMP_UNAVAILABLE_DATES,
     // Combined daily cap across Day Camp and All Day Camp bookings
     dailyCapacity: DEFAULT_CAMP_DAILY_CAPACITY
   },
@@ -72,14 +76,18 @@ export function getLocationAvailabilityById(locationId: string): LocationAvailab
 }
 
 export function isDateAvailableForLocation(date: Date, locationName: string): boolean {
+  return isDateKeyAvailableForLocation(toLocalDateString(date), locationName)
+}
+
+export function isDateKeyAvailableForLocation(date: string, locationName: string): boolean {
   const availability = getLocationAvailability(locationName)
-  
+
   if (!availability) return false
-  
+
+  if (availability.unavailableDates?.includes(date)) return false
   if (!availability.availableDates) return true
-  
-  const dateStr = toLocalDateString(date)
-  return availability.availableDates.includes(dateStr)
+
+  return availability.availableDates.includes(date)
 }
 
 export function getAvailableCampTypes(locationName: string): ('day' | 'allday')[] {
