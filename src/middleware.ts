@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/api/admin')
+
+  if (isAdminRoute) {
     const authHeader = request.headers.get('authorization')
-    const adminUser = process.env.ADMIN_USERNAME || 'admin'
-    const adminPass = process.env.ADMIN_PASSWORD || 'tinkertank2025'
+    const adminUser = process.env.ADMIN_USERNAME
+    const adminPass = process.env.ADMIN_PASSWORD
+
+    if (!adminUser || !adminPass) {
+      return new NextResponse('Admin authentication is not configured', { status: 503 })
+    }
 
     if (!authHeader) {
       return new NextResponse('Authentication required', {
@@ -33,5 +39,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/admin/:path*',
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 }
