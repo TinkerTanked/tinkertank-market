@@ -12,6 +12,7 @@ interface CampLocationPageProps {
   address: string
   image: string
   intro: string
+  dateSummary: string
   dates: string[]
   schedule: string
   options: string
@@ -19,6 +20,7 @@ interface CampLocationPageProps {
   relatedHref: string
   relatedLabel: string
   faqs: Array<{ question: string; answer: string }>
+  showLocationComparison?: boolean
 }
 
 const campFeatures = [
@@ -35,13 +37,15 @@ export default function CampLocationPage({
   address,
   image,
   intro,
+  dateSummary,
   dates,
   schedule,
   options,
   localDetail,
   relatedHref,
   relatedLabel,
-  faqs
+  faqs,
+  showLocationComparison = true
 }: CampLocationPageProps) {
   return (
     <>
@@ -69,6 +73,8 @@ export default function CampLocationPage({
             <div className='mt-7 grid gap-3 text-sm font-semibold text-slate-200 sm:grid-cols-2'>
               <span className='flex items-center gap-2'><UserGroupIcon className='h-5 w-5 text-cyan-300' />Ages 6-16</span>
               <span className='flex items-center gap-2'><ClockIcon className='h-5 w-5 text-cyan-300' />{schedule}</span>
+              <span className='flex items-center gap-2'><CalendarDaysIcon className='h-5 w-5 text-cyan-300' />{dateSummary}</span>
+              <span className='flex items-center gap-2'><CheckIcon className='h-5 w-5 text-cyan-300' />From $119.99 per day</span>
               <span className='flex items-center gap-2 sm:col-span-2'><MapPinIcon className='h-5 w-5 text-cyan-300' />{address}</span>
             </div>
             <div className='mt-8 flex flex-col gap-3 sm:flex-row sm:items-center'>
@@ -79,7 +85,9 @@ export default function CampLocationPage({
                 variant='hero'
                 trackingSource='camp_location_hero'
               />
-              <Link href='/camps' className='px-4 py-3 text-center font-semibold text-slate-200 hover:text-white'>Compare both locations</Link>
+              {showLocationComparison && (
+                <Link href='/camps' className='px-4 py-3 text-center font-semibold text-slate-200 hover:text-white'>Compare both locations</Link>
+              )}
             </div>
           </div>
           <Image src={image} alt={`Children enjoying a TinkerTank camp at ${locationName}`} width={1000} height={760} priority className='h-[26rem] w-full rounded-3xl object-cover shadow-2xl' />
@@ -155,6 +163,22 @@ export default function CampLocationPage({
           </div>
         </div>
       </section>
+
+      <div className='h-20 lg:hidden' aria-hidden='true' />
+      <div className='fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.12)] backdrop-blur lg:hidden'>
+        <div className='mx-auto flex max-w-lg items-center gap-3'>
+          <div className='min-w-0 flex-1'>
+            <p className='text-xs font-semibold text-slate-500'>{dateSummary}</p>
+            <p className='font-bold text-slate-950'>From $119.99</p>
+          </div>
+          <BookCampButton
+            initialLocationId={locationId}
+            label='Choose dates'
+            size='sm'
+            trackingSource='camp_location_sticky'
+          />
+        </div>
+      </div>
     </>
   )
 }

@@ -6,7 +6,7 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
 export const metadata: Metadata = {
   title: 'School Holiday STEM Camps Neutral Bay, Sydney',
-  description: 'Book school holiday STEM camps for ages 6-16 at TinkerTank Neutral Bay. Coding, robotics, engineering, animation and 3D design from $119.99.',
+  description: 'Book spring school holiday STEM camps from 28 September to 9 October for ages 6-16 at TinkerTank Neutral Bay. Days from $119.99.',
   alternates: { canonical: `${baseUrl}/camps/neutral-bay` },
   openGraph: {
     title: 'School Holiday STEM Camps in Neutral Bay | TinkerTank',
@@ -39,14 +39,16 @@ export default function NeutralBayCampPage() {
         areaName='Lower North Shore, Sydney'
         address='50 Yeo St, Neutral Bay NSW 2089'
         image='/images/camps2.jpeg'
-        intro='A practical day of coding, robotics and creative technology in our purpose-built studio, with day and extended-day options for easier family scheduling.'
-        dates={['Available weekdays', 'Choose one or more days', 'Live dates in booking calendar']}
+        intro='Spring holidays are for building, coding and creating. Choose one day or several across two weeks at our purpose-built Neutral Bay studio—beginners are very welcome.'
+        dateSummary='28 Sep–9 Oct 2026'
+        dates={['Mon 28 Sep–Fri 2 Oct', 'Mon 5–Fri 9 Oct', 'Choose one or more days']}
         schedule='9 AM-3 PM or 9 AM-5 PM'
         options='Day Camp $119.99 · All Day $149.99'
         localDetail='Our Neutral Bay studio gives campers access to the tools and equipment they use throughout the day, with a familiar drop-off and collection point on Yeo Street.'
         relatedHref='/locations/neutral-bay#studio-map'
         relatedLabel='View the studio map and location details'
         faqs={faqs}
+        showLocationComparison={false}
       />
     </>
   )

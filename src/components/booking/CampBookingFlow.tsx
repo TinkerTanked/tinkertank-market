@@ -73,7 +73,6 @@ export default function CampBookingFlow() {
   const initialLocationId = searchParams.get('location')
   const canceled = searchParams.get('canceled') === 'true'
   const [draft, setDraft] = useState<CampBookingDraft>(() => createInitialDraft(initialLocationId))
-  const [requestedLocation, setRequestedLocation] = useState<CampLocation | null>(null)
   const [errors, setErrors] = useState<BookingValidationError[]>([])
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [isLoadingDraft, setIsLoadingDraft] = useState(true)
@@ -104,11 +103,9 @@ export default function CampBookingFlow() {
         if (!parsed.success) return
 
         const locationFromLink = configuredLocation(initialLocationId)
-        const recoveredLocation = parsed.data.selection.location
-        if (locationFromLink && recoveredLocation && locationFromLink.id !== recoveredLocation.id) {
-          setRequestedLocation(locationFromLink)
-        } else if (locationFromLink && !recoveredLocation) {
-          parsed.data.selection.location = locationFromLink
+        if (locationFromLink) {
+          parsed.data.currentStep = 1
+          parsed.data.selection = { location: locationFromLink, dates: [], campType: null }
         }
         setDraft(parsed.data)
       })
@@ -167,17 +164,6 @@ export default function CampBookingFlow() {
   const selectionDates = useMemo(() => draft.selection.dates.map(fromCalendarDate), [draft.selection.dates])
 
   const updateDraft = (update: Partial<CampBookingDraft>) => setDraft(current => ({ ...current, ...update }))
-
-  const switchToRequestedLocation = () => {
-    if (!requestedLocation) return
-    setDraft(current => ({
-      ...current,
-      currentStep: 1,
-      selection: { location: requestedLocation, dates: [], campType: null },
-    }))
-    setRequestedLocation(null)
-    setErrors([])
-  }
 
   const validateStep = (step: number) => {
     const stepErrors = errorsForStep(validateCampBooking(draft), step)
@@ -357,31 +343,6 @@ export default function CampBookingFlow() {
       {canceled && (
         <div className='border-b border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900'>
           Payment was cancelled. Nothing was charged and your booking details are still here.
-        </div>
-      )}
-      {requestedLocation && draft.selection.location && (
-        <div className='border-b border-blue-200 bg-blue-50 px-4 py-4 text-blue-950'>
-          <div className='mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-            <p className='text-sm leading-6'>
-              We restored your {draft.selection.location.name} booking. Would you rather book at {requestedLocation.name}?
-            </p>
-            <div className='flex flex-wrap gap-2'>
-              <button
-                type='button'
-                onClick={() => setRequestedLocation(null)}
-                className='rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm font-bold text-blue-900'
-              >
-                Keep {draft.selection.location.name}
-              </button>
-              <button
-                type='button'
-                onClick={switchToRequestedLocation}
-                className='rounded-lg bg-blue-900 px-3 py-2 text-sm font-bold text-white'
-              >
-                Switch to {requestedLocation.name}
-              </button>
-            </div>
-          </div>
         </div>
       )}
       <BookingShell

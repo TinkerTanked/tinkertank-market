@@ -44,6 +44,7 @@ export default function ManlyCampPage() {
         address='Market Place, Manly NSW 2095'
         image='/images/manly-day.png'
         intro='School holiday coding, robotics and creative technology in central Manly, with six bookable spring dates for Northern Beaches families.'
+        dateSummary='29 Sep–8 Oct 2026'
         dates={dates}
         schedule='9:00 AM-3:00 PM'
         options='Day Camp · $119.99 per child, per day'
