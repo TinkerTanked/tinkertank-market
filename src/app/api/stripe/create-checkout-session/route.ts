@@ -8,6 +8,7 @@ import { getIgniteCheckoutPlan, getIgniteSessionConfig, igniteProductId, SYDNEY_
 import { calculateAgeOnDate } from '@/lib/bookingSchema'
 import { isDateKeyAvailableForLocation } from '@/data/locationAvailability'
 import { formatInTimeZone } from 'date-fns-tz'
+import { getCampUnitPrice } from '@/lib/campPromotion'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -535,7 +536,7 @@ async function createRegularCheckout(
 
   for (const item of regularItems) {
     const product = products.find(p => p.id === item.productId)!
-    const unitPrice = Number(product.price)
+    const unitPrice = getCampUnitPrice(product.id, item.location, Number(product.price))
     const isBundle = item.productId.includes('bundle')
     const numberOfDays = item.selectedDates?.length || 1
     const numberOfStudents = item.students.length

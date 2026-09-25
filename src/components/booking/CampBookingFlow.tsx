@@ -23,6 +23,7 @@ import {
 } from '@/lib/bookingSchema'
 import { DEFAULT_CAMP_DAILY_CAPACITY, getLocationAvailabilityById } from '@/data/locationAvailability'
 import { trackEvent } from '@/lib/analytics'
+import { getCampUnitPrice } from '@/lib/campPromotion'
 
 const STEP_NAMES = ['selection', 'children', 'contact', 'review'] as const
 
@@ -428,6 +429,7 @@ export function analyticsItems(draft: CampBookingDraft) {
   const { campType, location, dates } = draft.selection
   if (!campType) return []
   const childCount = Math.max(draft.children.length, 1)
+  const unitPrice = getCampUnitPrice(campType.id, location?.id || location?.name, campType.price)
   return [
     {
       item_id: campType.id,
@@ -435,7 +437,7 @@ export function analyticsItems(draft: CampBookingDraft) {
       item_category: 'camps',
       item_variant: `${dates.length} ${dates.length === 1 ? 'day' : 'days'}`,
       location_id: location?.id,
-      price: campType.price,
+      price: unitPrice,
       quantity: campType.isBundle ? childCount : childCount * dates.length,
     },
   ]

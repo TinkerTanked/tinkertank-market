@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 const mockStripe = {
@@ -105,6 +105,8 @@ async function postCheckout(body: ReturnType<typeof checkoutBody>) {
 
 describe('camp checkout session', () => {
   beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-28T00:00:00.000Z'))
     vi.clearAllMocks()
     vi.mocked(prisma.product.findMany).mockResolvedValue([campProduct] as never)
     vi.mocked(prisma.student.create).mockResolvedValue({ id: 'student-1' } as never)
@@ -112,6 +114,10 @@ describe('camp checkout session', () => {
     vi.mocked(prisma.order.update).mockResolvedValue({ id: 'order-1' } as never)
     vi.mocked(assertCampCapacity).mockResolvedValue(undefined)
     mockStripe.checkout.sessions.create.mockResolvedValue({ id: 'cs_test_1', url: 'https://checkout.stripe.test/session' })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('uses server pricing and creates an optional-school camp order for a 16-year-old', async () => {
@@ -172,6 +178,40 @@ describe('camp checkout session', () => {
         ],
       })
     )
+  })
+
+  it('enforces the Neutral Bay weekend offer server-side without trusting the client price', async () => {
+    vi.setSystemTime(new Date('2026-09-26T00:00:00.000Z'))
+    const body = checkoutBody()
+    body.items[0].productPrice = 1
+
+    const response = await postCheckout(body)
+
+    expect(response.status).toBe(200)
+    expect(prisma.order.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        totalAmount: 109,
+        orderItems: { create: [expect.objectContaining({ price: 109 })] }
+      })
+    })
+    expect(mockStripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        line_items: [expect.objectContaining({ price_data: expect.objectContaining({ unit_amount: 10900 }) })]
+      })
+    )
+  })
+
+  it('does not apply the Neutral Bay weekend offer to Manly', async () => {
+    vi.setSystemTime(new Date('2026-09-26T00:00:00.000Z'))
+    const body = checkoutBody()
+    body.items[0].location = 'Manly Library'
+
+    const response = await postCheckout(body)
+
+    expect(response.status).toBe(200)
+    expect(prisma.order.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ totalAmount: 119.99 })
+    })
   })
 
   it('rejects an ineligible participant before creating an order or Stripe session', async () => {

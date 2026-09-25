@@ -3,11 +3,13 @@
 import { CalendarDaysIcon, ClockIcon, MapPinIcon, UsersIcon } from '@heroicons/react/24/outline'
 import type { CampBookingDraft } from '@/lib/bookingSchema'
 import { fromCalendarDate } from '@/lib/bookingSchema'
+import { getCampUnitPrice } from '@/lib/campPromotion'
 
 export function getCampTotal(draft: CampBookingDraft) {
   const campType = draft.selection.campType
   if (!campType) return 0
-  const pricePerChild = campType.isBundle ? campType.price : campType.price * draft.selection.dates.length
+  const unitPrice = getCampUnitPrice(campType.id, draft.selection.location?.id || draft.selection.location?.name, campType.price)
+  const pricePerChild = campType.isBundle ? unitPrice : unitPrice * draft.selection.dates.length
   return Number((pricePerChild * Math.max(draft.children.length, 1)).toFixed(2))
 }
 
