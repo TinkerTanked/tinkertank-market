@@ -21,6 +21,11 @@ interface CampLocationPageProps {
   relatedLabel: string
   faqs: Array<{ question: string; answer: string }>
   showLocationComparison?: boolean
+  promotion?: {
+    price: number
+    standardPrice: number
+    deadline: string
+  }
 }
 
 const campFeatures = [
@@ -45,21 +50,24 @@ export default function CampLocationPage({
   relatedHref,
   relatedLabel,
   faqs,
-  showLocationComparison = true
+  showLocationComparison = true,
+  promotion
 }: CampLocationPageProps) {
+  const startingPrice = promotion?.price ?? 119.99
+
   return (
     <>
       <TrackEventOnMount
         name='view_item'
         parameters={{
           currency: 'AUD',
-          value: 119.99,
+          value: startingPrice,
           items: [{
             item_id: `camp-${locationId}`,
             item_name: `School Holiday STEM Camps at ${locationName}`,
             item_category: 'camps',
             location_id: locationId,
-            price: 119.99,
+            price: startingPrice,
             quantity: 1
           }]
         }}
@@ -70,11 +78,18 @@ export default function CampLocationPage({
             <p className='text-sm font-bold uppercase tracking-[0.18em] text-cyan-300'>{areaName}</p>
             <h1 className='mt-4 font-display text-4xl font-bold leading-tight sm:text-5xl'>School Holiday STEM Camps at {locationName}</h1>
             <p className='mt-5 text-lg leading-8 text-slate-300'>{intro}</p>
+            {promotion && (
+              <div className='mt-6 rounded-2xl border border-amber-300/40 bg-amber-300 px-5 py-4 text-slate-950 shadow-lg'>
+                <p className='text-sm font-black uppercase tracking-[0.14em]'>Weekend special</p>
+                <p className='mt-1 text-lg font-bold'>Day Camps A${promotion.price.toFixed(2)} · normally A${promotion.standardPrice.toFixed(2)}</p>
+                <p className='mt-1 text-sm font-semibold'>Automatically applied when you book by {promotion.deadline}.</p>
+              </div>
+            )}
             <div className='mt-7 grid gap-3 text-sm font-semibold text-slate-200 sm:grid-cols-2'>
               <span className='flex items-center gap-2'><UserGroupIcon className='h-5 w-5 text-cyan-300' />Ages 6-16</span>
               <span className='flex items-center gap-2'><ClockIcon className='h-5 w-5 text-cyan-300' />{schedule}</span>
               <span className='flex items-center gap-2'><CalendarDaysIcon className='h-5 w-5 text-cyan-300' />{dateSummary}</span>
-              <span className='flex items-center gap-2'><CheckIcon className='h-5 w-5 text-cyan-300' />From $119.99 per day</span>
+              <span className='flex items-center gap-2'><CheckIcon className='h-5 w-5 text-cyan-300' />From ${startingPrice.toFixed(2)} per day</span>
               <span className='flex items-center gap-2 sm:col-span-2'><MapPinIcon className='h-5 w-5 text-cyan-300' />{address}</span>
             </div>
             <div className='mt-8 flex flex-col gap-3 sm:flex-row sm:items-center'>
@@ -169,7 +184,7 @@ export default function CampLocationPage({
         <div className='mx-auto flex max-w-lg items-center gap-3'>
           <div className='min-w-0 flex-1'>
             <p className='text-xs font-semibold text-slate-500'>{dateSummary}</p>
-            <p className='font-bold text-slate-950'>From $119.99</p>
+            <p className='font-bold text-slate-950'>From ${startingPrice.toFixed(2)}</p>
           </div>
           <BookCampButton
             initialLocationId={locationId}

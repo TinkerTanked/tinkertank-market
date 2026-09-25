@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { analyticsItems } from '@/components/booking/CampBookingFlow'
 import type { CampBookingDraft } from '@/lib/bookingSchema'
 
@@ -33,11 +33,26 @@ function draft(childCount: number, dateCount: number): CampBookingDraft {
 }
 
 describe('camp booking analytics items', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-28T00:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('reports the quoted one-child quantity before child details are entered', () => {
     expect(analyticsItems(draft(0, 2))).toEqual([expect.objectContaining({ item_id: 'day-camp', price: 119.99, quantity: 2 })])
   })
 
   it('reports one unit per child and selected day after children are entered', () => {
     expect(analyticsItems(draft(2, 2))).toEqual([expect.objectContaining({ item_id: 'day-camp', price: 119.99, quantity: 4 })])
+  })
+
+  it('reports the promotional price during the Neutral Bay weekend offer', () => {
+    vi.setSystemTime(new Date('2026-09-26T00:00:00.000Z'))
+
+    expect(analyticsItems(draft(1, 1))).toEqual([expect.objectContaining({ item_id: 'day-camp', price: 109, quantity: 1 })])
   })
 })

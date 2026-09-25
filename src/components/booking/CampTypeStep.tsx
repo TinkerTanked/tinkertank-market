@@ -2,6 +2,7 @@
 
 import { ClockIcon, CheckIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import { getAvailableCampTypes, BUNDLE_AVAILABLE_DATES } from '@/data/locationAvailability'
+import { getCampUnitPrice } from '@/lib/campPromotion'
 
 interface CampType {
   id: string
@@ -85,9 +86,10 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
   const isNeutralBay = location?.id === 'neutral-bay'
   const showBundles = isNeutralBay && allDatesAreBundleEligible
   
-  const filteredCampTypes = showBundles 
+  const filteredCampTypes = (showBundles
     ? BUNDLE_TYPES
-    : CAMP_TYPES.filter(camp => availableTypes.includes(camp.type))
+    : CAMP_TYPES.filter(camp => availableTypes.includes(camp.type)))
+    .map(camp => ({ ...camp, price: getCampUnitPrice(camp.id, location?.id || location?.name, camp.price) }))
   
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-AU', {
@@ -154,7 +156,15 @@ export default function CampTypeStep({ selectedCampType, onCampTypeSelect, date,
               </div>
               <div className="text-right">
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Price</p>
-                <p className="mt-1 text-xl font-bold text-primary-800">${campType.price.toFixed(2)}</p>
+                <div className="mt-1 flex flex-wrap items-baseline gap-2">
+                  <p className="text-xl font-bold text-primary-800">${campType.price.toFixed(2)}</p>
+                  {campType.id === 'day-camp' && campType.price < 119.99 && (
+                    <>
+                      <span className="text-sm text-gray-500 line-through">$119.99</span>
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-900">Weekend special</span>
+                    </>
+                  )}
+                </div>
                 <p className="text-xs text-slate-500">{campType.isBundle ? `for ${campType.bundleDays} days` : 'per child, per day'}</p>
               </div>
             </div>
