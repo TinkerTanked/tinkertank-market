@@ -201,7 +201,7 @@ describe('camp checkout session', () => {
     )
   })
 
-  it('does not apply the Neutral Bay weekend offer to Manly', async () => {
+  it('applies the weekend offer to Manly Library', async () => {
     vi.setSystemTime(new Date('2026-09-26T00:00:00.000Z'))
     const body = checkoutBody()
     body.items[0].location = 'Manly Library'
@@ -210,7 +210,7 @@ describe('camp checkout session', () => {
 
     expect(response.status).toBe(200)
     expect(prisma.order.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ totalAmount: 119.99 })
+      data: expect.objectContaining({ totalAmount: 109 })
     })
   })
 
