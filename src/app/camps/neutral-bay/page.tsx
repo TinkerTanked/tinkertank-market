@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import CampLocationPage from '@/components/camps/CampLocationPage'
 import { BreadcrumbJsonLd, FAQJsonLd } from '@/components/seo/JsonLd'
-import { isNeutralBayWeekendOfferActive, NEUTRAL_BAY_WEEKEND_OFFER } from '@/lib/campPromotion'
+import { isWeekendCampOfferActive, WEEKEND_CAMP_OFFER } from '@/lib/campPromotion'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tinkertank.rocks'
 
@@ -28,7 +28,7 @@ const standardFaqs = [
 ]
 
 export default function NeutralBayCampPage() {
-  const promotionActive = isNeutralBayWeekendOfferActive()
+  const promotionActive = isWeekendCampOfferActive()
   const faqs = standardFaqs.map(faq =>
     faq.question === 'How much is a Neutral Bay camp?' && promotionActive
       ? { ...faq, answer: 'This weekend, Day Camp is $109 per child per day when booked by Sunday 27 September at 11:59 PM. All Day Camp remains $149.99 per child per day.' }
@@ -60,8 +60,8 @@ export default function NeutralBayCampPage() {
         faqs={faqs}
         showLocationComparison={false}
         promotion={promotionActive ? {
-          price: NEUTRAL_BAY_WEEKEND_OFFER.price,
-          standardPrice: NEUTRAL_BAY_WEEKEND_OFFER.standardPrice,
+          price: WEEKEND_CAMP_OFFER.price,
+          standardPrice: WEEKEND_CAMP_OFFER.standardPrice,
           deadline: 'Sunday 27 September at 11:59 PM'
         } : undefined}
       />
