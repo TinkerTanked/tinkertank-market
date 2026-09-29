@@ -209,8 +209,6 @@ const BASE_SESSIONS: Omit<IgniteSessionConfig, 'stripePriceId' | 'stripeProductI
     startTime: '15:30',
     endTime: '17:00',
     priceWeekly: 39.99,
-    ageMin: 7,
-    ageMax: 16,
     capacity: 20,
     firstSessionDate: '2026-10-19',
     lastSessionDate: '2026-12-07',
