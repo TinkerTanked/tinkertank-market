@@ -100,7 +100,9 @@ export default function IgniteBookingWizard({ onClose, isOpen }: IgniteBookingWi
         price: session.priceWeekly,
         category: 'ignite' as const,
         type: 'IGNITE' as const,
-        ageRange: session.ageMin ? `${session.ageMin}+ years` : '5-16 years',
+        ageRange: session.ageMin
+          ? `${session.ageMin}${session.ageMax ? `-${session.ageMax}` : '+'} years`
+          : 'All school ages',
         features: ['Weekly STEAM sessions', 'Expert instructors', 'Hands-on projects', 'Flexible subscription'],
         images: ['/images/ignite.jpeg'],
         location: session.location,

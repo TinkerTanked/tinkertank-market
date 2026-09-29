@@ -110,6 +110,17 @@ describe('Pittwater fixed-term checkout', () => {
     )
   })
 
+  it('accepts enrolments without an age restriction', async () => {
+    const payload = body()
+    payload.items[0].students[0].dateOfBirth = '2021-01-01'
+
+    const response = await checkout(payload)
+
+    expect(response.status).toBe(200)
+    expect(prisma.$transaction).toHaveBeenCalledOnce()
+    expect(mockStripe.checkout.sessions.create).toHaveBeenCalledOnce()
+  })
+
   it('switches to one-time payment when only 7 December remains', async () => {
     vi.setSystemTime(new Date('2026-12-01T00:00:00.000Z'))
 
