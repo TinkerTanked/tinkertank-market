@@ -14,8 +14,8 @@ export interface SchoolTerm {
   name: string
 }
 
-// 2026 NSW School Term Dates - Eastern Division
-export const SCHOOL_TERMS_2026: SchoolTerm[] = [
+// NSW School Term Dates - Eastern Division, first to last days for students
+export const SCHOOL_TERMS: SchoolTerm[] = [
   {
     term: 1,
     year: 2026,
@@ -43,6 +43,34 @@ export const SCHOOL_TERMS_2026: SchoolTerm[] = [
     startDate: new Date('2026-10-13'),
     endDate: new Date('2026-12-17'),
     name: 'Term 4 2026'
+  },
+  {
+    term: 1,
+    year: 2027,
+    startDate: new Date('2027-02-03'),
+    endDate: new Date('2027-04-09'),
+    name: 'Term 1 2027'
+  },
+  {
+    term: 2,
+    year: 2027,
+    startDate: new Date('2027-04-29'),
+    endDate: new Date('2027-07-02'),
+    name: 'Term 2 2027'
+  },
+  {
+    term: 3,
+    year: 2027,
+    startDate: new Date('2027-07-20'),
+    endDate: new Date('2027-09-24'),
+    name: 'Term 3 2027'
+  },
+  {
+    term: 4,
+    year: 2027,
+    startDate: new Date('2027-10-12'),
+    endDate: new Date('2027-12-20'),
+    name: 'Term 4 2027'
   }
 ]
 
@@ -60,7 +88,7 @@ export const SCHOOL_HOLIDAYS_2026 = [
 export function getCurrentTerm(date: Date = new Date()): SchoolTerm | null {
   const dateKey = formatInTimeZone(date, SYDNEY_TZ, 'yyyy-MM-dd')
 
-  for (const term of SCHOOL_TERMS_2026) {
+  for (const term of SCHOOL_TERMS) {
     const startKey = term.startDate.toISOString().slice(0, 10)
     const endKey = term.endDate.toISOString().slice(0, 10)
     if (dateKey >= startKey && dateKey <= endKey) {
@@ -76,7 +104,7 @@ export function getCurrentTerm(date: Date = new Date()): SchoolTerm | null {
 export function getNextTerm(date: Date = new Date()): SchoolTerm | null {
   const dateKey = formatInTimeZone(date, SYDNEY_TZ, 'yyyy-MM-dd')
 
-  for (const term of SCHOOL_TERMS_2026) {
+  for (const term of SCHOOL_TERMS) {
     if (term.startDate.toISOString().slice(0, 10) > dateKey) {
       return term
     }

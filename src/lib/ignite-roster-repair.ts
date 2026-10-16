@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz'
-import { SCHOOL_TERMS_2026 } from '@/config/schoolTerms'
+import { SCHOOL_TERMS } from '@/config/schoolTerms'
 
 const SYDNEY_TZ = 'Australia/Sydney'
 
@@ -16,7 +16,7 @@ export interface IgniteRosterOccurrence {
  */
 export function buildWeeklyRosterOccurrences(start: Date, end: Date): IgniteRosterOccurrence[] {
   const seedDate = formatInTimeZone(start, SYDNEY_TZ, 'yyyy-MM-dd')
-  const term = SCHOOL_TERMS_2026.find(candidate => {
+  const term = SCHOOL_TERMS.find(candidate => {
     const termStart = candidate.startDate.toISOString().slice(0, 10)
     const termEnd = candidate.endDate.toISOString().slice(0, 10)
     return seedDate >= termStart && seedDate <= termEnd
