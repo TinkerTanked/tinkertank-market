@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ChevronLeftIcon, ChevronRightIcon, MapPinIcon, MagnifyingGlassIcon, PhoneIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, startOfMonth, isSameDay, isSameMonth } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { clsx } from 'clsx';
+import { useAdminRole } from '@/components/admin/AdminRole';
 
 const TIMEZONE = 'Australia/Sydney';
 
@@ -106,15 +108,27 @@ function hasNote(value: string | null) {
   return !!value && !/^(n\/?a|none|nil|no)$/i.test(value.trim());
 }
 
-function StudentCheckInCard({ item, mentorName, busy, onAction }: {
+type AttendanceAction = 'checkin' | 'checkout' | 'undo';
+type AttendanceState = 'expected' | 'in' | 'out';
+
+const UNDO_WINDOW_MS = 15 * 60 * 1000;
+
+function attendanceState(item: ScheduleItem): AttendanceState {
+  return item.checkOutAt ? 'out' : item.checkInAt ? 'in' : 'expected';
+}
+
+function StudentCheckInCard({ item, mentorName, busy, canUndoAnytime, onAction }: {
   item: ScheduleItem;
   mentorName: string;
   busy: boolean;
-  onAction: (item: ScheduleItem, action: 'checkin' | 'checkout') => void;
+  canUndoAnytime: boolean;
+  onAction: (item: ScheduleItem, action: AttendanceAction) => void;
 }) {
   const canAct = mentorName.trim().length > 0 && !busy;
   const type = TYPE_STYLES[item.productType];
-  const state = item.checkOutAt ? 'out' : item.checkInAt ? 'in' : 'expected';
+  const state = attendanceState(item);
+  const lastChange = item.checkOutAt ?? item.checkInAt;
+  const canUndo = !!lastChange && (canUndoAnytime || Date.now() - new Date(lastChange).getTime() < UNDO_WINDOW_MS);
 
   return (
     <li
@@ -150,6 +164,15 @@ function StudentCheckInCard({ item, mentorName, busy, onAction }: {
           <div className="mt-2 text-sm text-gray-600">
             In {formatSydneyTime(item.checkInAt)}
             {item.checkOutAt && ` · Out ${formatSydneyTime(item.checkOutAt)} · ${formatDuration(item.checkInAt, item.checkOutAt)}`}
+            {canUndo && (
+              <button
+                onClick={() => onAction(item, 'undo')}
+                disabled={busy}
+                className="ml-2 font-medium text-orange-700 underline underline-offset-2 disabled:opacity-40"
+              >
+                Undo {state === 'out' ? 'check-out' : 'check-in'}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -229,25 +252,37 @@ function SummaryCards({ summary, locationId }: {
 }
 
 export default function AdminSchedule() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const isSuper = useAdminRole() === 'super';
+  const dateParam = useSearchParams().get('date');
+  const [selectedDate, setSelectedDate] = useState(() =>
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? new Date(`${dateParam}T00:00:00`) : new Date()
+  );
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [stateFilter, setStateFilter] = useState<AttendanceState | 'all'>('all');
   const [data, setData] = useState<ScheduleData | null>(null);
   const [weekData, setWeekData] = useState<WeekData | null>(null);
   const [monthData, setMonthData] = useState<MonthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mentorName, setMentorName] = useState('');
+  const [editingMentor, setEditingMentor] = useState(false);
   const [attendanceBusy, setAttendanceBusy] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
 
-  // Remember the mentor on duty on this device so it isn't re-typed per student.
+  // Remember the mentor on duty and their location on this device.
   useEffect(() => {
     setMentorName(localStorage.getItem('scheduleMentorName') || '');
+    setSelectedLocationId(localStorage.getItem('scheduleLocationId') || null);
   }, []);
   const updateMentorName = (name: string) => {
     setMentorName(name);
     localStorage.setItem('scheduleMentorName', name);
+  };
+  const selectLocation = (id: string | null) => {
+    setSelectedLocationId(id);
+    if (id) localStorage.setItem('scheduleLocationId', id);
+    else localStorage.removeItem('scheduleLocationId');
   };
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -282,7 +317,7 @@ export default function AdminSchedule() {
     fetchSchedule();
   }, [selectedDate, viewMode, refreshKey]);
 
-  const handleAttendance = async (item: ScheduleItem, action: 'checkin' | 'checkout') => {
+  const handleAttendance = async (item: ScheduleItem, action: AttendanceAction) => {
     if (!mentorName.trim()) return;
     setAttendanceBusy(item.id);
     try {
@@ -310,7 +345,9 @@ export default function AdminSchedule() {
     viewMode === 'month' ? addMonths(selectedDate, 1) : viewMode === 'week' ? addWeeks(selectedDate, 1) : addDays(selectedDate, 1)
   );
 
-  const filteredItems = useMemo(() => {
+  // Location and search narrow who is on the roster; the state filter then
+  // narrows what is shown. The list order stays put so rows never jump under a finger.
+  const rosterItems = useMemo(() => {
     if (!data) return [];
     const query = search.trim().toLowerCase();
     return data.items.filter(item =>
@@ -319,7 +356,13 @@ export default function AdminSchedule() {
     );
   }, [data, selectedLocationId, search]);
 
-  const checkedInCount = filteredItems.filter(item => item.checkInAt && !item.checkOutAt).length;
+  const stateCounts = useMemo(() => {
+    const counts: Record<AttendanceState, number> = { expected: 0, in: 0, out: 0 };
+    for (const item of rosterItems) counts[attendanceState(item)]++;
+    return counts;
+  }, [rosterItems]);
+
+  const filteredItems = stateFilter === 'all' ? rosterItems : rosterItems.filter(item => attendanceState(item) === stateFilter);
 
   const groupedByLocation = useMemo(() => {
     const groups: Record<string, { locationName: string; items: ScheduleItem[] }> = {};
@@ -349,11 +392,13 @@ export default function AdminSchedule() {
           {viewMode === 'month' ? 'Monthly schedule' : viewMode === 'week' ? 'Weekly schedule' : 'Check-in'}
         </h1>
         <div className="flex items-center gap-2">
-          <div className="flex flex-1 overflow-hidden rounded-lg border border-gray-300 sm:flex-none">
-            <button onClick={() => setViewMode('day')} className={segment(viewMode === 'day')}>Day</button>
-            <button onClick={() => setViewMode('week')} className={clsx(segment(viewMode === 'week'), 'border-l border-gray-300')}>Week</button>
-            <button onClick={() => setViewMode('month')} className={clsx(segment(viewMode === 'month'), 'border-l border-gray-300')}>Month</button>
-          </div>
+          {isSuper && (
+            <div className="flex flex-1 overflow-hidden rounded-lg border border-gray-300 sm:flex-none">
+              <button onClick={() => setViewMode('day')} className={segment(viewMode === 'day')}>Day</button>
+              <button onClick={() => setViewMode('week')} className={clsx(segment(viewMode === 'week'), 'border-l border-gray-300')}>Week</button>
+              <button onClick={() => setViewMode('month')} className={clsx(segment(viewMode === 'month'), 'border-l border-gray-300')}>Month</button>
+            </div>
+          )}
           <button onClick={goToPrev} className="rounded-lg border border-gray-300 bg-white p-2.5 hover:bg-gray-50" aria-label="Previous">
             <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
           </button>
@@ -371,7 +416,7 @@ export default function AdminSchedule() {
           {[{ id: null as string | null, name: 'All locations' }, ...locations].map(loc => (
             <button
               key={loc.id ?? 'all'}
-              onClick={() => setSelectedLocationId(loc.id)}
+              onClick={() => selectLocation(loc.id)}
               className={clsx(
                 'flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium',
                 selectedLocationId === loc.id ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 bg-white text-gray-700'
@@ -425,32 +470,47 @@ export default function AdminSchedule() {
             })}
           </div>
 
-          {data?.summary && <SummaryCards summary={data.summary} locationId={selectedLocationId} />}
+          {isSuper && data?.summary && <SummaryCards summary={data.summary} locationId={selectedLocationId} />}
 
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
             <div className="space-y-3 border-b border-gray-200 p-4">
               <div className="flex items-baseline justify-between gap-2">
                 <h2 className="text-base font-semibold text-gray-900 sm:text-lg">{format(selectedDate, 'EEEE d MMMM')}</h2>
-                {filteredItems.length > 0 && (
-                  <span className="text-sm text-gray-500">{checkedInCount} of {filteredItems.length} here</span>
+                {rosterItems.length > 0 && (
+                  <span className="text-sm text-gray-500">{stateCounts.in} of {rosterItems.length} here</span>
                 )}
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
-                <label className="block">
-                  <span className="sr-only">Mentor on duty</span>
-                  <input
-                    id="mentorName"
-                    type="text"
-                    value={mentorName}
-                    onChange={e => updateMentorName(e.target.value)}
-                    placeholder="Mentor on duty (your name)"
-                    autoComplete="name"
-                    className={clsx(
-                      'h-12 w-full rounded-xl border px-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-500',
-                      mentorName.trim() ? 'border-gray-300' : 'border-orange-300 bg-orange-50'
-                    )}
-                  />
-                </label>
+                {mentorName.trim() && !editingMentor ? (
+                  <div className="flex h-12 items-center justify-between rounded-xl bg-gray-50 px-4 text-sm text-gray-600">
+                    <span>
+                      Checking in as <span className="font-semibold text-gray-900">{mentorName}</span>
+                    </span>
+                    <button onClick={() => setEditingMentor(true)} className="font-medium text-orange-700">
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <label className="block">
+                    <span className="sr-only">Mentor on duty</span>
+                    <input
+                      id="mentorName"
+                      type="text"
+                      value={mentorName}
+                      onChange={e => updateMentorName(e.target.value)}
+                      onFocus={() => setEditingMentor(true)}
+                      onBlur={() => setEditingMentor(false)}
+                      onKeyDown={e => e.key === 'Enter' && setEditingMentor(false)}
+                      autoFocus={editingMentor}
+                      placeholder="Mentor on duty (your name)"
+                      autoComplete="name"
+                      className={clsx(
+                        'h-12 w-full rounded-xl border px-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-500',
+                        mentorName.trim() ? 'border-gray-300' : 'border-orange-300 bg-orange-50'
+                      )}
+                    />
+                  </label>
+                )}
                 <label className="relative block">
                   <span className="sr-only">Search students</span>
                   <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-3.5 h-5 w-5 text-gray-400" />
@@ -464,12 +524,35 @@ export default function AdminSchedule() {
                 </label>
               </div>
               {!mentorName.trim() && <p className="text-sm text-orange-700">Enter your name to check students in and out.</p>}
+              {rosterItems.length > 0 && (
+                <div className="grid grid-cols-4 gap-1 rounded-xl bg-gray-100 p-1">
+                  {([
+                    ['all', 'All', rosterItems.length],
+                    ['expected', 'To arrive', stateCounts.expected],
+                    ['in', 'Here', stateCounts.in],
+                    ['out', 'Gone', stateCounts.out]
+                  ] as const).map(([value, label, count]) => (
+                    <button
+                      key={value}
+                      onClick={() => setStateFilter(value)}
+                      className={clsx(
+                        'rounded-lg py-2 text-sm font-medium',
+                        stateFilter === value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'
+                      )}
+                    >
+                      {label} <span className="opacity-60">{count}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {loading ? (
               <div className="p-8 text-center text-gray-500">Loading…</div>
             ) : filteredItems.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">{search ? 'No matching students' : 'No bookings for this date'}</div>
+              <div className="p-8 text-center text-gray-500">
+                {search ? 'No matching students' : rosterItems.length > 0 ? 'Nobody in this group' : 'No bookings for this date'}
+              </div>
             ) : (
               groupedByLocation.map(([locationId, group]) => (
                 <section key={locationId}>
@@ -487,6 +570,7 @@ export default function AdminSchedule() {
                         item={item}
                         mentorName={mentorName}
                         busy={attendanceBusy === item.id}
+                        canUndoAnytime={isSuper}
                         onAction={handleAttendance}
                       />
                     ))}

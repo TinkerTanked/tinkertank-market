@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ChevronRightIcon, MagnifyingGlassIcon, PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { clsx } from 'clsx'
+import { useAdminRole } from '@/components/admin/AdminRole'
 
 interface Student {
   id: string
@@ -227,6 +228,7 @@ export default function AdminStudents() {
   const [editingStudent, setEditingStudent] = useState<Student | null | 'new'>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const isSuper = useAdminRole() === 'super'
 
   useEffect(() => {
     fetchStudents()
@@ -314,115 +316,92 @@ export default function AdminStudents() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Students</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">Students</h1>
+          {!loading && <p className="text-sm text-gray-500">{students.length} children</p>}
+        </div>
         <button
           onClick={() => setEditingStudent('new')}
-          className="flex items-center bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700"
+          className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700"
         >
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Add Student
+          <PlusIcon className="h-4 w-4" />
+          Add student
         </button>
       </div>
 
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-        </div>
+      <label className="relative block">
+        <span className="sr-only">Search students</span>
+        <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-3.5 h-5 w-5 text-gray-400" />
         <input
-          type="text"
-          placeholder="Search students by name..."
+          type="search"
+          placeholder="Search by name"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+          onChange={e => setSearch(e.target.value)}
+          className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-11 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
-      </div>
+      </label>
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-orange-600"></div>
+        </div>
+      ) : filteredStudents.length === 0 ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-gray-500">
+          {search ? 'No students match your search.' : 'No students yet.'}
         </div>
       ) : (
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200">
-            {filteredStudents.length === 0 ? (
-              <li className="px-6 py-12 text-center text-gray-500">
-                {search ? 'No students found matching your search.' : 'No students yet. Click "Add Student" to create one.'}
-              </li>
-            ) : (
-              filteredStudents.map((student) => (
-                <li key={student.id} className="hover:bg-gray-50">
-                  <div className="px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <Link
-                            href={`/admin/students/${student.id}`}
-                            className="text-lg font-medium text-orange-600 hover:text-orange-800 hover:underline"
-                          >
-                            {student.name}
-                          </Link>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {student._count.bookings} {student._count.bookings === 1 ? 'booking' : 'bookings'}
-                          </span>
-                          {student.igniteSubscriptions && student.igniteSubscriptions.length > 0 && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                              Ignite
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-2 flex flex-wrap items-center text-sm text-gray-500 gap-x-4 gap-y-1">
-                          <span>Age: {calculateAge(student.birthdate)} years</span>
-                          <span>Born: {new Date(student.birthdate).toLocaleDateString()}</span>
-                          {student.birthdateEstimated && (
-                            <span className="font-medium text-amber-700">Estimated DOB</span>
-                          )}
-                          {student.school && <span>School: {student.school}</span>}
-                          {student.allergies && (
-                            <span className="text-red-600 font-medium">⚠️ {student.allergies}</span>
-                          )}
-                        </div>
-                        {student.emergencyContactName && (
-                          <div className="mt-1 text-sm text-gray-500">
-                            Emergency: {student.emergencyContactName}
-                            {student.emergencyContactPhone && ` - ${student.emergencyContactPhone}`}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <button
-                          onClick={() => setEditingStudent(student)}
-                          className="p-2 text-gray-400 hover:text-orange-600 transition-colors"
-                          title="Edit student"
-                        >
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(student)}
-                          disabled={deleting === student.id || student._count.bookings > 0}
-                          className={clsx(
-                            'p-2 transition-colors',
-                            student._count.bookings > 0
-                              ? 'text-gray-300 cursor-not-allowed'
-                              : 'text-gray-400 hover:text-red-600'
-                          )}
-                          title={student._count.bookings > 0 ? 'Cannot delete student with bookings' : 'Delete student'}
-                        >
-                          {deleting === student.id ? (
-                            <div className="h-5 w-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <TrashIcon className="h-5 w-5" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
+        <ul className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white">
+          {filteredStudents.map(student => (
+            <li key={student.id} className="flex items-center gap-2 pr-2">
+              <Link href={`/admin/students/${student.id}`} className="flex min-w-0 flex-1 items-center gap-3 py-3 pl-4 hover:bg-gray-50">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-base font-semibold text-gray-900">{student.name}</span>
+                    {student.igniteSubscriptions && student.igniteSubscriptions.length > 0 && (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Ignite</span>
+                    )}
                   </div>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
+                  <div className="mt-0.5 truncate text-sm text-gray-500">
+                    {calculateAge(student.birthdate)} years
+                    {student.birthdateEstimated && ' (est.)'}
+                    {student.school && ` · ${student.school}`}
+                    {` · ${student._count.bookings} ${student._count.bookings === 1 ? 'session' : 'sessions'}`}
+                  </div>
+                  {student.allergies && !/^(n\/?a|none|nil|no)$/i.test(student.allergies.trim()) && (
+                    <div className="mt-0.5 truncate text-sm font-medium text-amber-700">⚠️ {student.allergies}</div>
+                  )}
+                </div>
+                <ChevronRightIcon className="h-5 w-5 flex-shrink-0 text-gray-300" />
+              </Link>
+              <button
+                onClick={() => setEditingStudent(student)}
+                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl text-gray-400 hover:bg-gray-50 hover:text-orange-600"
+                aria-label={`Edit ${student.name}`}
+              >
+                <PencilIcon className="h-5 w-5" />
+              </button>
+              {isSuper && (
+                <button
+                  onClick={() => handleDelete(student)}
+                  disabled={deleting === student.id || student._count.bookings > 0}
+                  className={clsx(
+                    'flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl',
+                    student._count.bookings > 0 ? 'cursor-not-allowed text-gray-200' : 'text-gray-400 hover:bg-gray-50 hover:text-red-600'
+                  )}
+                  aria-label={student._count.bookings > 0 ? 'Cannot delete a student with bookings' : `Delete ${student.name}`}
+                >
+                  {deleting === student.id ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+                  ) : (
+                    <TrashIcon className="h-5 w-5" />
+                  )}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
       )}
 
       {editingStudent && (

@@ -1,3 +1,6 @@
+import type { IgniteSubscription } from '@prisma/client'
+import { IGNITE_SESSIONS } from '@/config/igniteProducts'
+
 export interface CustomerOrderSource {
   customerEmail: string
   customerName: string
@@ -97,3 +100,28 @@ export function buildAdminCustomers(orders: CustomerOrderSource[], subscriptions
     }))
     .sort((a, b) => b.lastActivityAt.localeCompare(a.lastActivityAt))
 }
+
+/** How the admin shows an Ignite subscription, on the list and on a customer. */
+export function adminSubscriptionView(sub: IgniteSubscription & { students: { student: { id: string; name: string } }[] }) {
+  const session = IGNITE_SESSIONS.find(candidate => candidate.id === sub.igniteSessionId)
+  return {
+    id: sub.id,
+    stripeSubscriptionId: sub.stripeSubscriptionId,
+    customerEmail: sub.customerEmail,
+    customerName: sub.customerName,
+    status: sub.status,
+    weeklyAmount: Number(sub.weeklyAmount),
+    currentPeriodEnd: sub.currentPeriodEnd?.toISOString() ?? null,
+    cancelAt: sub.cancelAt?.toISOString() ?? null,
+    pauseResumesAt: sub.pauseResumesAt?.toISOString() ?? null,
+    createdAt: sub.createdAt.toISOString(),
+    sessionId: sub.igniteSessionId,
+    sessionName: session?.name || 'Unknown session',
+    sessionLocation: session?.location || 'Unknown location',
+    sessionDays: session?.dayOfWeek || [],
+    sessionTime: session ? `${session.startTime} - ${session.endTime}` : '',
+    students: sub.students.map(link => ({ id: link.student.id, name: link.student.name }))
+  }
+}
+
+export type AdminSubscriptionView = ReturnType<typeof adminSubscriptionView>

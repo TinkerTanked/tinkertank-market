@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   HomeIcon,
-  CalendarIcon,
   ChartBarIcon,
   UserGroupIcon,
   DocumentTextIcon,
@@ -17,22 +16,23 @@ import {
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
-import { useAdminRole } from './useAdminRole';
+import { useAdminRole } from './AdminRole';
 
-const navigation = [
+// Mentors look after students; the super admin looks after customers.
+const mentorNavigation = [
+  { name: 'Check-in', href: '/admin/schedule', icon: ClipboardDocumentCheckIcon },
+  { name: 'Students', href: '/admin/students', icon: UserGroupIcon }
+];
+
+const superNavigation = [
   { name: 'Check-in', href: '/admin/schedule', icon: ClipboardDocumentCheckIcon },
   { name: 'Customers', href: '/admin/customers', icon: UsersIcon },
   { name: 'Subscriptions', href: '/admin/ignite-subscriptions', icon: FireIcon },
   { name: 'Students', href: '/admin/students', icon: UserGroupIcon },
   { name: 'Bookings', href: '/admin/bookings', icon: DocumentTextIcon },
-  { name: 'Calendar', href: '/admin/calendar', icon: CalendarIcon },
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon }
 ];
-
-// The three most-used pages on a phone, plus "More" for the rest.
-const primaryMobile = navigation.slice(0, 3);
-const moreMobile = navigation.slice(3);
 
 function isActive(pathname: string, href: string) {
   return href === '/admin' ? pathname === '/admin' : pathname === href || pathname.startsWith(`${href}/`);
@@ -40,11 +40,11 @@ function isActive(pathname: string, href: string) {
 
 function RoleBadge() {
   const role = useAdminRole();
-  if (role !== 'super') return null;
+  if (!role) return null;
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium text-white">
-      <ShieldCheckIcon className="h-3.5 w-3.5" />
-      Super admin
+      {role === 'super' && <ShieldCheckIcon className="h-3.5 w-3.5" />}
+      {role === 'super' ? 'Super admin' : 'Mentor'}
     </span>
   );
 }
@@ -52,6 +52,10 @@ function RoleBadge() {
 export default function AdminSidebar() {
   const pathname = usePathname() || '';
   const [moreOpen, setMoreOpen] = useState(false);
+  const navigation = useAdminRole() === 'super' ? superNavigation : mentorNavigation;
+  // Up to four tabs fit on a phone; anything beyond three goes under "More".
+  const primaryMobile = navigation.length > 4 ? navigation.slice(0, 3) : navigation;
+  const moreMobile = navigation.length > 4 ? navigation.slice(3) : [];
 
   return (
     <>
@@ -89,7 +93,10 @@ export default function AdminSidebar() {
 
       {/* Mobile bottom tab bar */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden"
+        className={clsx(
+          'fixed inset-x-0 bottom-0 z-40 grid border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden',
+          primaryMobile.length + (moreMobile.length ? 1 : 0) === 4 ? 'grid-cols-4' : 'grid-cols-2'
+        )}
         aria-label="Admin"
       >
         {primaryMobile.map(item => {
@@ -105,17 +112,19 @@ export default function AdminSidebar() {
             </Link>
           );
         })}
-        <button
-          type="button"
-          onClick={() => setMoreOpen(true)}
-          className={clsx(
-            'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium',
-            moreMobile.some(item => isActive(pathname, item.href)) ? 'text-orange-600' : 'text-gray-500'
-          )}
-        >
-          <EllipsisHorizontalIcon className="h-6 w-6" />
-          More
-        </button>
+        {moreMobile.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            className={clsx(
+              'flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium',
+              moreMobile.some(item => isActive(pathname, item.href)) ? 'text-orange-600' : 'text-gray-500'
+            )}
+          >
+            <EllipsisHorizontalIcon className="h-6 w-6" />
+            More
+          </button>
+        )}
       </nav>
 
       {moreOpen && (

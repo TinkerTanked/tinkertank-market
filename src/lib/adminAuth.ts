@@ -29,3 +29,21 @@ export function adminRoleFromAuthorization(header: string | null): AdminRole | n
 
   return null
 }
+
+// Mentors (staff) only take attendance and look after students. Everything
+// else in the admin, including customers, billing and bookings, is super admin.
+const STAFF_PAGES = ['/admin/schedule', '/admin/students']
+const STAFF_APIS = ['/api/admin/schedule', '/api/admin/attendance', '/api/admin/students']
+
+function underAny(pathname: string, prefixes: string[]) {
+  return prefixes.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))
+}
+
+export function staffMayAccess(pathname: string, method: string): boolean {
+  if (pathname.startsWith('/api/')) {
+    // Removing a student is irreversible, so it stays with the super admin.
+    if (method === 'DELETE' && underAny(pathname, ['/api/admin/students'])) return false
+    return underAny(pathname, STAFF_APIS)
+  }
+  return underAny(pathname, STAFF_PAGES)
+}

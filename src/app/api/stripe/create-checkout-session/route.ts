@@ -655,6 +655,8 @@ async function createRegularCheckout(
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
     line_items: lineItems,
+    // Camp credits issued by the super admin are single-use promotion codes.
+    allow_promotion_codes: true,
     customer_email: customerInfo.email,
     client_reference_id: order.id,
     metadata,

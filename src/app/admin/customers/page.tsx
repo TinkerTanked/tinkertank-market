@@ -3,16 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { clsx } from 'clsx'
-import { ChevronDownIcon, EnvelopeIcon, MagnifyingGlassIcon, PhoneIcon } from '@heroicons/react/24/outline'
+import { ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import type { AdminCustomer } from '@/lib/adminCustomers'
-
-const STATUS_STYLES: Record<string, string> = {
-  ACTIVE: 'bg-green-100 text-green-800',
-  TRIALING: 'bg-blue-100 text-blue-800',
-  PAUSED: 'bg-yellow-100 text-yellow-800',
-  PAST_DUE: 'bg-orange-100 text-orange-800',
-  CANCELED: 'bg-gray-100 text-gray-600'
-}
 
 type Filter = 'all' | 'subscribers' | 'camps'
 
@@ -25,7 +17,6 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
-  const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/customers')
@@ -94,91 +85,29 @@ export default function CustomersPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-gray-500">No customers match.</div>
       ) : (
         <ul className="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white">
-          {visible.map(customer => {
-            const open = expanded === customer.email
-            return (
-              <li key={customer.email}>
-                <button
-                  type="button"
-                  onClick={() => setExpanded(open ? null : customer.email)}
-                  className="flex w-full items-start gap-3 p-4 text-left hover:bg-gray-50"
-                  aria-expanded={open}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-base font-semibold text-gray-900">{customer.name}</span>
-                      {customer.activeSubscriptions > 0 && (
-                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                          Ignite{customer.activeSubscriptions > 1 ? ` ×${customer.activeSubscriptions}` : ''}
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-1 text-sm text-gray-700">{customer.students.map(student => student.name).join(', ')}</div>
-                    <div className="mt-1 text-xs text-gray-500">
-                      {customer.orderCount > 0 && `${customer.orderCount} order${customer.orderCount === 1 ? '' : 's'} · $${customer.totalSpent.toFixed(2)} · `}
-                      Last activity {formatDate(customer.lastActivityAt)}
-                    </div>
-                  </div>
-                  <ChevronDownIcon className={clsx('mt-1 h-5 w-5 flex-shrink-0 text-gray-400 transition-transform', open && 'rotate-180')} />
-                </button>
-
-                {open && (
-                  <div className="space-y-4 border-t border-gray-100 bg-gray-50 px-4 py-4">
-                    <div className="flex flex-wrap gap-2">
-                      {customer.phone && (
-                        <a
-                          href={`tel:${customer.phone.replace(/[^\d+]/g, '')}`}
-                          className="inline-flex h-11 items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-800"
-                        >
-                          <PhoneIcon className="h-4 w-4" /> {customer.phone}
-                        </a>
-                      )}
-                      <a
-                        href={`mailto:${customer.email}`}
-                        className="inline-flex h-11 max-w-full items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-800"
-                      >
-                        <EnvelopeIcon className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{customer.email}</span>
-                      </a>
-                    </div>
-
-                    <div>
-                      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Children</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {customer.students.map(student => (
-                          <Link
-                            key={student.id}
-                            href={`/admin/students/${student.id}`}
-                            className="inline-flex h-10 items-center rounded-full border border-gray-300 bg-white px-4 text-sm font-medium text-orange-700"
-                          >
-                            {student.name}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-
-                    {customer.subscriptions.length > 0 && (
-                      <div>
-                        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Ignite</h3>
-                        <ul className="space-y-1.5">
-                          {customer.subscriptions.map(subscription => (
-                            <li key={subscription.id} className="flex items-center justify-between gap-2 text-sm">
-                              <span className="truncate text-gray-800">{subscription.sessionName}</span>
-                              <span className={clsx('flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium', STATUS_STYLES[subscription.status])}>
-                                {subscription.status.replace('_', ' ').toLowerCase()}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                        <Link href="/admin/ignite-subscriptions" className="mt-2 inline-block text-sm font-medium text-orange-700">
-                          Manage subscriptions →
-                        </Link>
-                      </div>
+          {visible.map(customer => (
+            <li key={customer.email}>
+              <Link href={`/admin/customers/${encodeURIComponent(customer.email)}`} className="flex items-center gap-3 p-4 hover:bg-gray-50">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-base font-semibold text-gray-900">{customer.name}</span>
+                    {customer.activeSubscriptions > 0 && (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                        Ignite{customer.activeSubscriptions > 1 ? ` ×${customer.activeSubscriptions}` : ''}
+                      </span>
                     )}
                   </div>
-                )}
-              </li>
-            )
-          })}
+                  <div className="mt-1 text-sm text-gray-700">{customer.students.map(student => student.name).join(', ')}</div>
+                  <div className="mt-1 truncate text-xs text-gray-500">
+                    {customer.email}
+                    {customer.phone && ` · ${customer.phone}`}
+                    {` · Last activity ${formatDate(customer.lastActivityAt)}`}
+                  </div>
+                </div>
+                <ChevronRightIcon className="h-5 w-5 flex-shrink-0 text-gray-400" />
+              </Link>
+            </li>
+          ))}
         </ul>
       )}
     </div>

@@ -286,6 +286,98 @@ export async function sendBookingConfirmationEmail(order: OrderWithItems): Promi
   return result;
 }
 
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
+}
+
+/** Short transactional email in the same style as the booking confirmation. */
+function simpleEmailHtml(heading: string, paragraphs: string[], panelHtml: string) {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>${heading}</title></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
+  <div style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+    <h1 style="margin: 0; font-size: 26px;">${heading}</h1>
+  </div>
+  <div style="padding: 30px; background: #f8fafc; border-radius: 0 0 8px 8px;">
+    ${paragraphs.map(text => `<p style="font-size: 16px; margin: 0 0 16px 0;">${text}</p>`).join('\n    ')}
+    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">${panelHtml}</div>
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+    <div style="text-align: center; color: #6b7280; font-size: 14px;">
+      <p>Questions? Reply to this email or contact us:</p>
+      <p>📧 hello@tinkertank.rocks | 📞 0455 400 261</p>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+}
+
+async function sendSimpleEmail(to: string, subject: string, html: string): Promise<SendEmailResult> {
+  const from = process.env.SES_FROM || process.env.SMTP_FROM;
+  if (!from) {
+    console.error(`[Email] SES_FROM not configured — cannot send "${subject}"`);
+    return { success: false, error: 'SES_FROM not configured' };
+  }
+  return sendViaSes({ to, from, subject, html, configurationSetName: process.env.SES_CONFIGURATION_SET || undefined });
+}
+
+export function generateCampMoveEmail(details: {
+  customerName: string;
+  studentName: string;
+  productName: string;
+  from: { date: string; locationName: string };
+  to: { date: string; locationName: string; address: string };
+}) {
+  const subject = `${details.studentName}'s camp day has moved to ${details.to.date}`;
+  const html = simpleEmailHtml(
+    'Your camp day has moved',
+    [
+      `Hi ${escapeHtml(details.customerName)},`,
+      `We've moved ${escapeHtml(details.studentName)}'s ${escapeHtml(details.productName)} as requested. There's no charge for the change.`
+    ],
+    `<p style="margin: 0 0 8px 0; color: #6b7280;"><s>${details.from.date} · ${escapeHtml(details.from.locationName)}</s></p>
+      <p style="margin: 0; font-size: 18px;"><strong>${details.to.date}</strong></p>
+      <p style="margin: 4px 0 0 0;">${escapeHtml(details.to.locationName)} — ${escapeHtml(details.to.address)}</p>`
+  );
+  return { subject, html };
+}
+
+export function generateCampCreditEmail(details: {
+  customerName: string;
+  studentName: string;
+  productName: string;
+  date: string;
+  locationName: string;
+  code: string;
+  amount: number;
+  expiresAt: string;
+}) {
+  const subject = `Your $${details.amount.toFixed(2)} TinkerTank camp credit`;
+  const html = simpleEmailHtml(
+    'Here is your camp credit',
+    [
+      `Hi ${escapeHtml(details.customerName)},`,
+      `We've cancelled ${escapeHtml(details.studentName)}'s ${escapeHtml(details.productName)} on ${details.date} at ${escapeHtml(details.locationName)} and added a credit for the full amount you paid.`,
+      'Enter this code at checkout when you book your next camp or party at <a href="https://tinkertank.rocks/camps" style="color: #2563eb;">tinkertank.rocks</a>.'
+    ],
+    `<p style="margin: 0; color: #6b7280;">Credit code</p>
+      <p style="margin: 4px 0 12px 0; font-size: 28px; font-weight: bold; letter-spacing: 2px;">${details.code}</p>
+      <p style="margin: 0;"><strong>$${details.amount.toFixed(2)} AUD</strong> · one use · valid until ${details.expiresAt}</p>`
+  );
+  return { subject, html };
+}
+
+export async function sendCampMoveEmail(to: string, details: Parameters<typeof generateCampMoveEmail>[0]) {
+  const { subject, html } = generateCampMoveEmail(details);
+  return sendSimpleEmail(to, subject, html);
+}
+
+export async function sendCampCreditEmail(to: string, details: Parameters<typeof generateCampCreditEmail>[0]) {
+  const { subject, html } = generateCampCreditEmail(details);
+  return sendSimpleEmail(to, subject, html);
+}
+
 export function generateBookingConfirmationEmail(order: OrderWithItems) {
   const timezone = 'Australia/Sydney';
   
