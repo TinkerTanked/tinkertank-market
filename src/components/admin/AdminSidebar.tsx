@@ -31,7 +31,7 @@ const superNavigation = [
   { name: 'Students', href: '/admin/students', icon: UserGroupIcon },
   { name: 'Bookings', href: '/admin/bookings', icon: DocumentTextIcon },
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
-  { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon }
+  { name: 'Sales', href: '/admin/analytics', icon: ChartBarIcon }
 ];
 
 function isActive(pathname: string, href: string) {

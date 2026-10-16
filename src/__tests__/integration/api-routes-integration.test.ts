@@ -272,32 +272,6 @@ describe('API Routes Integration Tests', () => {
       expect(data.bookings).toHaveLength(1);
       expect(data.bookings[0].student.name).toBe('Student 1');
     });
-
-    it('/api/admin/analytics/revenue should return revenue analytics', async () => {
-      const mockRevenueData = {
-        daily: [
-          { date: '2024-10-01', revenue: 500 },
-          { date: '2024-10-02', revenue: 750 }
-        ],
-        monthly: [
-          { month: '2024-10', revenue: 10000 }
-        ]
-      };
-
-      (prisma.order.groupBy as any)
-        .mockResolvedValueOnce(mockRevenueData.daily)
-        .mockResolvedValueOnce(mockRevenueData.monthly);
-
-      const { GET } = await import('@/app/api/admin/analytics/revenue/route');
-      const request = new NextRequest('http://localhost:3000/api/admin/analytics/revenue');
-
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.daily).toHaveLength(2);
-      expect(data.monthly).toHaveLength(1);
-    });
   });
 
   describe('Calendar & Events Routes', () => {

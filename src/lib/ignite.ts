@@ -15,6 +15,11 @@ export function igniteProductId(sessionId: string): string {
   return sessionId
 }
 
+/** "Mon–Fri" or "Wed", "Mon, Thu" for a session's days. */
+export function igniteDaysLabel(session: Pick<IgniteSessionConfig, 'dayOfWeek'>) {
+  return session.dayOfWeek.length === 5 ? 'Mon–Fri' : session.dayOfWeek.map(day => day[0].toUpperCase() + day.slice(1, 3)).join(', ')
+}
+
 export function getIgniteSessionConfig(sessionId: string): IgniteSessionConfig | undefined {
   return IGNITE_SESSIONS.find(s => s.id === sessionId)
 }
