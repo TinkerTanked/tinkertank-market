@@ -4,6 +4,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { NotificationProvider } from '@/components/NotificationProvider'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import SiteChrome from '@/components/layout/SiteChrome'
 import PlausibleAnalytics from '@/components/analytics/PlausibleAnalytics'
 import MetaPixel from '@/components/analytics/MetaPixel'
 import { OrganizationJsonLd, LocalBusinessJsonLd } from '@/components/seo/JsonLd'
@@ -111,15 +112,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LocalBusinessJsonLd />
       </head>
       <body className={`${inter.variable} ${poppins.variable} font-sans`}>
-        <PlausibleAnalytics />
-        <MetaPixel />
         <ErrorBoundary>
           <NotificationProvider>
-            <div className='min-h-screen flex flex-col'>
-              <Header />
-              <main className='flex-1'>{children}</main>
-              <Footer />
-            </div>
+            <SiteChrome
+              header={<Header />}
+              footer={<Footer />}
+              scripts={<><PlausibleAnalytics /><MetaPixel /></>}
+            >
+              {children}
+            </SiteChrome>
           </NotificationProvider>
         </ErrorBoundary>
       </body>

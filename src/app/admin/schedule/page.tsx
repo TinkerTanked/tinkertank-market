@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronLeftIcon, ChevronRightIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { useSearchParams } from 'next/navigation';
+import { ChevronLeftIcon, ChevronRightIcon, MapPinIcon, MagnifyingGlassIcon, PhoneIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, startOfMonth, isSameDay, isSameMonth } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { clsx } from 'clsx';
+import { useAdminRole } from '@/components/admin/AdminRole';
 
 const TIMEZONE = 'Australia/Sydney';
 
@@ -30,6 +32,8 @@ interface ScheduleItem {
   parentName: string;
   parentEmail: string;
   parentPhone: string | null;
+  allergies: string | null;
+  medicalNotes: string | null;
   status: string;
   locationId: string;
   locationName: string;
@@ -93,70 +97,121 @@ interface MonthData {
 
 type ViewMode = 'day' | 'week' | 'month';
 
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    CONFIRMED: 'bg-green-100 text-green-800',
-    PENDING: 'bg-yellow-100 text-yellow-800',
-    CANCELLED: 'bg-red-100 text-red-800',
-    COMPLETED: 'bg-gray-100 text-gray-800'
-  };
+const TYPE_STYLES: Record<ScheduleItem['productType'], { label: string; className: string }> = {
+  DAY_CAMP: { label: 'Day camp', className: 'bg-blue-50 text-blue-700' },
+  ALL_DAY_CAMP: { label: 'All day', className: 'bg-purple-50 text-purple-700' },
+  BIRTHDAY: { label: 'Birthday', className: 'bg-pink-50 text-pink-700' },
+  IGNITE: { label: 'Ignite', className: 'bg-green-50 text-green-700' }
+};
 
-  return (
-    <span className={clsx('px-2 py-1 text-xs font-medium rounded-full', colors[status] || 'bg-gray-100 text-gray-800')}>
-      {status}
-    </span>
-  );
+function hasNote(value: string | null) {
+  return !!value && !/^(n\/?a|none|nil|no)$/i.test(value.trim());
 }
 
-function AttendanceCell({ item, mentorName, busy, onAction }: {
+type AttendanceAction = 'checkin' | 'checkout' | 'undo';
+type AttendanceState = 'expected' | 'in' | 'out';
+
+const UNDO_WINDOW_MS = 15 * 60 * 1000;
+
+function attendanceState(item: ScheduleItem): AttendanceState {
+  return item.checkOutAt ? 'out' : item.checkInAt ? 'in' : 'expected';
+}
+
+function StudentCheckInCard({ item, mentorName, busy, canUndoAnytime, onAction }: {
   item: ScheduleItem;
   mentorName: string;
   busy: boolean;
-  onAction: (item: ScheduleItem, action: 'checkin' | 'checkout') => void;
+  canUndoAnytime: boolean;
+  onAction: (item: ScheduleItem, action: AttendanceAction) => void;
 }) {
   const canAct = mentorName.trim().length > 0 && !busy;
+  const type = TYPE_STYLES[item.productType];
+  const state = attendanceState(item);
+  const lastChange = item.checkOutAt ?? item.checkInAt;
+  const canUndo = !!lastChange && (canUndoAnytime || Date.now() - new Date(lastChange).getTime() < UNDO_WINDOW_MS);
 
-  // Checked out — show the completed session and total time present.
-  if (item.checkOutAt && item.checkInAt) {
-    return (
-      <div className="text-xs text-gray-600">
-        <div className="font-medium text-gray-900">
-          {formatSydneyTime(item.checkInAt)} – {formatSydneyTime(item.checkOutAt)}
-        </div>
-        <div className="text-green-700">{formatDuration(item.checkInAt, item.checkOutAt)} present</div>
-      </div>
-    );
-  }
-
-  // Checked in — show arrival time and a check-out button.
-  if (item.checkInAt) {
-    return (
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          In · {formatSydneyTime(item.checkInAt)}
-        </span>
-        <button
-          onClick={() => onAction(item, 'checkout')}
-          disabled={!canAct}
-          title={canAct ? undefined : 'Enter the mentor on duty first'}
-          className="px-3 py-1 text-xs font-medium rounded-md bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Check out
-        </button>
-      </div>
-    );
-  }
-
-  // Not yet arrived — show a check-in button.
   return (
-    <button
-      onClick={() => onAction(item, 'checkin')}
-      disabled={!canAct}
-      title={canAct ? undefined : 'Enter the mentor on duty first'}
-      className="px-3 py-1 text-xs font-medium rounded-md bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed"
+    <li
+      className={clsx(
+        'flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between',
+        state === 'in' && 'bg-green-50/60',
+        state === 'out' && 'bg-gray-50'
+      )}
     >
-      Check in
-    </button>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/admin/students/${item.studentId}`} className="text-base font-semibold text-gray-900 hover:text-orange-700">
+            {item.studentName}
+          </Link>
+          <span className={clsx('rounded-full px-2 py-0.5 text-xs font-medium', type.className)}>
+            {type.label} · {item.timeSlot}
+          </span>
+        </div>
+        <div className="mt-1 truncate text-sm text-gray-500">
+          {item.productType === 'DAY_CAMP' || item.productType === 'ALL_DAY_CAMP' ? item.parentName : `${item.productName} · ${item.parentName}`}
+        </div>
+        {(hasNote(item.allergies) || hasNote(item.medicalNotes)) && (
+          <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-sm text-amber-900">
+            <ExclamationTriangleIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+            <span>
+              {[hasNote(item.allergies) && `Allergies: ${item.allergies}`, hasNote(item.medicalNotes) && `Medical: ${item.medicalNotes}`]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+          </div>
+        )}
+        {state !== 'expected' && item.checkInAt && (
+          <div className="mt-2 text-sm text-gray-600">
+            In {formatSydneyTime(item.checkInAt)}
+            {item.checkOutAt && ` · Out ${formatSydneyTime(item.checkOutAt)} · ${formatDuration(item.checkInAt, item.checkOutAt)}`}
+            {canUndo && (
+              <button
+                onClick={() => onAction(item, 'undo')}
+                disabled={busy}
+                className="ml-2 font-medium text-orange-700 underline underline-offset-2 disabled:opacity-40"
+              >
+                Undo {state === 'out' ? 'check-out' : 'check-in'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 sm:flex-shrink-0">
+        {item.parentPhone && (
+          <a
+            href={`tel:${item.parentPhone.replace(/[^\d+]/g, '')}`}
+            className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+            aria-label={`Call ${item.parentName}`}
+          >
+            <PhoneIcon className="h-5 w-5" />
+          </a>
+        )}
+        {state === 'expected' && (
+          <button
+            onClick={() => onAction(item, 'checkin')}
+            disabled={!canAct}
+            className="h-12 flex-1 rounded-xl bg-orange-600 px-6 text-base font-semibold text-white hover:bg-orange-700 disabled:opacity-40 sm:flex-none"
+          >
+            {busy ? 'Saving…' : 'Check in'}
+          </button>
+        )}
+        {state === 'in' && (
+          <button
+            onClick={() => onAction(item, 'checkout')}
+            disabled={!canAct}
+            className="h-12 flex-1 rounded-xl bg-gray-900 px-6 text-base font-semibold text-white hover:bg-gray-800 disabled:opacity-40 sm:flex-none"
+          >
+            {busy ? 'Saving…' : 'Check out'}
+          </button>
+        )}
+        {state === 'out' && (
+          <span className="inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-gray-100 px-6 text-sm font-semibold text-gray-500 sm:flex-none">
+            Picked up
+          </span>
+        )}
+      </div>
+    </li>
   );
 }
 
@@ -175,55 +230,60 @@ function SummaryCards({ summary, locationId }: {
         mentorsNeeded: summary.mentorsNeeded
       };
 
+  const cards = [
+    { label: 'Students', value: stats.totalStudents, className: 'text-gray-900' },
+    { label: 'Mentors needed', value: stats.mentorsNeeded, className: 'text-orange-600' },
+    { label: 'Day camp', value: stats.dayCampCount, className: 'text-blue-600' },
+    { label: 'All day', value: stats.allDayCampCount, className: 'text-purple-600' },
+    { label: 'Birthdays', value: stats.birthdayCount, className: 'text-pink-600' },
+    { label: 'Ignite', value: stats.igniteCount, className: 'text-green-600' }
+  ];
+
   return (
-    <div className="grid grid-cols-6 gap-4">
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="text-2xl font-bold text-gray-900">{stats.totalStudents}</div>
-        <div className="text-sm text-gray-500">Total Students</div>
-      </div>
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="text-2xl font-bold text-orange-600">{stats.mentorsNeeded}</div>
-        <div className="text-sm text-gray-500">Mentors Needed</div>
-      </div>
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="text-2xl font-bold text-blue-600">{stats.dayCampCount}</div>
-        <div className="text-sm text-gray-500">Day Camp (9-3)</div>
-      </div>
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="text-2xl font-bold text-purple-600">{stats.allDayCampCount}</div>
-        <div className="text-sm text-gray-500">All Day (9-5)</div>
-      </div>
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="text-2xl font-bold text-pink-600">{stats.birthdayCount}</div>
-        <div className="text-sm text-gray-500">Birthday Parties</div>
-      </div>
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="text-2xl font-bold text-green-600">{stats.igniteCount}</div>
-        <div className="text-sm text-gray-500">Ignite Sessions</div>
-      </div>
+    <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-6">
+      {cards.map(card => (
+        <div key={card.label} className="rounded-xl border border-gray-200 bg-white px-3 py-2.5">
+          <div className={clsx('text-xl font-bold sm:text-2xl', card.className)}>{card.value}</div>
+          <div className="text-xs text-gray-500 sm:text-sm">{card.label}</div>
+        </div>
+      ))}
     </div>
   );
 }
 
 export default function AdminSchedule() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const isSuper = useAdminRole() === 'super';
+  const dateParam = useSearchParams().get('date');
+  const [selectedDate, setSelectedDate] = useState(() =>
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? new Date(`${dateParam}T00:00:00`) : new Date()
+  );
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [stateFilter, setStateFilter] = useState<AttendanceState | 'all'>('all');
   const [data, setData] = useState<ScheduleData | null>(null);
   const [weekData, setWeekData] = useState<WeekData | null>(null);
   const [monthData, setMonthData] = useState<MonthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mentorName, setMentorName] = useState('');
+  const [editingMentor, setEditingMentor] = useState(false);
   const [attendanceBusy, setAttendanceBusy] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [search, setSearch] = useState('');
 
-  // Remember the mentor on duty across reloads so it isn't re-typed per student.
+  // Remember the mentor on duty and their location on this device.
   useEffect(() => {
     setMentorName(localStorage.getItem('scheduleMentorName') || '');
+    setSelectedLocationId(localStorage.getItem('scheduleLocationId') || null);
   }, []);
-  useEffect(() => {
-    localStorage.setItem('scheduleMentorName', mentorName);
-  }, [mentorName]);
+  const updateMentorName = (name: string) => {
+    setMentorName(name);
+    localStorage.setItem('scheduleMentorName', name);
+  };
+  const selectLocation = (id: string | null) => {
+    setSelectedLocationId(id);
+    if (id) localStorage.setItem('scheduleLocationId', id);
+    else localStorage.removeItem('scheduleLocationId');
+  };
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -257,7 +317,7 @@ export default function AdminSchedule() {
     fetchSchedule();
   }, [selectedDate, viewMode, refreshKey]);
 
-  const handleAttendance = async (item: ScheduleItem, action: 'checkin' | 'checkout') => {
+  const handleAttendance = async (item: ScheduleItem, action: AttendanceAction) => {
     if (!mentorName.trim()) return;
     setAttendanceBusy(item.id);
     try {
@@ -285,11 +345,24 @@ export default function AdminSchedule() {
     viewMode === 'month' ? addMonths(selectedDate, 1) : viewMode === 'week' ? addWeeks(selectedDate, 1) : addDays(selectedDate, 1)
   );
 
-  const filteredItems = useMemo(() => {
+  // Location and search narrow who is on the roster; the state filter then
+  // narrows what is shown. The list order stays put so rows never jump under a finger.
+  const rosterItems = useMemo(() => {
     if (!data) return [];
-    if (!selectedLocationId) return data.items;
-    return data.items.filter(item => item.locationId === selectedLocationId);
-  }, [data, selectedLocationId]);
+    const query = search.trim().toLowerCase();
+    return data.items.filter(item =>
+      (!selectedLocationId || item.locationId === selectedLocationId) &&
+      (!query || item.studentName.toLowerCase().includes(query) || item.parentName.toLowerCase().includes(query))
+    );
+  }, [data, selectedLocationId, search]);
+
+  const stateCounts = useMemo(() => {
+    const counts: Record<AttendanceState, number> = { expected: 0, in: 0, out: 0 };
+    for (const item of rosterItems) counts[attendanceState(item)]++;
+    return counts;
+  }, [rosterItems]);
+
+  const filteredItems = stateFilter === 'all' ? rosterItems : rosterItems.filter(item => attendanceState(item) === stateFilter);
 
   const groupedByLocation = useMemo(() => {
     const groups: Record<string, { locationName: string; items: ScheduleItem[] }> = {};
@@ -307,111 +380,56 @@ export default function AdminSchedule() {
     setViewMode('day');
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header with title, view toggle, and navigation */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {viewMode === 'month' ? 'Monthly Schedule' : viewMode === 'week' ? 'Weekly Schedule' : 'Daily Schedule'}
-        </h1>
-        <div className="flex items-center space-x-4">
-          {/* View mode toggle */}
-          <div className="flex rounded-lg border border-gray-300 overflow-hidden">
-            <button
-              onClick={() => setViewMode('day')}
-              className={clsx(
-                'px-4 py-2 text-sm font-medium transition-colors',
-                viewMode === 'day'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              Day
-            </button>
-            <button
-              onClick={() => setViewMode('week')}
-              className={clsx(
-                'px-4 py-2 text-sm font-medium transition-colors',
-                viewMode === 'week'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              Week
-            </button>
-            <button
-              onClick={() => setViewMode('month')}
-              className={clsx(
-                'px-4 py-2 text-sm font-medium transition-colors',
-                viewMode === 'month'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              Month
-            </button>
-          </div>
+  const segment = (active: boolean) => clsx(
+    'flex-1 px-3 py-2 text-sm font-medium sm:flex-none sm:px-4',
+    active ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+  );
 
-          {/* Date navigation */}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={goToPrev}
-              className="p-2 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              <ChevronLeftIcon className="w-5 h-5 text-gray-600" />
-            </button>
-            <button
-              onClick={goToToday}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Today
-            </button>
-            <button
-              onClick={goToNext}
-              className="p-2 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              <ChevronRightIcon className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+          {viewMode === 'month' ? 'Monthly schedule' : viewMode === 'week' ? 'Weekly schedule' : 'Check-in'}
+        </h1>
+        <div className="flex items-center gap-2">
+          {isSuper && (
+            <div className="flex flex-1 overflow-hidden rounded-lg border border-gray-300 sm:flex-none">
+              <button onClick={() => setViewMode('day')} className={segment(viewMode === 'day')}>Day</button>
+              <button onClick={() => setViewMode('week')} className={clsx(segment(viewMode === 'week'), 'border-l border-gray-300')}>Week</button>
+              <button onClick={() => setViewMode('month')} className={clsx(segment(viewMode === 'month'), 'border-l border-gray-300')}>Month</button>
+            </div>
+          )}
+          <button onClick={goToPrev} className="rounded-lg border border-gray-300 bg-white p-2.5 hover:bg-gray-50" aria-label="Previous">
+            <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
+          </button>
+          <button onClick={goToToday} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            Today
+          </button>
+          <button onClick={goToNext} className="rounded-lg border border-gray-300 bg-white p-2.5 hover:bg-gray-50" aria-label="Next">
+            <ChevronRightIcon className="h-5 w-5 text-gray-600" />
+          </button>
         </div>
       </div>
 
-      {/* Location filter */}
       {locations.length > 0 && (
-        <div className="flex items-center space-x-2">
-          <MapPinIcon className="w-5 h-5 text-gray-400" />
-          <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+          {[{ id: null as string | null, name: 'All locations' }, ...locations].map(loc => (
             <button
-              onClick={() => setSelectedLocationId(null)}
+              key={loc.id ?? 'all'}
+              onClick={() => selectLocation(loc.id)}
               className={clsx(
-                'px-4 py-2 text-sm font-medium transition-colors',
-                selectedLocationId === null
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                'flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium',
+                selectedLocationId === loc.id ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 bg-white text-gray-700'
               )}
             >
-              All Locations
+              {loc.id && <MapPinIcon className="h-4 w-4" />}
+              {loc.name}
             </button>
-            {locations.map(loc => (
-              <button
-                key={loc.id}
-                onClick={() => setSelectedLocationId(loc.id)}
-                className={clsx(
-                  'px-4 py-2 text-sm font-medium transition-colors border-l border-gray-300',
-                  selectedLocationId === loc.id
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                )}
-              >
-                {loc.name}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
       )}
 
       {viewMode === 'month' ? (
-        /* Month View */
         <MonthView
           monthData={monthData}
           loading={loading}
@@ -420,7 +438,6 @@ export default function AdminSchedule() {
           onDayClick={handleWeekDayClick}
         />
       ) : viewMode === 'week' ? (
-        /* Week View */
         <WeekView
           weekData={weekData}
           loading={loading}
@@ -428,11 +445,9 @@ export default function AdminSchedule() {
           onDayClick={handleWeekDayClick}
         />
       ) : (
-        /* Day View */
         <>
-          {/* Week day selector */}
-          <div className="flex space-x-2">
-            {weekDays.map((day) => {
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+            {weekDays.map(day => {
               const isSelected = isSameDay(day, selectedDate);
               const isToday = isSameDay(day, new Date());
               return (
@@ -440,145 +455,127 @@ export default function AdminSchedule() {
                   key={day.toISOString()}
                   onClick={() => setSelectedDate(day)}
                   className={clsx(
-                    'flex-1 py-3 px-2 rounded-lg text-center transition-colors',
+                    'rounded-lg py-2 text-center sm:py-3',
                     isSelected
                       ? 'bg-orange-600 text-white'
                       : isToday
-                        ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                        : 'bg-white border border-gray-200 hover:bg-gray-50'
+                        ? 'bg-orange-100 text-orange-700'
+                        : 'border border-gray-200 bg-white text-gray-700'
                   )}
                 >
-                  <div className="text-xs font-medium">{format(day, 'EEE')}</div>
-                  <div className="text-lg font-semibold">{format(day, 'd')}</div>
-                  <div className="text-xs">{format(day, 'MMM')}</div>
+                  <div className="text-[11px] font-medium sm:text-xs">{format(day, 'EEE')}</div>
+                  <div className="text-base font-semibold sm:text-lg">{format(day, 'd')}</div>
                 </button>
               );
             })}
           </div>
 
-          {data?.summary && (
-            <SummaryCards summary={data.summary} locationId={selectedLocationId} />
-          )}
+          {isSuper && data?.summary && <SummaryCards summary={data.summary} locationId={selectedLocationId} />}
 
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-              </h2>
-              <div className="flex items-center gap-2">
-                <label htmlFor="mentorName" className="text-sm font-medium text-gray-600 whitespace-nowrap">
-                  Mentor on duty
-                </label>
-                <input
-                  id="mentorName"
-                  type="text"
-                  value={mentorName}
-                  onChange={(e) => setMentorName(e.target.value)}
-                  placeholder="Your name"
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="space-y-3 border-b border-gray-200 p-4">
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="text-base font-semibold text-gray-900 sm:text-lg">{format(selectedDate, 'EEEE d MMMM')}</h2>
+                {rosterItems.length > 0 && (
+                  <span className="text-sm text-gray-500">{stateCounts.in} of {rosterItems.length} here</span>
+                )}
               </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {mentorName.trim() && !editingMentor ? (
+                  <div className="flex h-12 items-center justify-between rounded-xl bg-gray-50 px-4 text-sm text-gray-600">
+                    <span>
+                      Checking in as <span className="font-semibold text-gray-900">{mentorName}</span>
+                    </span>
+                    <button onClick={() => setEditingMentor(true)} className="font-medium text-orange-700">
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <label className="block">
+                    <span className="sr-only">Mentor on duty</span>
+                    <input
+                      id="mentorName"
+                      type="text"
+                      value={mentorName}
+                      onChange={e => updateMentorName(e.target.value)}
+                      onFocus={() => setEditingMentor(true)}
+                      onBlur={() => setEditingMentor(false)}
+                      onKeyDown={e => e.key === 'Enter' && setEditingMentor(false)}
+                      autoFocus={editingMentor}
+                      placeholder="Mentor on duty (your name)"
+                      autoComplete="name"
+                      className={clsx(
+                        'h-12 w-full rounded-xl border px-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-500',
+                        mentorName.trim() ? 'border-gray-300' : 'border-orange-300 bg-orange-50'
+                      )}
+                    />
+                  </label>
+                )}
+                <label className="relative block">
+                  <span className="sr-only">Search students</span>
+                  <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-3.5 h-5 w-5 text-gray-400" />
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Search student or parent"
+                    className="h-12 w-full rounded-xl border border-gray-300 pl-11 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </label>
+              </div>
+              {!mentorName.trim() && <p className="text-sm text-orange-700">Enter your name to check students in and out.</p>}
+              {rosterItems.length > 0 && (
+                <div className="grid grid-cols-4 gap-1 rounded-xl bg-gray-100 p-1">
+                  {([
+                    ['all', 'All', rosterItems.length],
+                    ['expected', 'To arrive', stateCounts.expected],
+                    ['in', 'Here', stateCounts.in],
+                    ['out', 'Gone', stateCounts.out]
+                  ] as const).map(([value, label, count]) => (
+                    <button
+                      key={value}
+                      onClick={() => setStateFilter(value)}
+                      className={clsx(
+                        'rounded-lg py-2 text-sm font-medium',
+                        stateFilter === value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'
+                      )}
+                    >
+                      {label} <span className="opacity-60">{count}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {loading ? (
-              <div className="p-8 text-center text-gray-500">Loading...</div>
+              <div className="p-8 text-center text-gray-500">Loading…</div>
             ) : filteredItems.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
-                No bookings for this date
+                {search ? 'No matching students' : rosterItems.length > 0 ? 'Nobody in this group' : 'No bookings for this date'}
               </div>
             ) : (
               groupedByLocation.map(([locationId, group]) => (
-                <div key={locationId}>
-                  {/* Location header - show when viewing all locations */}
-                  {!selectedLocationId && groupedByLocation.length > 1 && (
-                    <div className="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center space-x-2">
-                      <MapPinIcon className="w-4 h-4 text-orange-500" />
+                <section key={locationId}>
+                  {groupedByLocation.length > 1 && (
+                    <div className="sticky top-14 z-10 flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-2.5 lg:top-0">
+                      <MapPinIcon className="h-4 w-4 text-orange-500" />
                       <span className="text-sm font-semibold text-gray-700">{group.locationName}</span>
-                      <span className="text-xs text-gray-500">({group.items.length} students)</span>
+                      <span className="text-xs text-gray-500">{group.items.length}</span>
                     </div>
                   )}
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Time Slot
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Student
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Product
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Location
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Parent Contact
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Attendance
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {group.items.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={clsx(
-                              'px-2 py-1 text-sm font-medium rounded',
-                              item.productType === 'BIRTHDAY'
-                                ? 'bg-pink-100 text-pink-800'
-                                : item.productType === 'ALL_DAY_CAMP'
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : item.productType === 'IGNITE'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-blue-100 text-blue-800'
-                            )}>
-                              {item.productType === 'BIRTHDAY' && '🎂 '}
-                              {item.productType === 'IGNITE' && '⚡ '}
-                              {item.timeSlot}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Link
-                              href={`/admin/students/${item.studentId}`}
-                              className="text-orange-600 hover:text-orange-800 font-medium"
-                            >
-                              {item.studentName}
-                            </Link>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {item.productName}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {item.locationName}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-900">{item.parentName}</div>
-                            <div className="text-sm text-gray-500">{item.parentEmail}</div>
-                            {item.parentPhone && (
-                              <div className="text-sm text-gray-500">{item.parentPhone}</div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <StatusBadge status={item.status} />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <AttendanceCell
-                              item={item}
-                              mentorName={mentorName}
-                              busy={attendanceBusy === item.id}
-                              onAction={handleAttendance}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                  <ul className="divide-y divide-gray-100">
+                    {group.items.map(item => (
+                      <StudentCheckInCard
+                        key={item.id}
+                        item={item}
+                        mentorName={mentorName}
+                        busy={attendanceBusy === item.id}
+                        canUndoAnytime={isSuper}
+                        onAction={handleAttendance}
+                      />
+                    ))}
+                  </ul>
+                </section>
               ))
             )}
           </div>
@@ -650,7 +647,7 @@ function MonthView({ monthData, loading, selectedDate, selectedLocationId, onDay
                   key={day.date}
                   onClick={() => onDayClick(day.date)}
                   className={clsx(
-                    'rounded-lg border p-2 text-left transition-colors min-h-[90px]',
+                    'rounded-lg border p-1 sm:p-2 text-left transition-colors min-h-[64px] sm:min-h-[90px]',
                     'hover:border-orange-400 hover:shadow-sm',
                     !isCurrentMonth && 'opacity-40',
                     isWeekend && 'bg-gray-50',
@@ -712,7 +709,7 @@ function WeekView({ weekData, loading, selectedLocationId, onDayClick }: {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-gray-700">{weekLabel}</h2>
-      <div className="grid grid-cols-7 gap-3">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-7 sm:gap-3 sm:px-0">
         {weekData.days.map(day => {
           const isToday = isSameDay(new Date(day.date + 'T00:00:00'), new Date());
           const stats = selectedLocationId && day.byLocation[selectedLocationId]
@@ -731,7 +728,7 @@ function WeekView({ weekData, loading, selectedLocationId, onDayClick }: {
               key={day.date}
               onClick={() => onDayClick(day.date)}
               className={clsx(
-                'rounded-lg border p-4 text-left transition-colors hover:border-orange-400 hover:shadow-sm',
+                'min-w-[132px] flex-shrink-0 rounded-lg border p-4 text-left transition-colors hover:border-orange-400 hover:shadow-sm sm:min-w-0',
                 isToday
                   ? 'border-orange-300 bg-orange-50'
                   : 'border-gray-200 bg-white'

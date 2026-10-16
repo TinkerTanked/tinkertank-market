@@ -181,6 +181,8 @@ jobs:
           NEXT_PUBLIC_APP_URL: https://${{ env.DOMAIN }}
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          SUPER_ADMIN_USERNAME: ${{ secrets.SUPER_ADMIN_USERNAME }}
+          SUPER_ADMIN_PASSWORD: ${{ secrets.SUPER_ADMIN_PASSWORD }}
           GITHUB_SHA: ${{ github.sha }}
         run: |
           ./envsubst < .github/k8s/deployment-template.yml > ${REPO_NAME}.yml

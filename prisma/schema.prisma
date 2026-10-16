@@ -106,6 +106,7 @@ model Booking {
   student              Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
   igniteSubscription   IgniteSubscription? @relation(fields: [igniteSubscriptionId], references: [id])
   attendance           AttendanceRecord?
+  campCredit           CampCredit?
 
   // One Ignite booking per subscription+student+session date. Existing camp/
   // birthday rows have a null igniteSubscriptionId so the constraint ignores them.
@@ -273,6 +274,8 @@ model IgniteSubscription {
   currentPeriodEnd     DateTime?
   canceledAt           DateTime?
   cancelAtPeriodEnd    Boolean                     @default(false)
+  cancelAt             DateTime?
+  pauseResumesAt       DateTime?
   weeklyAmount         Decimal                     @db.Money
   createdAt            DateTime                    @default(now())
   updatedAt            DateTime                    @updatedAt
@@ -300,4 +303,25 @@ enum IgniteSubscriptionStatus {
   CANCELED
   PAST_DUE
   TRIALING
+}
+
+// A cancelled camp day refunded as a single-use Stripe promotion code. Stripe
+// enforces redemption and expiry; this row records who it was issued to and why.
+model CampCredit {
+  id                    String    @id @default(cuid())
+  code                  String    @unique
+  amount                Decimal   @db.Money
+  customerEmail         String
+  customerName          String?
+  bookingId             String    @unique
+  stripeCouponId        String
+  stripePromotionCodeId String    @unique
+  expiresAt             DateTime
+  redeemedAt            DateTime?
+  redeemedOrderId       String?
+  createdAt             DateTime  @default(now())
+  booking               Booking   @relation(fields: [bookingId], references: [id])
+
+  @@index([customerEmail])
+  @@map("camp_credits")
 }

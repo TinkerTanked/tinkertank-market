@@ -11,24 +11,7 @@ import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '
 import { assertCampCapacityForLocation, CampCapacityExceededError, lockCampCapacity } from '@/lib/campCapacity';
 import { assertBirthdaySlotAvailable, BirthdaySlotUnavailableError } from '@/lib/birthdayAvailability';
 import { sendMetaPurchase } from '@/lib/metaConversions';
-
-const IGNITE_SUBSCRIPTION_STATUS: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED' | 'PAST_DUE' | 'TRIALING'> = {
-  active: 'ACTIVE',
-  paused: 'PAUSED',
-  canceled: 'CANCELED',
-  past_due: 'PAST_DUE',
-  trialing: 'TRIALING',
-  incomplete: 'PAST_DUE',
-  incomplete_expired: 'CANCELED',
-  unpaid: 'PAST_DUE',
-};
-
-function igniteSubscriptionStatus(subscription: Stripe.Subscription) {
-  // Stripe keeps status=active while invoice collection is paused. Mirror the
-  // collection state so paused Pittwater enrolments are not shown as billable.
-  if (subscription.pause_collection) return 'PAUSED' as const
-  return IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE'
-}
+import { igniteSubscriptionLifecycle, igniteSubscriptionStatus } from '@/lib/igniteSubscriptionActions';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -138,6 +121,14 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
     const isSubscription = session.metadata?.isSubscription === 'true'
     const isIgniteSingleSession = session.metadata?.isIgniteSingleSession === 'true'
 
+    // A camp credit (promotion code) lowers what the customer paid below the
+    // order subtotal. Revenue, the confirmation email and Meta use what was paid.
+    const discounted = !!session.total_details?.amount_discount && session.amount_total != null
+    const paidTotal = discounted ? session.amount_total! / 100 : Number(order.totalAmount)
+    const redeemedPromotionCodes = (session.discounts ?? [])
+      .map(discount => (typeof discount.promotion_code === 'string' ? discount.promotion_code : discount.promotion_code?.id))
+      .filter((id): id is string => !!id)
+
     // Only process if payment was successful and order is still pending
     if (session.payment_status === 'paid' && order.status === 'PENDING') {
       if (isSubscription) {
@@ -152,8 +143,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
           // Update order status to PAID
           await tx.order.update({
             where: { id: order.id },
-            data: { status: 'PAID' },
+            data: { status: 'PAID', ...(discounted ? { totalAmount: paidTotal } : {}) },
           });
+
+          if (redeemedPromotionCodes.length > 0) {
+            await tx.campCredit.updateMany({
+              where: { stripePromotionCodeId: { in: redeemedPromotionCodes }, redeemedAt: null },
+              data: { redeemedAt: new Date(), redeemedOrderId: order.id },
+            });
+          }
 
           // Create bookings for each order item (camps and birthdays)
           for (const orderItem of order.orderItems) {
@@ -315,7 +313,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
       await withErrorHandling(
         () => sendBookingConfirmationEmail({
           ...order,
-          totalAmount: Number(order.totalAmount),
+          totalAmount: paidTotal,
           orderItems: order.orderItems.map(item => ({
             id: item.id,
             product: {
@@ -346,7 +344,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
       await notificationService.notifyBookingConfirmed(
         order.id, 
         order.customerName, 
-        Number(order.totalAmount)
+        paidTotal
       );
       }
 
@@ -366,7 +364,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session, 
         () => ErrorHandler.retryOperation(
           () => sendMetaPurchase({
             orderId: order.id,
-            value: Number(order.totalAmount),
+            value: paidTotal,
             currency: 'AUD',
             email: order.customerEmail,
             phone: session.metadata?.customerPhone,
@@ -957,11 +955,7 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         igniteSessionId: igniteSession.id,
         studentNames: legacyStudentNames,
         quantity,
-        status: igniteSubscriptionStatus(subscription),
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        ...igniteSubscriptionLifecycle(subscription),
         weeklyAmount,
       },
       // Lifecycle only — never overwrite studentNames (owned by
@@ -972,11 +966,7 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         customerName: customer.name || undefined,
         igniteSessionId: igniteSession.id,
         quantity,
-        status: igniteSubscriptionStatus(subscription),
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        ...igniteSubscriptionLifecycle(subscription),
         weeklyAmount,
       },
       include: { students: { select: { studentId: true } } },

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import Stripe from 'stripe'
+import { prisma } from '@/lib/prisma'
+import { adminRoleFromAuthorization } from '@/lib/adminAuth'
+import { adminSubscriptionView } from '@/lib/adminCustomers'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia'
@@ -18,6 +20,10 @@ interface GroupedOrder {
   totalPrice: number
 }
 
+function sydneyDateKey(date: Date) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney' }).format(date)
+}
+
 async function getPhoneFromStripe(sessionId: string): Promise<string | null> {
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId)
@@ -30,6 +36,8 @@ async function getPhoneFromStripe(sessionId: string): Promise<string | null> {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    // Mentors see the child's record, not what the family has spent.
+    const isSuper = adminRoleFromAuthorization(request.headers.get('authorization')) === 'super'
 
     const student = await prisma.student.findUnique({
       where: { id },
@@ -37,8 +45,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         bookings: {
           include: {
             product: true,
-            event: true,
-            location: true
+            location: true,
+            attendance: { select: { id: true } },
+            campCredit: { select: { code: true } },
+            igniteSubscription: { select: { status: true, cancelAt: true } }
           },
           orderBy: { startDate: 'desc' }
         },
@@ -51,13 +61,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         },
         igniteSubscriptions: {
           include: {
-            igniteSubscription: true
+            igniteSubscription: { include: { students: { include: { student: { select: { id: true, name: true } } } } } }
           }
         },
-        attendanceRecords: true,
-        _count: {
-          select: { bookings: true, orderItems: true }
-        }
+        attendanceRecords: true
       }
     })
 
@@ -76,26 +83,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return sum + Math.max(0, Math.round((r.checkOutAt.getTime() - r.checkInAt.getTime()) / 60000))
     }, 0)
 
-    let parentPhone: string | null = null
-    
-    if (student.orderItems.length > 0) {
-      const mostRecentOrder = student.orderItems[0].order
-      if (mostRecentOrder.stripePaymentIntentId) {
-        parentPhone = await getPhoneFromStripe(mostRecentOrder.stripePaymentIntentId)
-      }
+    const latestOrder = student.orderItems[0]?.order
+    const latestSubscription = student.igniteSubscriptions[0]?.igniteSubscription
+    let parentPhone = latestOrder?.customerPhone || null
+    if (!parentPhone && latestOrder?.stripePaymentIntentId) {
+      parentPhone = await getPhoneFromStripe(latestOrder.stripePaymentIntentId)
     }
-    
     if (!parentPhone) {
       parentPhone = student.emergencyContactPhone || null
     }
 
-    const parentContact = student.orderItems.length > 0
-      ? {
-          name: student.orderItems[0].order.customerName,
-          email: student.orderItems[0].order.customerEmail,
-          phone: parentPhone
-        }
-      : null
+    const parentContact = latestOrder
+      ? { name: latestOrder.customerName, email: latestOrder.customerEmail, phone: parentPhone }
+      : latestSubscription
+        ? { name: latestSubscription.customerName || latestSubscription.customerEmail, email: latestSubscription.customerEmail, phone: parentPhone }
+        : null
 
     const groupedOrders: GroupedOrder[] = []
     const orderMap = new Map<string, GroupedOrder>()
@@ -103,7 +105,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     for (const item of student.orderItems) {
       const key = `${item.orderId}-${item.productId}`
       const existing = orderMap.get(key)
-      
+
       if (existing) {
         existing.bookingDates.push(item.bookingDate.toISOString())
         existing.totalPrice += Number(item.price)
@@ -128,12 +130,47 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       order.bookingDates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
     })
 
+    const subscriptions = student.igniteSubscriptions.map(link => adminSubscriptionView(link.igniteSubscription))
+
     return NextResponse.json({
-      ...student,
-      totalSpend,
+      id: student.id,
+      name: student.name,
+      birthdate: student.birthdate,
+      birthdateEstimated: student.birthdateEstimated,
+      school: student.school,
+      allergies: student.allergies,
+      medicalNotes: student.medicalNotes,
+      emergencyContactName: student.emergencyContactName,
+      emergencyContactPhone: student.emergencyContactPhone,
+      createdAt: student.createdAt,
       totalAttendanceMinutes,
       parentContact,
-      groupedOrders
+      // Same rule as the check-in roster: Ignite sessions only count while the
+      // subscription is running (or the session was attended or overridden).
+      bookings: student.bookings
+        .filter(booking => {
+          if (!booking.igniteSubscriptionId || booking.rosterOverride || booking.attendance) return true
+          const subscription = booking.igniteSubscription
+          return (
+            !!subscription &&
+            (subscription.status === 'ACTIVE' || subscription.status === 'TRIALING') &&
+            (!subscription.cancelAt || booking.startDate < subscription.cancelAt)
+          )
+        })
+        .map(booking => ({
+        id: booking.id,
+        // Ignite bookings are real instants; camp and party dates are stored on the UTC calendar day.
+        dateKey: booking.igniteSubscriptionId ? sydneyDateKey(booking.startDate) : booking.startDate.toISOString().slice(0, 10),
+        status: booking.status,
+        productName: booking.product.name,
+        productType: booking.product.type,
+        locationName: booking.location.name,
+        checkedIn: !!booking.attendance,
+        creditCode: booking.campCredit?.code ?? null,
+        ...(isSuper ? { price: Number(booking.totalPrice) } : {})
+      })),
+      subscriptions: isSuper ? subscriptions : subscriptions.map(({ weeklyAmount: _weeklyAmount, ...subscription }) => subscription),
+      ...(isSuper ? { totalSpend, groupedOrders } : {})
     })
   } catch (error) {
     console.error('Error fetching student:', error)

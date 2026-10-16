@@ -5,17 +5,31 @@ import { config, middleware } from '@/middleware'
 describe('admin authentication middleware', () => {
   const originalAdminUsername = process.env.ADMIN_USERNAME
   const originalAdminPassword = process.env.ADMIN_PASSWORD
+  const originalSuperUsername = process.env.SUPER_ADMIN_USERNAME
+  const originalSuperPassword = process.env.SUPER_ADMIN_PASSWORD
+
+  const basic = (user: string, password: string) => ({
+    Authorization: `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`
+  })
+  const mentor = basic('test-admin', 'test-password')
+  const superAdmin = basic('test-super', 'super-password')
 
   beforeEach(() => {
     process.env.ADMIN_USERNAME = 'test-admin'
     process.env.ADMIN_PASSWORD = 'test-password'
+    process.env.SUPER_ADMIN_USERNAME = 'test-super'
+    process.env.SUPER_ADMIN_PASSWORD = 'super-password'
   })
 
   afterEach(() => {
-    if (originalAdminUsername === undefined) delete process.env.ADMIN_USERNAME
-    else process.env.ADMIN_USERNAME = originalAdminUsername
-    if (originalAdminPassword === undefined) delete process.env.ADMIN_PASSWORD
-    else process.env.ADMIN_PASSWORD = originalAdminPassword
+    const restore = (key: string, value: string | undefined) => {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
+    restore('ADMIN_USERNAME', originalAdminUsername)
+    restore('ADMIN_PASSWORD', originalAdminPassword)
+    restore('SUPER_ADMIN_USERNAME', originalSuperUsername)
+    restore('SUPER_ADMIN_PASSWORD', originalSuperPassword)
   })
 
   it('matches both admin pages and admin API routes', () => {
@@ -44,14 +58,44 @@ describe('admin authentication middleware', () => {
     expect(middleware(new NextRequest('https://tinkertank.rocks/api/admin/ignite-subscriptions')).status).toBe(503)
   })
 
-  it('allows valid credentials through to admin APIs', () => {
-    const request = new NextRequest('https://tinkertank.rocks/api/admin/ignite-subscriptions', {
-      headers: { Authorization: `Basic ${Buffer.from('test-admin:test-password').toString('base64')}` }
-    })
+  it('allows the super admin into every admin API', () => {
+    const request = new NextRequest('https://tinkertank.rocks/api/admin/ignite-subscriptions', { headers: superAdmin })
     const response = middleware(request)
 
     expect(response.status).toBe(200)
     expect(response.headers.get('x-middleware-next')).toBe('1')
+  })
+
+  it.each([
+    ['GET', '/admin/schedule'],
+    ['GET', '/admin/students/abc123'],
+    ['GET', '/api/admin/schedule'],
+    ['POST', '/api/admin/attendance'],
+    ['PUT', '/api/admin/students/abc123']
+  ])('lets mentors %s %s', (method, path) => {
+    const response = middleware(new NextRequest(`https://tinkertank.rocks${path}`, { method, headers: mentor }))
+
+    expect(response.headers.get('x-middleware-next')).toBe('1')
+  })
+
+  it.each([
+    ['GET', '/api/admin/customers'],
+    ['GET', '/api/admin/ignite-subscriptions'],
+    ['POST', '/api/admin/ignite-subscriptions/sub_1/billing'],
+    ['POST', '/api/admin/bookings/bk_1/move'],
+    ['GET', '/api/admin/studentsexport'],
+    ['DELETE', '/api/admin/students/abc123']
+  ])('refuses mentors %s %s', (method, path) => {
+    const response = middleware(new NextRequest(`https://tinkertank.rocks${path}`, { method, headers: mentor }))
+
+    expect(response.status).toBe(403)
+  })
+
+  it.each(['/admin', '/admin/customers', '/admin/ignite-subscriptions'])('sends mentors from %s to check-in', path => {
+    const response = middleware(new NextRequest(`https://tinkertank.rocks${path}`, { headers: mentor }))
+
+    expect(response.status).toBe(307)
+    expect(response.headers.get('location')).toBe('https://tinkertank.rocks/admin/schedule')
   })
 
   it('does not require admin credentials for public APIs', () => {

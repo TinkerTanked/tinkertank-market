@@ -1,71 +1,40 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeftIcon, EnvelopeIcon, PhoneIcon, UserIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { clsx } from 'clsx'
+import { ArrowLeftIcon, ChevronRightIcon, EnvelopeIcon, ExclamationTriangleIcon, PhoneIcon, UserIcon } from '@heroicons/react/24/outline'
+import type { AdminSubscriptionView } from '@/lib/adminCustomers'
+import { useAdminRole } from '@/components/admin/AdminRole'
+import SubscriptionBillingSheet, {
+  formatDate as formatSydneyDate,
+  formatSessionTime,
+  STATUS_COLORS,
+  STATUS_LABELS,
+} from '@/components/admin/SubscriptionBillingSheet'
+import CampBookingSheet, { type ManagedCampDay } from '@/components/admin/CampBookingSheet'
 
-interface Booking {
+interface StudentBooking {
   id: string
-  startDate: string
-  endDate: string
+  dateKey: string
   status: string
-  totalPrice: string
-  product: {
-    id: string
-    name: string
-    type: string
-  }
-  location: {
-    id: string
-    name: string
-  }
-  event: {
-    id: string
-    title: string
-  } | null
-}
-
-interface OrderItem {
-  id: string
-  bookingDate: string
-  price: string
-  createdAt: string
-  order: {
-    id: string
-    customerEmail: string
-    customerName: string
-    status: string
-    createdAt: string
-  }
-  product: {
-    id: string
-    name: string
-    type: string
-  }
+  productName: string
+  productType: 'CAMP' | 'BIRTHDAY' | 'SUBSCRIPTION'
+  locationName: string
+  checkedIn: boolean
+  creditCode: string | null
+  price?: number
 }
 
 interface GroupedOrder {
   orderId: string
   orderDate: string
   status: string
-  customerName: string
-  customerEmail: string
   productName: string
   productType: string
   bookingDates: string[]
   totalPrice: number
-}
-
-interface IgniteSubscription {
-  id: string
-  igniteSubscription: {
-    id: string
-    customerEmail: string
-    status: string
-    weeklyAmount: string
-  }
 }
 
 interface StudentProfile {
@@ -79,21 +48,13 @@ interface StudentProfile {
   emergencyContactName: string | null
   emergencyContactPhone: string | null
   createdAt: string
-  bookings: Booking[]
-  orderItems: OrderItem[]
-  groupedOrders: GroupedOrder[]
-  igniteSubscriptions: IgniteSubscription[]
-  totalSpend: number
   totalAttendanceMinutes: number
-  parentContact: {
-    name: string
-    email: string
-    phone: string | null
-  } | null
-  _count: {
-    bookings: number
-    orderItems: number
-  }
+  parentContact: { name: string; email: string; phone: string | null } | null
+  bookings: StudentBooking[]
+  subscriptions: (Omit<AdminSubscriptionView, 'weeklyAmount'> & { weeklyAmount?: number })[]
+  // Super admin only
+  totalSpend?: number
+  groupedOrders?: GroupedOrder[]
 }
 
 function calculateAge(birthdate: string): number {
@@ -101,23 +62,26 @@ function calculateAge(birthdate: string): number {
   const birth = new Date(birthdate)
   let age = today.getFullYear() - birth.getFullYear()
   const monthDiff = today.getMonth() - birth.getMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--
-  }
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--
   return age
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-AU', {
+  return new Date(dateStr).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function formatDateKey(dateKey: string): string {
+  return new Date(`${dateKey}T12:00:00Z`).toLocaleDateString('en-AU', {
+    weekday: 'short',
     day: 'numeric',
     month: 'short',
-    year: 'numeric'
+    year: 'numeric',
+    timeZone: 'UTC',
   })
 }
 
-function formatCurrency(amount: number | string): string {
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount
-  return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(num)
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(amount)
 }
 
 function formatHours(minutes: number): string {
@@ -127,358 +91,356 @@ function formatHours(minutes: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
-function getStatusColor(status: string): string {
-  switch (status.toUpperCase()) {
-    case 'CONFIRMED':
-    case 'PAID':
-    case 'ACTIVE':
-      return 'bg-green-100 text-green-800'
-    case 'PENDING':
-      return 'bg-yellow-100 text-yellow-800'
-    case 'CANCELLED':
-    case 'CANCELED':
-      return 'bg-red-100 text-red-800'
-    case 'COMPLETED':
-      return 'bg-blue-100 text-blue-800'
-    default:
-      return 'bg-gray-100 text-gray-800'
-  }
+function hasNote(value: string | null) {
+  return !!value && !/^(n\/?a|none|nil|no)$/i.test(value.trim())
+}
+
+const BOOKING_STATUS: Record<string, string> = {
+  CONFIRMED: 'bg-green-100 text-green-800',
+  PAID: 'bg-green-100 text-green-800',
+  PENDING: 'bg-yellow-100 text-yellow-800',
+  CANCELLED: 'bg-gray-100 text-gray-600',
+  COMPLETED: 'bg-blue-100 text-blue-800',
+}
+
+const TYPE_LABEL: Record<string, string> = { CAMP: 'Camp', BIRTHDAY: 'Party', SUBSCRIPTION: 'Ignite' }
+
+function Card({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+  return (
+    <section className={clsx('overflow-hidden rounded-xl border border-gray-200 bg-white', className)}>
+      <h2 className='border-b border-gray-100 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-gray-500'>{title}</h2>
+      {children}
+    </section>
+  )
 }
 
 export default function StudentProfilePage() {
   const params = useParams()
-  const router = useRouter()
+  const isSuper = useAdminRole() === 'super'
   const [student, setStudent] = useState<StudentProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showPast, setShowPast] = useState(false)
+  const [showAllUpcoming, setShowAllUpcoming] = useState(false)
+  const [billing, setBilling] = useState<AdminSubscriptionView | null>(null)
+  const [managing, setManaging] = useState<ManagedCampDay | null>(null)
 
-  useEffect(() => {
-    const fetchStudent = async () => {
-      try {
-        const response = await fetch(`/api/admin/students/${params.id}`)
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError('Student not found')
-          } else {
-            setError('Failed to load student')
-          }
-          return
-        }
-        const data = await response.json()
-        setStudent(data)
-      } catch (err) {
-        console.error('Error fetching student:', err)
-        setError('Failed to load student')
-      } finally {
-        setLoading(false)
+  const load = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/admin/students/${params.id}`)
+      if (!response.ok) {
+        setError(response.status === 404 ? 'Student not found' : 'Failed to load student')
+        return
       }
-    }
-
-    if (params.id) {
-      fetchStudent()
+      setStudent(await response.json())
+    } catch {
+      setError('Failed to load student')
+    } finally {
+      setLoading(false)
     }
   }, [params.id])
 
+  useEffect(() => {
+    if (params.id) load()
+  }, [params.id, load])
+
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+      <div className='flex justify-center py-12'>
+        <div className='h-8 w-8 animate-spin rounded-full border-b-2 border-orange-600' />
       </div>
     )
   }
 
   if (error || !student) {
     return (
-      <div className="space-y-6">
-        <Link
-          href="/admin/students"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
-        >
-          <ArrowLeftIcon className="h-4 w-4 mr-1" />
-          Back to Students
+      <div className='space-y-6'>
+        <Link href='/admin/students' className='inline-flex items-center text-sm text-gray-500 hover:text-gray-700'>
+          <ArrowLeftIcon className='mr-1 h-4 w-4' /> Students
         </Link>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-800">{error || 'Student not found'}</p>
-        </div>
+        <div className='rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-800'>{error || 'Student not found'}</div>
       </div>
     )
   }
 
-  const age = calculateAge(student.birthdate)
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney' }).format(new Date())
+  const upcoming = student.bookings.filter(booking => booking.dateKey >= today && booking.status !== 'CANCELLED').reverse()
+  const past = student.bookings.filter(booking => booking.dateKey < today || booking.status === 'CANCELLED')
+  const attended = student.bookings.filter(booking => booking.checkedIn).length
+  // Camp and party days are always shown (they can be managed); weekly Ignite
+  // sessions collapse to the next few.
+  let igniteShown = 0
+  const upcomingPreview = upcoming.filter(booking => booking.productType !== 'SUBSCRIPTION' || igniteShown++ < 4)
+
+  const bookingRow = (booking: StudentBooking, manageable: boolean) => (
+    <li key={booking.id} className='flex items-center gap-3 px-4 py-3'>
+      <div className='min-w-0 flex-1'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Link href={`/admin/schedule?date=${booking.dateKey}`} className='text-sm font-semibold text-gray-900 hover:text-orange-700'>
+            {formatDateKey(booking.dateKey)}
+          </Link>
+          <span
+            className={clsx('rounded-full px-2 py-0.5 text-xs font-medium', BOOKING_STATUS[booking.status] || 'bg-gray-100 text-gray-600')}
+          >
+            {booking.creditCode ? `Credited ${booking.creditCode}` : booking.checkedIn ? 'attended' : booking.status.toLowerCase()}
+          </span>
+        </div>
+        <div className='mt-0.5 truncate text-sm text-gray-600'>
+          {booking.productType === 'SUBSCRIPTION'
+            ? 'Ignite'
+            : `${TYPE_LABEL[booking.productType] ?? booking.productType} · ${booking.productName}`}{' '}
+          · {booking.locationName}
+        </div>
+      </div>
+      {isSuper && manageable && booking.productType === 'CAMP' && booking.status === 'CONFIRMED' && !booking.checkedIn && (
+        <button
+          onClick={() =>
+            setManaging({
+              id: booking.id,
+              studentName: student.name,
+              productName: booking.productName,
+              dateKey: booking.dateKey,
+              locationName: booking.locationName,
+              price: booking.price ?? 0,
+            })
+          }
+          className='inline-flex h-10 flex-shrink-0 items-center rounded-xl border border-gray-300 bg-white px-3.5 text-sm font-medium text-gray-800 hover:bg-gray-50'
+        >
+          Manage
+        </button>
+      )}
+    </li>
+  )
 
   return (
-    <div className="space-y-6">
-      <Link
-        href="/admin/students"
-        className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
-      >
-        <ArrowLeftIcon className="h-4 w-4 mr-1" />
-        Back to Students
+    <div className='space-y-4 sm:space-y-6'>
+      <Link href='/admin/students' className='inline-flex items-center text-sm text-gray-500 hover:text-gray-700'>
+        <ArrowLeftIcon className='mr-1 h-4 w-4' /> Students
       </Link>
 
-      <div className="flex items-center justify-between">
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{student.name}</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Student since {formatDate(student.createdAt)}
+          <h1 className='text-xl font-bold text-gray-900 sm:text-2xl'>{student.name}</h1>
+          <p className='mt-1 text-sm text-gray-500'>
+            {calculateAge(student.birthdate)} years{student.school ? ` · ${student.school}` : ''} · with us since{' '}
+            {formatDate(student.createdAt)}
           </p>
         </div>
-        <div className="flex items-start gap-8 text-right">
-          <div>
-            <p className="text-2xl font-bold text-gray-900">{formatHours(student.totalAttendanceMinutes)}</p>
-            <p className="text-sm text-gray-500">Time with TinkerTank</p>
+        <div className='grid grid-cols-2 gap-2 sm:flex sm:gap-3'>
+          <div className='rounded-xl border border-gray-200 bg-white px-4 py-2.5'>
+            <p className='text-xl font-bold text-gray-900'>{formatHours(student.totalAttendanceMinutes)}</p>
+            <p className='text-xs text-gray-500'>Time with TinkerTank</p>
           </div>
-          <div>
-            <p className="text-2xl font-bold text-gray-900">{formatCurrency(student.totalSpend)}</p>
-            <p className="text-sm text-gray-500">Total spend</p>
-          </div>
+          {isSuper && student.totalSpend !== undefined ? (
+            <div className='rounded-xl border border-gray-200 bg-white px-4 py-2.5'>
+              <p className='text-xl font-bold text-gray-900'>{formatCurrency(student.totalSpend)}</p>
+              <p className='text-xs text-gray-500'>Total spend</p>
+            </div>
+          ) : (
+            <div className='rounded-xl border border-gray-200 bg-white px-4 py-2.5'>
+              <p className='text-xl font-bold text-gray-900'>{attended}</p>
+              <p className='text-xs text-gray-500'>Sessions attended</p>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Student Details */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Student Details</h2>
-          <dl className="space-y-3">
-            <div>
-              <dt className="text-sm font-medium text-gray-500">Age</dt>
-              <dd className="text-sm text-gray-900">{age} years old</dd>
+      {(hasNote(student.allergies) || hasNote(student.medicalNotes)) && (
+        <div className='space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-4'>
+          {hasNote(student.allergies) && (
+            <div className='flex items-start gap-2 text-amber-900'>
+              <ExclamationTriangleIcon className='mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600' />
+              <p>
+                <span className='font-semibold'>Allergies:</span> {student.allergies}
+              </p>
             </div>
+          )}
+          {hasNote(student.medicalNotes) && (
+            <p className='pl-7 text-amber-900'>
+              <span className='font-semibold'>Medical:</span> {student.medicalNotes}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className='grid gap-4 lg:grid-cols-3 lg:gap-6'>
+        <Card title='Details'>
+          <dl className='space-y-3 p-4 text-sm'>
             <div>
-              <dt className="text-sm font-medium text-gray-500">Date of Birth</dt>
-              <dd className="text-sm text-gray-900">
-                {formatDate(student.birthdate)}{student.birthdateEstimated ? ' (estimated)' : ''}
+              <dt className='text-gray-500'>Date of birth</dt>
+              <dd className='text-gray-900'>
+                {formatDate(student.birthdate)}
+                {student.birthdateEstimated ? ' (estimated)' : ''}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">School</dt>
-              <dd className="text-sm text-gray-900">{student.school || '—'}</dd>
+              <dt className='text-gray-500'>School</dt>
+              <dd className='text-gray-900'>{student.school || '—'}</dd>
             </div>
-            {student.allergies && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <dt className="text-sm font-medium text-red-800">Allergies</dt>
-                    <dd className="text-sm text-red-700">{student.allergies}</dd>
-                  </div>
-                </div>
-              </div>
-            )}
-            {student.medicalNotes && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <dt className="text-sm font-medium text-amber-800">Medical Notes</dt>
-                <dd className="text-sm text-amber-700">{student.medicalNotes}</dd>
-              </div>
-            )}
           </dl>
-        </div>
+        </Card>
 
-        {/* Contact Information */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h2>
-
-          {/* Parent/Customer Contact from Orders */}
-          {student.parentContact && (
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Parent/Guardian</h3>
-              <dl className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <UserIcon className="h-4 w-4 text-gray-400" />
-                  <dd className="text-sm text-gray-900">{student.parentContact.name}</dd>
-                </div>
-                <div className="flex items-center gap-2">
-                  <EnvelopeIcon className="h-4 w-4 text-gray-400" />
-                  <dd className="text-sm text-gray-900">
-                    <a href={`mailto:${student.parentContact.email}`} className="text-orange-600 hover:text-orange-700">
-                      {student.parentContact.email}
-                    </a>
-                  </dd>
+        <Card title='Contacts'>
+          <div className='space-y-4 p-4 text-sm'>
+            {student.parentContact && (
+              <div className='space-y-2'>
+                <div className='flex items-center gap-2 text-gray-900'>
+                  <UserIcon className='h-4 w-4 text-gray-400' /> {student.parentContact.name}
+                  <span className='text-xs text-gray-500'>parent</span>
                 </div>
                 {student.parentContact.phone && (
-                  <div className="flex items-center gap-2">
-                    <PhoneIcon className="h-4 w-4 text-gray-400" />
-                    <dd className="text-sm text-gray-900">
-                      <a href={`tel:${student.parentContact.phone}`} className="text-orange-600 hover:text-orange-700">
-                        {student.parentContact.phone}
-                      </a>
-                    </dd>
-                  </div>
+                  <a href={`tel:${student.parentContact.phone.replace(/[^\d+]/g, '')}`} className='flex items-center gap-2 text-orange-700'>
+                    <PhoneIcon className='h-4 w-4 text-gray-400' /> {student.parentContact.phone}
+                  </a>
                 )}
-              </dl>
-            </div>
-          )}
-
-          {/* Emergency Contact */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Emergency Contact</h3>
-            {student.emergencyContactName ? (
-              <dl className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <UserIcon className="h-4 w-4 text-gray-400" />
-                  <dd className="text-sm text-gray-900">{student.emergencyContactName}</dd>
-                </div>
-                {student.emergencyContactPhone && (
-                  <div className="flex items-center gap-2">
-                    <PhoneIcon className="h-4 w-4 text-gray-400" />
-                    <dd className="text-sm text-gray-900">
-                      <a href={`tel:${student.emergencyContactPhone}`} className="text-orange-600 hover:text-orange-700">
-                        {student.emergencyContactPhone}
-                      </a>
-                    </dd>
-                  </div>
+                <a href={`mailto:${student.parentContact.email}`} className='flex items-center gap-2 break-all text-orange-700'>
+                  <EnvelopeIcon className='h-4 w-4 flex-shrink-0 text-gray-400' /> {student.parentContact.email}
+                </a>
+                {isSuper && (
+                  <Link
+                    href={`/admin/customers/${encodeURIComponent(student.parentContact.email.trim().toLowerCase())}`}
+                    className='inline-flex items-center gap-1 pt-1 font-medium text-gray-900 hover:text-orange-700'
+                  >
+                    Customer account <ChevronRightIcon className='h-4 w-4' />
+                  </Link>
                 )}
-              </dl>
-            ) : (
-              <p className="text-sm text-gray-500 italic">No emergency contact on file</p>
+              </div>
             )}
+            <div className='space-y-2 border-t border-gray-100 pt-3'>
+              <p className='text-xs font-medium uppercase tracking-wide text-gray-500'>Emergency</p>
+              {student.emergencyContactName ? (
+                <>
+                  <div className='text-gray-900'>{student.emergencyContactName}</div>
+                  {student.emergencyContactPhone && (
+                    <a
+                      href={`tel:${student.emergencyContactPhone.replace(/[^\d+]/g, '')}`}
+                      className='flex items-center gap-2 text-orange-700'
+                    >
+                      <PhoneIcon className='h-4 w-4 text-gray-400' /> {student.emergencyContactPhone}
+                    </a>
+                  )}
+                </>
+              ) : (
+                <p className='italic text-gray-500'>No emergency contact on file</p>
+              )}
+            </div>
           </div>
+        </Card>
 
-          {!student.parentContact && !student.emergencyContactName && (
-            <p className="text-sm text-gray-500 italic">No contact information available</p>
-          )}
-        </div>
-
-        {/* Subscriptions */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Subscriptions</h2>
-          {student.igniteSubscriptions.length > 0 ? (
-            <ul className="space-y-3">
-              {student.igniteSubscriptions.map((sub) => (
-                <li key={sub.id} className="border border-gray-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">Ignite Subscription</span>
-                    <span className={clsx('px-2 py-0.5 rounded-full text-xs font-medium', getStatusColor(sub.igniteSubscription.status))}>
-                      {sub.igniteSubscription.status}
-                    </span>
+        <Card title='Ignite'>
+          {student.subscriptions.length === 0 ? (
+            <p className='p-4 text-sm italic text-gray-500'>Not enrolled in Ignite</p>
+          ) : (
+            <ul className='divide-y divide-gray-100'>
+              {student.subscriptions.map(sub => (
+                <li key={sub.id} className='flex items-center gap-3 px-4 py-3'>
+                  <div className='min-w-0 flex-1'>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <span className='text-sm font-semibold text-gray-900'>{sub.sessionLocation}</span>
+                      <span className={clsx('rounded-full px-2 py-0.5 text-xs font-medium', STATUS_COLORS[sub.status])}>
+                        {STATUS_LABELS[sub.status]}
+                      </span>
+                    </div>
+                    <div className='mt-0.5 text-sm text-gray-600'>
+                      {formatSessionTime(sub)}
+                      {sub.weeklyAmount !== undefined && ` · $${sub.weeklyAmount.toFixed(2)}/wk`}
+                    </div>
+                    {sub.status === 'PAUSED' && sub.pauseResumesAt && (
+                      <div className='text-xs text-gray-500'>Paused until {formatSydneyDate(sub.pauseResumesAt)}</div>
+                    )}
+                    {sub.cancelAt && sub.status !== 'CANCELED' && (
+                      <div className='text-xs text-red-700'>Ends {formatSydneyDate(sub.cancelAt)}</div>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {formatCurrency(sub.igniteSubscription.weeklyAmount)}/week
-                  </p>
+                  {isSuper && sub.weeklyAmount !== undefined && (
+                    <button
+                      onClick={() => setBilling(sub as AdminSubscriptionView)}
+                      className='inline-flex h-10 flex-shrink-0 items-center rounded-xl bg-gray-900 px-3.5 text-sm font-medium text-white hover:bg-gray-800'
+                    >
+                      Billing
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
-          ) : (
-            <p className="text-sm text-gray-500 italic">No active subscriptions</p>
           )}
-        </div>
+        </Card>
       </div>
 
-      {/* Purchase History */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Purchase History</h2>
-        </div>
-
-        {student.groupedOrders.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchased</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking Dates</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {student.groupedOrders.map((order) => (
-                  <tr key={`${order.orderId}-${order.bookingDates[0]}`} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDate(order.orderDate)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{order.productName}</div>
-                      <div className="text-sm text-gray-500">{order.productType}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <div className="space-y-1">
-                        {order.bookingDates.map((date) => {
-                          const dateObj = new Date(date)
-                          const calendarDate = dateObj.toISOString().split('T')[0]
-                          return (
-                            <Link
-                              key={date}
-                              href={`/admin/calendar?date=${calendarDate}`}
-                              className="block text-orange-600 hover:text-orange-700 hover:underline"
-                            >
-                              {formatDate(date)}
-                            </Link>
-                          )
-                        })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={clsx('px-2 py-0.5 rounded-full text-xs font-medium', getStatusColor(order.status))}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatCurrency(order.totalPrice)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <Card title='Sessions'>
+        {upcoming.length === 0 ? (
+          <p className='px-4 py-6 text-sm text-gray-500'>Nothing booked ahead.</p>
         ) : (
-          <div className="px-6 py-12 text-center text-gray-500">
-            No purchase history found
+          <ul className='divide-y divide-gray-100'>
+            {(showAllUpcoming ? upcoming : upcomingPreview).map(booking => bookingRow(booking, true))}
+          </ul>
+        )}
+        {upcomingPreview.length < upcoming.length && (
+          <button
+            onClick={() => setShowAllUpcoming(open => !open)}
+            className='w-full border-t border-gray-100 px-4 py-3 text-left text-sm font-medium text-orange-700'
+          >
+            {showAllUpcoming ? 'Show fewer' : `Show all ${upcoming.length} upcoming`}
+          </button>
+        )}
+        {past.length > 0 && (
+          <div className='border-t border-gray-100'>
+            <button onClick={() => setShowPast(open => !open)} className='w-full px-4 py-3 text-left text-sm font-medium text-orange-700'>
+              {showPast ? 'Hide' : 'Show'} past sessions ({past.length})
+            </button>
+            {showPast && <ul className='divide-y divide-gray-100 bg-gray-50/60'>{past.map(booking => bookingRow(booking, false))}</ul>}
           </div>
         )}
-      </div>
+      </Card>
 
-      {/* Bookings */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Bookings</h2>
-        </div>
+      {isSuper && student.groupedOrders && student.groupedOrders.length > 0 && (
+        <Card title='Purchases'>
+          <ul className='divide-y divide-gray-100'>
+            {student.groupedOrders.map(order => (
+              <li key={`${order.orderId}-${order.bookingDates[0]}`} className='flex items-start justify-between gap-3 px-4 py-3 text-sm'>
+                <div className='min-w-0'>
+                  <div className='font-medium text-gray-900'>{order.productName}</div>
+                  <div className='text-gray-500'>
+                    Bought {formatDate(order.orderDate)} · {order.bookingDates.length} day{order.bookingDates.length === 1 ? '' : 's'}
+                  </div>
+                </div>
+                <div className='flex-shrink-0 text-right'>
+                  <div className='font-semibold text-gray-900'>{formatCurrency(order.totalPrice)}</div>
+                  <span
+                    className={clsx(
+                      'rounded-full px-2 py-0.5 text-xs font-medium',
+                      BOOKING_STATUS[order.status] || 'bg-gray-100 text-gray-600'
+                    )}
+                  >
+                    {order.status.toLowerCase()}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
-        {student.bookings.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {student.bookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatDate(booking.startDate)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{booking.product.name}</div>
-                      <div className="text-sm text-gray-500">{booking.product.type}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {booking.location.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={clsx('px-2 py-0.5 rounded-full text-xs font-medium', getStatusColor(booking.status))}>
-                        {booking.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatCurrency(booking.totalPrice)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="px-6 py-12 text-center text-gray-500">
-            No bookings found
-          </div>
-        )}
-      </div>
+      {billing && (
+        <SubscriptionBillingSheet
+          subscription={billing}
+          onClose={() => setBilling(null)}
+          onDone={() => {
+            setBilling(null)
+            load()
+          }}
+        />
+      )}
+      {managing && (
+        <CampBookingSheet
+          booking={managing}
+          onClose={() => setManaging(null)}
+          onDone={() => {
+            setManaging(null)
+            load()
+          }}
+        />
+      )}
     </div>
   )
 }

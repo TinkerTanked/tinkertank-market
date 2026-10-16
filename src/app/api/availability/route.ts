@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getDailyCapacity, getLocationAvailabilityById } from '@/data/locationAvailability'
+import { resolveCampLocation } from '@/lib/campCapacity'
 
 /**
  * GET /api/availability?locationId=manly-library
@@ -29,10 +30,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Look up the matching DB location row by name
-    const dbLocation = await prisma.location.findFirst({
-      where: { name: availability.locationName }
-    })
+    // Resolve the location exactly as checkout's capacity check does, so the
+    // calendar's sold-out days match what checkout will accept.
+    const dbLocation = await resolveCampLocation(prisma, availability.locationName)
     // Database capacity is authoritative and configurable per location. The
     // configured default keeps availability useful before a new location has
     // been seeded.

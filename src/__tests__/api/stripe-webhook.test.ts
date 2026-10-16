@@ -351,6 +351,43 @@ describe('Stripe Webhook Route', () => {
       })
     })
 
+    it('records what was paid after a camp credit and marks the credit used', async () => {
+      const mockOrder = createMockOrder({ totalAmount: 119.99 })
+      const checkoutSession = createCheckoutSession({
+        amount_total: 0,
+        total_details: { amount_discount: 11999, amount_shipping: 0, amount_tax: 0 },
+        discounts: [{ coupon: 'co_credit', promotion_code: 'promo_credit' }]
+      })
+      const webhookEvent = createWebhookEvent('checkout.session.completed', checkoutSession)
+      const tx = {
+        order: { update: vi.fn().mockResolvedValue({ ...mockOrder, status: 'PAID' }) },
+        campCredit: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+        booking: {
+          findFirst: vi.fn().mockResolvedValue(null),
+          count: vi.fn().mockResolvedValue(0),
+          create: vi.fn().mockResolvedValue({ id: 'booking_123' })
+        },
+        location: { findFirst: vi.fn().mockResolvedValue(mockLocation) },
+        $executeRaw: vi.fn().mockResolvedValue(1)
+      }
+
+      ;(mockStripe.webhooks.constructEvent as any).mockReturnValue(webhookEvent)
+      ;(prisma.order.findUnique as any).mockResolvedValue(mockOrder)
+      ;(prisma.$transaction as any).mockImplementation(async (callback: any) => callback(tx))
+      ;(eventService.createEventsFromOrder as any).mockResolvedValue([])
+
+      const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+
+      expect(response.status).toBe(200)
+      expect(tx.order.update).toHaveBeenCalledWith({ where: { id: mockOrder.id }, data: { status: 'PAID', totalAmount: 0 } })
+      expect(tx.campCredit.updateMany).toHaveBeenCalledWith({
+        where: { stripePromotionCodeId: { in: ['promo_credit'] }, redeemedAt: null },
+        data: { redeemedAt: expect.any(Date), redeemedOrderId: mockOrder.id }
+      })
+      expect(tx.booking.create).toHaveBeenCalled()
+      expect(sendMetaPurchase).toHaveBeenCalledWith(expect.objectContaining({ orderId: mockOrder.id, value: 0 }))
+    })
+
     it('fails the webhook for retry instead of marking a paid order fulfilled without a location', async () => {
       const mockOrder = createMockOrder()
       const checkoutSession = createCheckoutSession()

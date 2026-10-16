@@ -17,8 +17,8 @@ export default function QuickActions() {
       color: 'bg-orange-600 hover:bg-orange-700',
     },
     {
-      name: 'View Calendar',
-      href: '/admin/calendar',
+      name: 'View Schedule',
+      href: '/admin/schedule',
       icon: CalendarDaysIcon,
       color: 'bg-blue-600 hover:bg-blue-700',
     },
