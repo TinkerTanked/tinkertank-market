@@ -851,6 +851,63 @@ describe('Stripe Webhook Route', () => {
         create: expect.objectContaining({ status: 'PAUSED' }),
         update: expect.objectContaining({ status: 'PAUSED' })
       }))
+      expect(prisma.booking.createMany).not.toHaveBeenCalled()
+    })
+
+    it('rolls continuing subscribers into the next term when Stripe renews them', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date('2026-12-20T00:00:00.000Z'))
+      try {
+        const igniteSession = IGNITE_SESSIONS.find(session => session.id === 'ignite-balgowlah-wed')!
+        const subscription = {
+          id: 'sub_balgowlah_active',
+          customer: 'cus_balgowlah',
+          status: 'active',
+          pause_collection: null,
+          metadata: {},
+          current_period_start: 1797552000,
+          current_period_end: 1798156800,
+          canceled_at: null,
+          cancel_at_period_end: false,
+          items: { data: [{ quantity: 2, price: { id: igniteSession.stripePriceId } }] }
+        }
+        const webhookEvent = createWebhookEvent('customer.subscription.updated', subscription)
+
+        ;(mockStripe.webhooks.constructEvent as any).mockReturnValue(webhookEvent)
+        ;(mockStripe.subscriptions.retrieve as any).mockResolvedValue(subscription)
+        ;(mockStripe.customers.retrieve as any).mockResolvedValue({ id: 'cus_balgowlah', deleted: false, email: 'parent@example.com' })
+        ;(mockStripe.prices.retrieve as any).mockResolvedValue({
+          id: igniteSession.stripePriceId,
+          unit_amount: 2599,
+          recurring: { interval: 'week' }
+        })
+        ;(prisma.igniteSubscription.upsert as any).mockResolvedValue({
+          id: 'local_balgowlah',
+          status: 'ACTIVE',
+          students: [{ studentId: 'student_a' }, { studentId: 'student_b' }]
+        })
+        ;(prisma.location.findFirst as any).mockResolvedValue({ id: 'location_balgowlah' })
+        ;(prisma.booking.createMany as any).mockResolvedValue({ count: 20 })
+
+        const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+
+        expect(response.status).toBe(200)
+        const { data, skipDuplicates } = (prisma.booking.createMany as any).mock.calls[0][0]
+        expect(skipDuplicates).toBe(true)
+        expect(data).toHaveLength(20)
+        const studentA = data.filter((booking: any) => booking.studentId === 'student_a')
+        expect(studentA).toHaveLength(10)
+        // Term 1 2027 Wednesdays: 3 Feb (AEDT) through 7 Apr (AEST, after DST ends)
+        expect(studentA[0]).toMatchObject({
+          igniteSubscriptionId: 'local_balgowlah',
+          locationId: 'location_balgowlah',
+          startDate: new Date('2027-02-03T01:45:00.000Z'),
+          status: 'CONFIRMED'
+        })
+        expect(studentA[9].startDate).toEqual(new Date('2027-04-07T02:45:00.000Z'))
+      } finally {
+        vi.useRealTimers()
+      }
     })
   })
 

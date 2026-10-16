@@ -6,7 +6,7 @@ import { eventService } from '@/lib/events';
 import { sendBookingConfirmationEmail } from '@/lib/email';
 import { ErrorHandler, ErrorCategory, ErrorSeverity, withErrorHandling } from '@/lib/error-handling';
 import { notificationService } from '@/lib/notifications';
-import { IGNITE_SESSIONS } from '@/config/igniteProducts';
+import { IGNITE_SESSIONS, type IgniteSessionConfig } from '@/config/igniteProducts';
 import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '@/lib/ignite';
 import { assertCampCapacityForLocation, CampCapacityExceededError, lockCampCapacity } from '@/lib/campCapacity';
 import { assertBirthdaySlotAvailable, BirthdaySlotUnavailableError } from '@/lib/birthdayAvailability';
@@ -946,7 +946,7 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         ? JSON.parse(subscription.metadata.studentNames)
         : null;
 
-    await prisma.igniteSubscription.upsert({
+    const localSubscription = await prisma.igniteSubscription.upsert({
       where: { stripeSubscriptionId: subscription.id },
       create: {
         stripeSubscriptionId: subscription.id,
@@ -979,12 +979,58 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
         weeklyAmount,
       },
+      include: { students: { select: { studentId: true } } },
     });
 
     console.log('Subscription synced to database:', subscription.id);
+
+    // Stripe sends an update at every billing period, so continuing
+    // subscribers are rolled into each new term without re-purchasing.
+    if (localSubscription.status === 'ACTIVE' || localSubscription.status === 'TRIALING') {
+      await ensureIgniteTermBookings(localSubscription.id, igniteSession, localSubscription.students.map(s => s.studentId));
+    }
   } catch (error) {
     console.error('Error processing subscription upsert:', error);
     throw error;
+  }
+}
+
+/**
+ * Ensure each linked student has a booking for every remaining occurrence of
+ * the current term (or the next term during school holidays). Idempotent via
+ * the [igniteSubscriptionId, studentId, startDate] unique key.
+ */
+async function ensureIgniteTermBookings(igniteSubscriptionId: string, config: IgniteSessionConfig, studentIds: string[]) {
+  if (studentIds.length === 0) return;
+  const occurrences = getIgniteScheduleFrom(config, new Date())?.occurrences ?? [];
+  if (occurrences.length === 0) return;
+
+  const location = await prisma.location.findFirst({
+    where: { name: { equals: config.location, mode: 'insensitive' }, isActive: true },
+  });
+  if (!location) {
+    console.error(`Ignite term rollover skipped: location not found (${config.location})`);
+    return;
+  }
+
+  const created = await prisma.booking.createMany({
+    data: studentIds.flatMap(studentId =>
+      occurrences.map(occ => ({
+        studentId,
+        productId: igniteProductId(config.id),
+        locationId: location.id,
+        igniteSubscriptionId,
+        startDate: occ.start,
+        endDate: occ.end,
+        status: 'CONFIRMED' as const,
+        totalPrice: 0,
+        notes: `Ignite: ${config.name} | Term rollover`,
+      }))
+    ),
+    skipDuplicates: true,
+  });
+  if (created.count > 0) {
+    console.log(`Ignite term rollover created ${created.count} bookings for subscription ${igniteSubscriptionId}`);
   }
 }
 

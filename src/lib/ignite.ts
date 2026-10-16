@@ -1,6 +1,6 @@
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz'
 import { IGNITE_SESSIONS, type IgniteSessionConfig } from '@/config/igniteProducts'
-import { DAY_NAME_TO_NUMBER, getSubscriptionStartTerm, SCHOOL_TERMS_2026, type SchoolTerm } from '@/config/schoolTerms'
+import { DAY_NAME_TO_NUMBER, getSubscriptionStartTerm, SCHOOL_TERMS, type SchoolTerm } from '@/config/schoolTerms'
 
 export const SYDNEY_TZ = 'Australia/Sydney'
 
@@ -94,7 +94,7 @@ export function getIgniteScheduleFrom(
   from: Date = new Date()
 ): { term: SchoolTerm; occurrences: IgniteOccurrence[] } | null {
   const term = session.firstSessionDate
-    ? SCHOOL_TERMS_2026.find(candidate => {
+    ? SCHOOL_TERMS.find(candidate => {
         const start = candidate.startDate.toISOString().slice(0, 10)
         const end = candidate.endDate.toISOString().slice(0, 10)
         return session.firstSessionDate! >= start && session.firstSessionDate! <= end
