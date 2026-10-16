@@ -273,6 +273,8 @@ model IgniteSubscription {
   currentPeriodEnd     DateTime?
   canceledAt           DateTime?
   cancelAtPeriodEnd    Boolean                     @default(false)
+  cancelAt             DateTime?
+  pauseResumesAt       DateTime?
   weeklyAmount         Decimal                     @db.Money
   createdAt            DateTime                    @default(now())
   updatedAt            DateTime                    @updatedAt

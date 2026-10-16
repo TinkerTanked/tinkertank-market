@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       return {
         ...sub,
         weeklyAmount: Number(sub.weeklyAmount),
+        sessionId: sub.igniteSessionId,
         studentNames: sub.studentNames as Array<{ firstName: string; lastName: string; age?: number; grade?: string; allergies?: string }> | null,
         sessionName: igniteSession?.name || 'Unknown session',
         sessionLocation: igniteSession?.location || 'Unknown location',

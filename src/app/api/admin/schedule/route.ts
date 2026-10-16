@@ -14,6 +14,8 @@ interface ScheduleItem {
   parentName: string;
   parentEmail: string;
   parentPhone: string | null;
+  allergies: string | null;
+  medicalNotes: string | null;
   status: string;
   locationId: string;
   locationName: string;
@@ -216,6 +218,8 @@ async function fetchBookingsForRange(rangeStart: Date, rangeEnd: Date): Promise<
         ? (booking.igniteSubscription?.customerEmail || '')
         : (parentInfo?.email || ''),
       parentPhone: emergencyPhone || null,
+      allergies: booking.student.allergies,
+      medicalNotes: booking.student.medicalNotes,
       status: booking.status,
       locationId: booking.locationId,
       locationName: booking.location.name,

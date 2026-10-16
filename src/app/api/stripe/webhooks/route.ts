@@ -11,24 +11,7 @@ import { getIgniteScheduleFrom, getIgniteSessionConfig, igniteProductId } from '
 import { assertCampCapacityForLocation, CampCapacityExceededError, lockCampCapacity } from '@/lib/campCapacity';
 import { assertBirthdaySlotAvailable, BirthdaySlotUnavailableError } from '@/lib/birthdayAvailability';
 import { sendMetaPurchase } from '@/lib/metaConversions';
-
-const IGNITE_SUBSCRIPTION_STATUS: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED' | 'PAST_DUE' | 'TRIALING'> = {
-  active: 'ACTIVE',
-  paused: 'PAUSED',
-  canceled: 'CANCELED',
-  past_due: 'PAST_DUE',
-  trialing: 'TRIALING',
-  incomplete: 'PAST_DUE',
-  incomplete_expired: 'CANCELED',
-  unpaid: 'PAST_DUE',
-};
-
-function igniteSubscriptionStatus(subscription: Stripe.Subscription) {
-  // Stripe keeps status=active while invoice collection is paused. Mirror the
-  // collection state so paused Pittwater enrolments are not shown as billable.
-  if (subscription.pause_collection) return 'PAUSED' as const
-  return IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE'
-}
+import { igniteSubscriptionLifecycle, igniteSubscriptionStatus } from '@/lib/igniteSubscriptionActions';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -957,11 +940,7 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         igniteSessionId: igniteSession.id,
         studentNames: legacyStudentNames,
         quantity,
-        status: igniteSubscriptionStatus(subscription),
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        ...igniteSubscriptionLifecycle(subscription),
         weeklyAmount,
       },
       // Lifecycle only — never overwrite studentNames (owned by
@@ -972,11 +951,7 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
         customerName: customer.name || undefined,
         igniteSessionId: igniteSession.id,
         quantity,
-        status: igniteSubscriptionStatus(subscription),
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        ...igniteSubscriptionLifecycle(subscription),
         weeklyAmount,
       },
       include: { students: { select: { studentId: true } } },

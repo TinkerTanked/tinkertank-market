@@ -186,6 +186,11 @@ spec:
               value: "${ADMIN_USERNAME}"
             - name: ADMIN_PASSWORD
               value: "${ADMIN_PASSWORD}"
+            # Optional: unlocks Stripe billing actions in the admin. Unset = disabled.
+            - name: SUPER_ADMIN_USERNAME
+              value: "${SUPER_ADMIN_USERNAME}"
+            - name: SUPER_ADMIN_PASSWORD
+              value: "${SUPER_ADMIN_PASSWORD}"
             - name: NEXT_PUBLIC_STRIPE_MODE
               value: "production"
             # AWS SES — outbound email (booking confirmations etc.)
