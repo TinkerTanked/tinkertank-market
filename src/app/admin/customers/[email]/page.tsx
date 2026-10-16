@@ -186,8 +186,8 @@ export default function CustomerPage() {
         <Section title='Children'>
           <ul className='divide-y divide-gray-100'>
             {data.students.map(student => (
-              <li key={student.id}>
-                <Link href={`/admin/students/${student.id}`} className='block px-4 py-3 hover:bg-gray-50'>
+              <li key={student.id} className='flex items-start'>
+                <Link href={`/admin/students/${student.id}`} className='block min-w-0 flex-1 px-4 py-3 hover:bg-gray-50'>
                   <div className='text-base font-semibold text-gray-900'>{student.name}</div>
                   <div className='text-sm text-gray-500'>
                     {age(student.birthdate)} years{student.school ? ` · ${student.school}` : ''}
@@ -200,6 +200,12 @@ export default function CustomerPage() {
                         .join(' · ')}
                     </div>
                   )}
+                </Link>
+                <Link
+                  href={`/admin/bookings/new?studentId=${student.id}`}
+                  className='m-3 flex-shrink-0 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                >
+                  Add booking
                 </Link>
               </li>
             ))}
