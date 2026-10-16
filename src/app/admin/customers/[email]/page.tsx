@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { clsx } from 'clsx'
-import { ArrowLeftIcon, EnvelopeIcon, ExclamationTriangleIcon, PhoneIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, EnvelopeIcon, ExclamationTriangleIcon, PencilIcon, PhoneIcon } from '@heroicons/react/24/outline'
 import type { AdminSubscriptionView } from '@/lib/adminCustomers'
 import SubscriptionBillingSheet, {
   formatDate,
@@ -31,7 +31,15 @@ interface CustomerBooking {
 interface CustomerDetail {
   customer: { email: string; name: string; phone: string | null; emergencyContactName: string | null; emergencyContactPhone: string | null }
   totals: { orders: number; spent: number }
-  students: { id: string; name: string; birthdate: string; school: string | null; allergies: string | null; medicalNotes: string | null }[]
+  students: {
+    id: string
+    name: string
+    birthdate: string
+    school: string | null
+    allergies: string | null
+    medicalNotes: string | null
+    emergencyContactPhone: string | null
+  }[]
   subscriptions: AdminSubscriptionView[]
   bookings: CustomerBooking[]
   credits: { code: string; amount: number; expiresAt: string; redeemedAt: string | null; createdAt: string }[]
@@ -83,6 +91,9 @@ export default function CustomerPage() {
   const [billing, setBilling] = useState<AdminSubscriptionView | null>(null)
   const [managing, setManaging] = useState<ManagedCampDay | null>(null)
   const [showPast, setShowPast] = useState(false)
+  const [phoneDraft, setPhoneDraft] = useState<string | null>(null)
+  const [phoneError, setPhoneError] = useState('')
+  const [savingPhone, setSavingPhone] = useState(false)
 
   const load = useCallback(() => {
     fetch(`/api/admin/customers/${encodeURIComponent(email)}`)
@@ -95,6 +106,27 @@ export default function CustomerPage() {
   }, [email])
 
   useEffect(load, [load])
+
+  async function savePhone(event: React.FormEvent) {
+    event.preventDefault()
+    setSavingPhone(true)
+    setPhoneError('')
+    try {
+      const response = await fetch(`/api/admin/customers/${encodeURIComponent(email)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneDraft }),
+      })
+      const body = await response.json()
+      if (!response.ok) throw new Error(body.error || 'Failed to save')
+      setPhoneDraft(null)
+      load()
+    } catch (err) {
+      setPhoneError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSavingPhone(false)
+    }
+  }
 
   if (error) {
     return <div className='rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-800'>{error}</div>
@@ -164,14 +196,73 @@ export default function CustomerPage() {
             {data.totals.spent.toFixed(2)} across {data.totals.orders} order{data.totals.orders === 1 ? '' : 's'}
           </p>
         </div>
+        {phoneDraft !== null ? (
+          <form onSubmit={savePhone} className='rounded-xl border border-gray-200 bg-white p-3'>
+            <label htmlFor='customer-phone' className='mb-1 block text-sm font-medium text-gray-700'>
+              Phone
+            </label>
+            <div className='flex gap-2'>
+              <input
+                id='customer-phone'
+                type='tel'
+                inputMode='tel'
+                autoComplete='off'
+                autoFocus
+                value={phoneDraft}
+                onChange={event => setPhoneDraft(event.target.value)}
+                placeholder='0400 000 000'
+                className='h-11 min-w-0 flex-1 rounded-xl border border-gray-300 px-3 text-base focus:border-orange-500 focus:ring-orange-500 sm:text-sm'
+              />
+              <button
+                type='submit'
+                disabled={savingPhone || !phoneDraft.trim()}
+                className='h-11 rounded-xl bg-orange-600 px-4 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-40'
+              >
+                {savingPhone ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type='button'
+                onClick={() => {
+                  setPhoneDraft(null)
+                  setPhoneError('')
+                }}
+                className='h-11 rounded-xl border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50'
+              >
+                Cancel
+              </button>
+            </div>
+            {phoneError ? (
+              <p className='mt-1.5 text-sm text-red-700'>{phoneError}</p>
+            ) : (
+              <p className='mt-1.5 text-xs text-gray-500'>Also used as the emergency contact for children who don&apos;t have a different one.</p>
+            )}
+          </form>
+        ) : null}
         <div className='flex flex-wrap gap-2'>
-          {data.customer.phone && (
-            <a
-              href={`tel:${data.customer.phone.replace(/[^\d+]/g, '')}`}
-              className='inline-flex h-11 items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 text-sm font-medium text-gray-800'
-            >
-              <PhoneIcon className='h-4 w-4' /> {data.customer.phone}
-            </a>
+          {data.customer.phone ? (
+            <div className='inline-flex h-11 items-stretch overflow-hidden rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-800'>
+              <a href={`tel:${data.customer.phone.replace(/[^\d+]/g, '')}`} className='inline-flex items-center gap-2 px-4 hover:bg-gray-50'>
+                <PhoneIcon className='h-4 w-4' /> {data.customer.phone}
+              </a>
+              <button
+                type='button'
+                onClick={() => setPhoneDraft(data.customer.phone || '')}
+                className='border-l border-gray-200 px-3 text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                aria-label='Edit phone'
+              >
+                <PencilIcon className='h-4 w-4' />
+              </button>
+            </div>
+          ) : (
+            phoneDraft === null && (
+              <button
+                type='button'
+                onClick={() => setPhoneDraft('')}
+                className='inline-flex h-11 items-center gap-2 rounded-xl border border-dashed border-amber-400 bg-amber-50 px-4 text-sm font-medium text-amber-900 hover:bg-amber-100'
+              >
+                <PhoneIcon className='h-4 w-4' /> Add phone
+              </button>
+            )
           )}
           <a
             href={`mailto:${data.customer.email}`}
