@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SCHOOL_TERMS } from '@/config/schoolTerms'
-import { campHolidayWindow, orderRevenueByStream, sydneyWeekStart } from '@/lib/adminAnalytics'
+import { campHolidayWindow } from '@/lib/adminAnalytics'
 import { createManualBooking } from '@/lib/adminManualBooking'
+import { metaTotals } from '@/lib/metaAds'
 
 describe('campHolidayWindow', () => {
   it('sells the next holidays during term, starting the day after term ends', () => {
@@ -14,36 +15,6 @@ describe('campHolidayWindow', () => {
 
   it('still shows the holidays on their last day', () => {
     expect(campHolidayWindow(SCHOOL_TERMS, '2026-10-12')?.name).toBe('Spring holidays')
-  })
-})
-
-describe('sydneyWeekStart', () => {
-  it('uses the Sydney calendar, not UTC, across the daylight saving change', () => {
-    // Sun 4 Oct 2026, 11:30pm AEDT (daylight saving began that morning).
-    expect(sydneyWeekStart(new Date('2026-10-04T12:30:00Z'))).toBe('2026-09-28')
-    // Mon 5 Oct 2026, 12:30am AEDT: still Sunday in UTC and at a fixed +10 offset.
-    expect(sydneyWeekStart(new Date('2026-10-04T13:30:00Z'))).toBe('2026-10-05')
-  })
-})
-
-describe('orderRevenueByStream', () => {
-  it('spreads a discount across streams in proportion to line prices', () => {
-    const revenue = orderRevenueByStream({
-      totalAmount: 180,
-      paidOutsideStripe: false,
-      items: [
-        { price: 120, productType: 'CAMP' },
-        { price: 80, productType: 'BIRTHDAY' }
-      ]
-    })
-    expect(revenue.camps).toBeCloseTo(108)
-    expect(revenue.parties).toBeCloseTo(72)
-  })
-
-  it('only counts Ignite lines when the order was paid outside Stripe subscriptions', () => {
-    const items = [{ price: 40, productType: 'IGNITE' }]
-    expect(orderRevenueByStream({ totalAmount: 40, paidOutsideStripe: false, items }).ignite).toBe(0)
-    expect(orderRevenueByStream({ totalAmount: 40, paidOutsideStripe: true, items }).ignite).toBe(40)
   })
 })
 
@@ -120,5 +91,25 @@ describe('createManualBooking', () => {
     expect(bookings.length).toBeGreaterThan(1)
     expect(bookings.every((booking: { rosterOverride: boolean }) => booking.rosterOverride)).toBe(true)
     expect(bookings.reduce((sum: number, booking: { totalPrice: number }) => sum + booking.totalPrice, 0)).toBeCloseTo(300, 2)
+  })
+})
+
+describe('metaTotals', () => {
+  it('counts each purchase once although Meta reports it under several action types', () => {
+    const totals = metaTotals({
+      spend: '456.21',
+      inline_link_clicks: '127',
+      actions: [
+        { action_type: 'offsite_conversion.fb_pixel_purchase', value: '6' },
+        { action_type: 'onsite_web_purchase', value: '6' },
+        { action_type: 'omni_purchase', value: '6' },
+        { action_type: 'purchase', value: '6' }
+      ],
+      action_values: [
+        { action_type: 'offsite_conversion.fb_pixel_purchase', value: '828.94' },
+        { action_type: 'omni_purchase', value: '828.94' }
+      ]
+    })
+    expect(totals).toEqual({ spend: 456.21, impressions: 0, linkClicks: 127, purchases: 6, purchaseValue: 828.94 })
   })
 })

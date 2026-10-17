@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { clsx } from 'clsx'
 import { ArrowDownRightIcon, ArrowUpRightIcon } from '@heroicons/react/24/outline'
+import type { MetaAdsSummary, MetaAdsTotals } from '@/lib/metaAds'
 
 interface Analytics {
   generatedAt: string
@@ -17,8 +18,6 @@ interface Analytics {
     parties: { last30: number; prev30: number }
     igniteNew: { last30: number; prev30: number }
   }
-  revenueByWeek: { weekStart: string; camps: number; parties: number; ignite: number }[]
-  igniteRevenueFromStripe: boolean
   ignite: {
     active: number
     weeklyRecurring: number
@@ -29,14 +28,9 @@ interface Analytics {
     sessions: { id: string; location: string; days: string; enrolled: number; capacity: number }[]
   }
   parties: { weeks: { weekStart: string; booked: number; slots: number }[]; booked: number; slots: number }
-  families: { new: number; returning: number }
 }
 
-const STREAMS = [
-  { key: 'camps', label: 'Camps', color: 'bg-orange-500' },
-  { key: 'parties', label: 'Parties', color: 'bg-pink-500' },
-  { key: 'ignite', label: 'Ignite', color: 'bg-emerald-500' }
-] as const
+type MetaAdsResponse = ({ configured: true } & MetaAdsSummary) | { configured: false } | { configured: true; error: string }
 
 const dollars = (value: number) => `$${Math.round(value).toLocaleString('en-AU')}`
 const shortDate = (key: string) =>
@@ -80,6 +74,93 @@ function fillColor(booked: number, capacity: number) {
   return 'bg-gray-50 text-gray-500'
 }
 
+const money = (value: number) => `$${value.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+const per = (spend: number, count: number) => (count > 0 ? money(spend / count) : '–')
+
+function MetaStat({ value, label, detail }: { value: string; label: string; detail?: string }) {
+  return (
+    <div className='rounded-lg bg-gray-50 px-3 py-2'>
+      <div className='text-lg font-bold text-gray-900'>{value}</div>
+      <div className='text-xs text-gray-600'>{label}</div>
+      {detail && <div className='text-[11px] text-gray-500'>{detail}</div>}
+    </div>
+  )
+}
+
+function MetaAdsCard() {
+  const [meta, setMeta] = useState<MetaAdsResponse | null>(null)
+
+  useEffect(() => {
+    fetch('/api/admin/analytics/meta')
+      .then(response => response.json())
+      .then(setMeta)
+      .catch(() => setMeta({ configured: true, error: 'Could not load results from Meta right now.' }))
+  }, [])
+
+  return (
+    <Card title='Meta ads, last 30 days' subtitle='Spend and purchases as reported by Meta. Compare with camp days sold above.'>
+      {!meta ? (
+        <div className='h-24 animate-pulse rounded-lg bg-gray-100' />
+      ) : !meta.configured ? (
+        <p className='text-sm text-gray-600'>Meta isn&apos;t connected yet, so ad results can&apos;t be shown.</p>
+      ) : 'error' in meta ? (
+        <p className='rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900'>{meta.error}</p>
+      ) : (
+        <MetaAdsResults meta={meta} />
+      )}
+    </Card>
+  )
+}
+
+function MetaAdsResults({ meta }: { meta: MetaAdsSummary }) {
+  const total: MetaAdsTotals = meta.last30
+  return (
+    <div className='space-y-4'>
+      <div className='grid grid-cols-2 gap-2 lg:grid-cols-4'>
+        <MetaStat value={money(total.spend)} label='Spent' detail={`${total.impressions.toLocaleString('en-AU')} impressions`} />
+        <MetaStat
+          value={total.linkClicks.toLocaleString('en-AU')}
+          label='Link clicks'
+          detail={`${per(total.spend, total.linkClicks)} each`}
+        />
+        <MetaStat value={String(total.purchases)} label='Purchases' detail={`${per(total.spend, total.purchases)} each`} />
+        <MetaStat
+          value={money(total.purchaseValue)}
+          label='Purchase value'
+          detail={total.spend > 0 ? `$${(total.purchaseValue / total.spend).toFixed(2)} back per $1` : undefined}
+        />
+      </div>
+      <p className='text-sm text-gray-600'>
+        Last 7 days: {money(meta.last7.spend)} spent · {meta.last7.purchases} {meta.last7.purchases === 1 ? 'purchase' : 'purchases'}
+      </p>
+      {meta.campaigns.length > 0 && (
+        <ul className='divide-y divide-gray-100 rounded-lg border border-gray-100'>
+          {meta.campaigns.map(campaign => (
+            <li key={campaign.id} className='flex items-center gap-3 px-3 py-2.5 text-sm'>
+              <div className='min-w-0 flex-1'>
+                <div className='font-medium leading-snug text-gray-900'>{campaign.name}</div>
+                <div className='text-xs text-gray-500'>
+                  {money(campaign.spend)} · {campaign.linkClicks} clicks · {campaign.purchases}{' '}
+                  {campaign.purchases === 1 ? 'purchase' : 'purchases'}
+                  {campaign.purchases > 0 && ` · ${per(campaign.spend, campaign.purchases)} each`}
+                </div>
+              </div>
+              <span
+                className={clsx(
+                  'flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
+                  campaign.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                )}
+              >
+                {campaign.status === 'ACTIVE' ? 'Running' : campaign.status === 'PAUSED' ? 'Paused' : 'Ended'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 export default function SalesPage() {
   const [data, setData] = useState<Analytics | null>(null)
   const [error, setError] = useState('')
@@ -103,9 +184,6 @@ export default function SalesPage() {
     )
   }
 
-  const maxWeek = Math.max(1, ...data.revenueByWeek.map(week => week.camps + week.parties + week.ignite))
-  const lastFour = data.revenueByWeek.slice(-4)
-  const families = data.families.new + data.families.returning
   const maxPartySlots = Math.max(1, ...data.parties.weeks.map(week => week.slots))
 
   return (
@@ -116,28 +194,6 @@ export default function SalesPage() {
           Updated{' '}
           {new Date(data.generatedAt).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', timeZone: 'Australia/Sydney' })}
         </p>
-      </div>
-
-      <div className='grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4'>
-        <Pace label='Camp days sold, last 7 days' value={data.pace.campDays.last7} previous={data.pace.campDays.prev7} period='the week' />
-        <Pace
-          label='Camp days sold, last 30 days'
-          value={data.pace.campDays.last30}
-          previous={data.pace.campDays.prev30}
-          period='the 30 days'
-        />
-        <Pace
-          label='New Ignite, last 30 days'
-          value={data.pace.igniteNew.last30}
-          previous={data.pace.igniteNew.prev30}
-          period='the 30 days'
-        />
-        <Pace
-          label='Parties booked, last 30 days'
-          value={data.pace.parties.last30}
-          previous={data.pace.parties.prev30}
-          period='the 30 days'
-        />
       </div>
 
       {data.campFill && (
@@ -194,53 +250,29 @@ export default function SalesPage() {
         </Card>
       )}
 
-      <Card
-        title='Revenue by week'
-        subtitle={
-          data.igniteRevenueFromStripe
-            ? 'Paid camps and parties, invoiced bookings, and Ignite charges from Stripe.'
-            : 'Ignite charges could not be loaded from Stripe, so Ignite only includes invoiced bookings.'
-        }
-      >
-        <div className='flex h-40 items-end gap-1.5'>
-          {data.revenueByWeek.map(week => {
-            const total = week.camps + week.parties + week.ignite
-            return (
-              <div
-                key={week.weekStart}
-                className='flex h-full flex-1 flex-col justify-end'
-                title={`Week of ${shortDate(week.weekStart)}: ${dollars(total)}`}
-              >
-                <div className='flex flex-col-reverse overflow-hidden rounded-t' style={{ height: `${(total / maxWeek) * 100}%` }}>
-                  {STREAMS.map(stream => (
-                    <div key={stream.key} className={stream.color} style={{ height: `${total ? (week[stream.key] / total) * 100 : 0}%` }} />
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-        <div className='mt-1 flex gap-1.5 text-[10px] text-gray-400'>
-          {data.revenueByWeek.map((week, index) => (
-            <div key={week.weekStart} className='flex-1 text-center'>
-              {index % 3 === 0 ? shortDate(week.weekStart) : ''}
-            </div>
-          ))}
-        </div>
-        <div className='mt-4 grid grid-cols-3 gap-2'>
-          {STREAMS.map(stream => (
-            <div key={stream.key} className='rounded-lg bg-gray-50 px-3 py-2'>
-              <div className='flex items-center gap-1.5 text-xs text-gray-600'>
-                <span className={clsx('h-2.5 w-2.5 rounded-sm', stream.color)} /> {stream.label}
-              </div>
-              <div className='text-base font-semibold text-gray-900'>
-                {dollars(lastFour.reduce((sum, week) => sum + week[stream.key], 0))}
-              </div>
-              <div className='text-[11px] text-gray-500'>last 4 weeks</div>
-            </div>
-          ))}
-        </div>
-      </Card>
+      <div className='grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4'>
+        <Pace label='Camp days sold, last 7 days' value={data.pace.campDays.last7} previous={data.pace.campDays.prev7} period='the week' />
+        <Pace
+          label='Camp days sold, last 30 days'
+          value={data.pace.campDays.last30}
+          previous={data.pace.campDays.prev30}
+          period='the 30 days'
+        />
+        <Pace
+          label='New Ignite, last 30 days'
+          value={data.pace.igniteNew.last30}
+          previous={data.pace.igniteNew.prev30}
+          period='the 30 days'
+        />
+        <Pace
+          label='Parties booked, last 30 days'
+          value={data.pace.parties.last30}
+          previous={data.pace.parties.prev30}
+          period='the 30 days'
+        />
+      </div>
+
+      <MetaAdsCard />
 
       <div className='grid gap-4 lg:grid-cols-2 lg:gap-6'>
         <Card title='Ignite' subtitle='Sessions with the most spare places first.'>
@@ -284,51 +316,32 @@ export default function SalesPage() {
           </ul>
         </Card>
 
-        <div className='space-y-4 lg:space-y-6'>
-          <Card title='Parties, next 8 weeks' subtitle='Friday and Saturday, three slots a day.'>
-            <p className='mb-3 text-sm text-gray-700'>
-              <span className='text-lg font-bold text-gray-900'>{data.parties.booked}</span> of {data.parties.slots} slots booked
-            </p>
-            <ul className='space-y-2'>
-              {data.parties.weeks.map(week => (
-                <li key={week.weekStart} className='flex items-center gap-3 text-sm'>
-                  <span className='w-16 flex-shrink-0 text-gray-600'>{shortDate(week.weekStart)}</span>
-                  <div className='flex flex-1 gap-1'>
-                    {Array.from({ length: maxPartySlots }, (_, index) => (
-                      <span
-                        key={index}
-                        className={clsx(
-                          'h-3 flex-1 rounded-sm',
-                          index < week.booked ? 'bg-pink-500' : index < week.slots ? 'bg-gray-100' : 'invisible'
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <span className='w-10 flex-shrink-0 text-right text-gray-600'>
-                    {week.booked}/{week.slots}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card title='Families, last 90 days' subtitle='Who bought camps or parties, or was invoiced.'>
-            <div className='flex items-baseline gap-6'>
-              <div>
-                <div className='text-2xl font-bold text-gray-900'>{data.families.new}</div>
-                <div className='text-sm text-gray-600'>new</div>
-              </div>
-              <div>
-                <div className='text-2xl font-bold text-gray-900'>{data.families.returning}</div>
-                <div className='text-sm text-gray-600'>returning</div>
-              </div>
-              <div className='ml-auto text-right'>
-                <div className='text-2xl font-bold text-gray-900'>{percent(data.families.returning, families)}%</div>
-                <div className='text-sm text-gray-600'>came back</div>
-              </div>
-            </div>
-          </Card>
-        </div>
+        <Card title='Parties, next 8 weeks' subtitle='Friday and Saturday, three slots a day.'>
+          <p className='mb-3 text-sm text-gray-700'>
+            <span className='text-lg font-bold text-gray-900'>{data.parties.booked}</span> of {data.parties.slots} slots booked
+          </p>
+          <ul className='space-y-2'>
+            {data.parties.weeks.map(week => (
+              <li key={week.weekStart} className='flex items-center gap-3 text-sm'>
+                <span className='w-16 flex-shrink-0 text-gray-600'>{shortDate(week.weekStart)}</span>
+                <div className='flex flex-1 gap-1'>
+                  {Array.from({ length: maxPartySlots }, (_, index) => (
+                    <span
+                      key={index}
+                      className={clsx(
+                        'h-3 flex-1 rounded-sm',
+                        index < week.booked ? 'bg-pink-500' : index < week.slots ? 'bg-gray-100' : 'invisible'
+                      )}
+                    />
+                  ))}
+                </div>
+                <span className='w-10 flex-shrink-0 text-right text-gray-600'>
+                  {week.booked}/{week.slots}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
       </div>
     </div>
   )
