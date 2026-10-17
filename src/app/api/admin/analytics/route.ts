@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { fromZonedTime } from 'date-fns-tz'
 import { prisma } from '@/lib/prisma'
 import { SCHOOL_TERMS } from '@/config/schoolTerms'
 import { IGNITE_SESSIONS } from '@/config/igniteProducts'
@@ -8,47 +6,10 @@ import { isClosureDate } from '@/data/closureDates'
 import { isDateKeyAvailableForLocation, LOCATION_AVAILABILITY } from '@/data/locationAvailability'
 import { resolveCampLocation } from '@/lib/campCapacity'
 import { igniteDaysLabel, igniteProductId } from '@/lib/ignite'
-import {
-  addDaysToKey,
-  campHolidayWindow,
-  orderRevenueByStream,
-  sydneyDateKey,
-  sydneyWeekStart,
-  weekdayOfKey,
-  type RevenueStream
-} from '@/lib/adminAnalytics'
+import { addDaysToKey, campHolidayWindow, sydneyDateKey, weekdayOfKey } from '@/lib/adminAnalytics'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-02-24.acacia' })
 const DAY_MS = 24 * 60 * 60 * 1000
-const WEEKS = 12
 const PARTY_SLOTS_PER_DAY = 3
-
-// Stripe invoices are the only record of weekly Ignite charges. Paging through
-// twelve weeks of them is slow, so keep the result for a few minutes.
-let igniteInvoiceCache: { key: string; at: number; byWeek: Record<string, number> } | null = null
-
-async function igniteRevenueByWeek(since: Date): Promise<Record<string, number> | null> {
-  const key = since.toISOString()
-  if (igniteInvoiceCache?.key === key && Date.now() - igniteInvoiceCache.at < 10 * 60 * 1000) return igniteInvoiceCache.byWeek
-  try {
-    const byWeek: Record<string, number> = {}
-    for await (const invoice of stripe.invoices.list({
-      status: 'paid',
-      created: { gte: Math.floor(since.getTime() / 1000) },
-      limit: 100
-    })) {
-      if (!invoice.subscription || !invoice.amount_paid) continue
-      const paidAt = new Date((invoice.status_transitions?.paid_at ?? invoice.created) * 1000)
-      const week = sydneyWeekStart(paidAt)
-      byWeek[week] = (byWeek[week] ?? 0) + invoice.amount_paid / 100
-    }
-    igniteInvoiceCache = { key, at: Date.now(), byWeek }
-    return byWeek
-  } catch (error) {
-    console.error('Analytics: could not load Stripe invoices', error)
-    return null
-  }
-}
 
 const countWhere = (dates: Date[], from: Date, to: Date) => dates.filter(date => date >= from && date < to).length
 
@@ -57,8 +18,6 @@ export async function GET() {
     const now = new Date()
     const today = sydneyDateKey(now)
     const ago = (days: number) => new Date(now.getTime() - days * DAY_MS)
-    const firstWeek = addDaysToKey(sydneyWeekStart(now), -7 * (WEEKS - 1))
-    const revenueSince = fromZonedTime(`${firstWeek}T00:00:00`, 'Australia/Sydney')
 
     // ── Camp fill for the coming school holidays ────────────────────────────
     const holiday = campHolidayWindow(SCHOOL_TERMS, today)
@@ -105,16 +64,10 @@ export async function GET() {
         )
       : []
 
-    // ── Sales pace, revenue and families from paid orders ───────────────────
+    // ── Sales pace from paid orders ─────────────────────────────────────────
     const paidOrders = await prisma.order.findMany({
-      where: { status: 'PAID', createdAt: { gte: new Date(Math.min(ago(90).getTime(), revenueSince.getTime())) } },
-      select: {
-        customerEmail: true,
-        totalAmount: true,
-        createdAt: true,
-        stripePaymentIntentId: true,
-        orderItems: { select: { price: true, product: { select: { type: true } } } }
-      }
+      where: { status: 'PAID', createdAt: { gte: ago(60) } },
+      select: { createdAt: true, orderItems: { select: { product: { select: { type: true } } } } }
     })
 
     const campSales: Date[] = []
@@ -126,44 +79,7 @@ export async function GET() {
       }
     }
 
-    const weekKeys = Array.from({ length: WEEKS }, (_, index) => addDaysToKey(firstWeek, index * 7))
-    const revenue = new Map(
-      weekKeys.map(week => [
-        week,
-        { weekStart: week, camps: 0, parties: 0, ignite: 0 } as Record<RevenueStream, number> & { weekStart: string }
-      ])
-    )
-    for (const order of paidOrders) {
-      const week = revenue.get(sydneyWeekStart(order.createdAt))
-      if (!week) continue
-      const split = orderRevenueByStream({
-        totalAmount: Number(order.totalAmount),
-        paidOutsideStripe: !order.stripePaymentIntentId,
-        items: order.orderItems.map(item => ({ price: Number(item.price), productType: item.product.type }))
-      })
-      week.camps += split.camps
-      week.parties += split.parties
-      week.ignite += split.ignite
-    }
-    const stripeIgnite = await igniteRevenueByWeek(revenueSince)
-    if (stripeIgnite) for (const [week, amount] of Object.entries(stripeIgnite)) if (revenue.has(week)) revenue.get(week)!.ignite += amount
     const round = (value: number) => Math.round(value * 100) / 100
-    const revenueByWeek = [...revenue.values()].map(week => ({
-      weekStart: week.weekStart,
-      camps: round(week.camps),
-      parties: round(week.parties),
-      ignite: round(week.ignite)
-    }))
-
-    const recentEmails = new Set(
-      paidOrders.filter(order => order.createdAt >= ago(90)).map(order => order.customerEmail.trim().toLowerCase())
-    )
-    const earlierBuyers = await prisma.order.findMany({
-      where: { status: 'PAID', createdAt: { lt: ago(90) }, customerEmail: { in: [...recentEmails], mode: 'insensitive' } },
-      select: { customerEmail: true },
-      distinct: ['customerEmail']
-    })
-    const returning = new Set(earlierBuyers.map(order => order.customerEmail.trim().toLowerCase()))
 
     // ── Ignite ──────────────────────────────────────────────────────────────
     const subscriptions = await prisma.igniteSubscription.findMany({
@@ -253,8 +169,6 @@ export async function GET() {
           )
         }
       },
-      revenueByWeek,
-      igniteRevenueFromStripe: !!stripeIgnite,
       ignite: {
         active: running.length,
         weeklyRecurring: round(running.reduce((sum, sub) => sum + Number(sub.weeklyAmount), 0)),
@@ -269,8 +183,7 @@ export async function GET() {
         manualStudents: new Set(manualRoster.map(booking => booking.studentId)).size,
         sessions
       },
-      parties: { weeks: [...partyWeeks.values()], booked: parties.length, slots: partyDays.length * PARTY_SLOTS_PER_DAY },
-      families: { new: recentEmails.size - returning.size, returning: returning.size }
+      parties: { weeks: [...partyWeeks.values()], booked: parties.length, slots: partyDays.length * PARTY_SLOTS_PER_DAY }
     })
   } catch (error) {
     console.error('Analytics error:', error)
