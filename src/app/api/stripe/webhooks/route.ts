@@ -926,7 +926,16 @@ async function handleSubscriptionUpsert(subscription: Stripe.Subscription) {
     // admin revenue report sums this field.
     const weeklyAmount = price.recurring?.interval === 'week' ? unitAmount * quantity : 0;
 
-    const igniteSession = IGNITE_SESSIONS.find(s => s.stripePriceId === priceItem.price.id);
+    let igniteSession = IGNITE_SESSIONS.find(s => s.stripePriceId === priceItem.price.id);
+    if (!igniteSession) {
+      // Subscriptions on older Stripe prices were imported and mapped to a
+      // session by hand. Keep them in sync instead of dropping their updates.
+      const existing = await prisma.igniteSubscription.findUnique({
+        where: { stripeSubscriptionId: subscription.id },
+        select: { igniteSessionId: true },
+      });
+      igniteSession = existing?.igniteSessionId ? getIgniteSessionConfig(existing.igniteSessionId) : undefined;
+    }
 
     // Skip non-Ignite subscriptions
     if (!igniteSession) {

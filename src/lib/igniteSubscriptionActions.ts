@@ -18,8 +18,10 @@ const IGNITE_SUBSCRIPTION_STATUS: Record<string, 'ACTIVE' | 'PAUSED' | 'CANCELED
 
 export function igniteSubscriptionStatus(subscription: Pick<Stripe.Subscription, 'status' | 'pause_collection'>) {
   // Stripe keeps status=active while invoice collection is paused. Mirror the
-  // collection state so paused enrolments are not shown as billable.
-  if (subscription.pause_collection) return 'PAUSED' as const
+  // collection state so paused enrolments are not shown as billable. A
+  // cancelled subscription keeps its old pause_collection, so it must not
+  // read as paused.
+  if (subscription.pause_collection && (subscription.status === 'active' || subscription.status === 'trialing')) return 'PAUSED' as const
   return IGNITE_SUBSCRIPTION_STATUS[subscription.status] || 'ACTIVE'
 }
 

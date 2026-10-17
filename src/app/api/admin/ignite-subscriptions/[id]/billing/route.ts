@@ -55,7 +55,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const current = await stripe.subscriptions.retrieve(local.stripeSubscriptionId)
     if (current.status === 'canceled' || current.status === 'incomplete_expired') {
-      return NextResponse.json({ error: 'This subscription has already ended in Stripe.' }, { status: 409 })
+      // Our copy missed the cancellation; bring it in line so the admin shows it as ended.
+      const lifecycle = igniteSubscriptionLifecycle(current)
+      await prisma.igniteSubscription.update({ where: { id }, data: lifecycle })
+      return NextResponse.json({ subscription: { id, ...lifecycle }, alreadyEnded: true })
     }
 
     const updated = await stripe.subscriptions.update(local.stripeSubscriptionId, stripeUpdateFor(parsed, current))
