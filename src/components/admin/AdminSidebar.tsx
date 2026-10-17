@@ -7,7 +7,6 @@ import {
   HomeIcon,
   ChartBarIcon,
   UserGroupIcon,
-  DocumentTextIcon,
   FireIcon,
   ClipboardDocumentCheckIcon,
   UsersIcon,
@@ -25,12 +24,11 @@ const mentorNavigation = [
 ];
 
 const superNavigation = [
+  { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Check-in', href: '/admin/schedule', icon: ClipboardDocumentCheckIcon },
   { name: 'Customers', href: '/admin/customers', icon: UsersIcon },
   { name: 'Subscriptions', href: '/admin/ignite-subscriptions', icon: FireIcon },
   { name: 'Students', href: '/admin/students', icon: UserGroupIcon },
-  { name: 'Bookings', href: '/admin/bookings', icon: DocumentTextIcon },
-  { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Sales', href: '/admin/analytics', icon: ChartBarIcon }
 ];
 

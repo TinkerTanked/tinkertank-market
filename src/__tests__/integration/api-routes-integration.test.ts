@@ -249,29 +249,6 @@ describe('API Routes Integration Tests', () => {
       expect(data.totalBookings).toBe(25);
       expect(data.upcomingEvents).toHaveLength(2);
     });
-
-    it('/api/admin/bookings should return booking management data', async () => {
-      const mockBookings = [
-        {
-          id: 'booking_1',
-          student: { name: 'Student 1' },
-          event: { title: 'Camp 1', startDateTime: new Date() },
-          order: { customerName: 'Parent 1' }
-        }
-      ];
-
-      (prisma.booking.findMany as any).mockResolvedValue(mockBookings);
-
-      const { GET } = await import('@/app/api/admin/bookings/route');
-      const request = new NextRequest('http://localhost:3000/api/admin/bookings');
-
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.bookings).toHaveLength(1);
-      expect(data.bookings[0].student.name).toBe('Student 1');
-    });
   });
 
   describe('Calendar & Events Routes', () => {
