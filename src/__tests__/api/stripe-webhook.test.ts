@@ -42,7 +42,8 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: vi.fn()
     },
     igniteSubscription: {
-      upsert: vi.fn()
+      upsert: vi.fn(),
+      findUnique: vi.fn()
     },
     igniteSubscriptionStudent: {
       upsert: vi.fn()
@@ -945,6 +946,38 @@ describe('Stripe Webhook Route', () => {
       } finally {
         vi.useRealTimers()
       }
+    })
+    it('keeps imported subscriptions on older Stripe prices in sync when they are cancelled', async () => {
+      const subscription = {
+        id: 'sub_legacy_manly',
+        customer: 'cus_legacy',
+        status: 'canceled',
+        pause_collection: { behavior: 'void', resumes_at: null },
+        metadata: {},
+        current_period_start: 1790000000,
+        current_period_end: 1790604800,
+        canceled_at: 1791786128,
+        cancel_at_period_end: false,
+        items: { data: [{ quantity: 1, price: { id: 'price_legacy_not_in_config' } }] }
+      }
+      const webhookEvent = createWebhookEvent('customer.subscription.deleted', subscription)
+
+      ;(mockStripe.webhooks.constructEvent as any).mockReturnValue(webhookEvent)
+      ;(mockStripe.subscriptions.retrieve as any).mockResolvedValue(subscription)
+      ;(mockStripe.customers.retrieve as any).mockResolvedValue({ id: 'cus_legacy', deleted: false, email: 'parent@example.com' })
+      ;(mockStripe.prices.retrieve as any).mockResolvedValue({ id: 'price_legacy_not_in_config', unit_amount: 3500, recurring: { interval: 'week' } })
+      ;(prisma.igniteSubscription.findUnique as any).mockResolvedValue({ igniteSessionId: 'ignite-manly-library' })
+      ;(prisma.igniteSubscription.upsert as any).mockResolvedValue({ id: 'local_legacy', status: 'CANCELED', students: [] })
+
+      const response = await callWebhook(JSON.stringify(webhookEvent), 'valid_signature')
+
+      expect(response.status).toBe(200)
+      expect(prisma.igniteSubscription.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { stripeSubscriptionId: 'sub_legacy_manly' },
+          update: expect.objectContaining({ status: 'CANCELED', igniteSessionId: 'ignite-manly-library' })
+        })
+      )
     })
   })
 

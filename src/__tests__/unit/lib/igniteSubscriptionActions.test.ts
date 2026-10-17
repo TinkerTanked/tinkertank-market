@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { nextTermResumeDate, stripeUpdateFor } from '@/lib/igniteSubscriptionActions'
+import { igniteSubscriptionStatus, nextTermResumeDate, stripeUpdateFor } from '@/lib/igniteSubscriptionActions'
 import { buildAdminCustomers } from '@/lib/adminCustomers'
 
 const WEEK = 7 * 24 * 60 * 60
@@ -27,6 +27,18 @@ describe('Ignite subscription billing actions', () => {
   it('defaults a holiday pause to midnight Sydney on the first day of next term', () => {
     // Summer holidays: next term starts Wednesday 3 Feb 2027 (AEDT, UTC+11)
     expect(nextTermResumeDate(new Date('2026-12-20T00:00:00.000Z'))?.toISOString()).toBe('2027-02-02T13:00:00.000Z')
+  })
+})
+
+describe('igniteSubscriptionStatus', () => {
+  const paused = { behavior: 'void' as const, resumes_at: null }
+
+  it('shows an active subscription with paused collection as paused', () => {
+    expect(igniteSubscriptionStatus({ status: 'active', pause_collection: paused })).toBe('PAUSED')
+  })
+
+  it('shows a subscription cancelled while paused as cancelled', () => {
+    expect(igniteSubscriptionStatus({ status: 'canceled', pause_collection: paused })).toBe('CANCELED')
   })
 })
 
