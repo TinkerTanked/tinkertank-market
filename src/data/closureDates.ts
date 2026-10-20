@@ -21,6 +21,13 @@ export interface ClosureDate {
 export const RECURRING_CLOSURE_DATES: ClosureDate[] = [
   // Christmas/New Year Period
   {
+    name: 'Christmas Eve',
+    description: 'TinkerTank is closed on Christmas Eve',
+    recurring: true,
+    month: 12,
+    day: 24
+  },
+  {
     name: 'Christmas Day',
     description: 'TinkerTank is closed for Christmas',
     recurring: true,
@@ -35,32 +42,11 @@ export const RECURRING_CLOSURE_DATES: ClosureDate[] = [
     day: 26
   },
   {
-    name: 'Christmas Closure - Day 3',
-    description: 'TinkerTank is closed during Christmas period',
+    name: "New Year's Eve",
+    description: "TinkerTank is closed on New Year's Eve",
     recurring: true,
     month: 12,
-    day: 27
-  },
-  {
-    name: 'Christmas Closure - Day 4',
-    description: 'TinkerTank is closed during Christmas period',
-    recurring: true,
-    month: 12,
-    day: 28
-  },
-  {
-    name: 'Christmas Closure - Day 5',
-    description: 'TinkerTank is closed during Christmas period',
-    recurring: true,
-    month: 12,
-    day: 29
-  },
-  {
-    name: 'Christmas Closure - Day 6',
-    description: 'TinkerTank is closed during Christmas period',
-    recurring: true,
-    month: 12,
-    day: 30
+    day: 31
   },
   {
     name: "New Year's Day",
@@ -153,6 +139,13 @@ export const SPECIFIC_CLOSURE_DATES: ClosureDate[] = [
     recurring: false,
     specificDate: new Date('2026-12-28'),
     year: 2026
+  },
+  {
+    name: 'Australia Day Long Weekend',
+    description: 'TinkerTank is closed for the Australia Day long weekend',
+    recurring: false,
+    specificDate: new Date('2027-01-25'),
+    year: 2027
   }
 ]
 

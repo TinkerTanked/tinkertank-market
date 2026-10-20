@@ -22,23 +22,31 @@ const campProducts = [
   { item_id: 'all-day-camp', item_name: 'All Day Camp', item_category: 'camps', price: 149.99 },
 ]
 
-export default function CampsClient() {
+interface CampsClientProps {
+  seasonName: string
+  title: string
+  dateRange: string
+  neutralBayDetail: string
+  manlyDetail: string
+}
+
+export default function CampsClient({ seasonName, title, dateRange, neutralBayDetail, manlyDetail }: CampsClientProps) {
   useEffect(() => {
     trackEvent('view_item_list', {
-      item_list_id: 'spring_holiday_camps_2026',
-      item_list_name: 'Spring Holiday Camps 2026',
+      item_list_id: title.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+      item_list_name: title,
       items: campProducts,
     })
-  }, [])
+  }, [title])
 
   return (
     <div className='pb-20 md:pb-0'>
       <section className='bg-slate-950 py-12 text-white lg:py-16'>
         <div className='container-custom grid items-start gap-9 lg:grid-cols-[1fr_0.95fr] lg:gap-14'>
           <div className='lg:sticky lg:top-28'>
-            <p className='text-sm font-bold uppercase tracking-[0.18em] text-cyan-300'>28 September–9 October 2026</p>
+            <p className='text-sm font-bold uppercase tracking-[0.18em] text-cyan-300'>{dateRange}</p>
             <h1 className='mt-4 max-w-3xl font-display text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl'>
-              Spring Holiday Camps 2026
+              {title}
             </h1>
             <p className='mt-5 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl'>
               Hands-on coding, robotics, engineering, animation and 3D design for curious kids in Neutral Bay and Manly.
@@ -70,7 +78,7 @@ export default function CampsClient() {
             </div>
             <CampLocationCard
               name='Neutral Bay Studio'
-              detail='28 Sep–9 Oct · Weekdays'
+              detail={neutralBayDetail}
               hours='9 AM–3 PM or 9 AM–5 PM'
               address='50 Yeo St, Neutral Bay'
               href='/camps/neutral-bay'
@@ -78,7 +86,7 @@ export default function CampsClient() {
             />
             <CampLocationCard
               name='Manly Library'
-              detail='29 Sep–1 Oct & 6–8 Oct'
+              detail={manlyDetail}
               hours='9 AM–3 PM'
               address='Market Place, Manly'
               href='/camps/manly'
@@ -152,7 +160,7 @@ export default function CampsClient() {
         </div>
       </section>
 
-      <MobileActionBar label='Spring camps · from $119.99'>
+      <MobileActionBar label={`${seasonName} camps · from $119.99`}>
         <BookCampButton size='sm' label='See dates' className='shadow-none' trackingSource='camps_mobile' />
       </MobileActionBar>
     </div>
