@@ -18,14 +18,23 @@ export const DEFAULT_CAMP_DAILY_CAPACITY = 35
 // Dates when 3-day bundles are available at Neutral Bay
 export const BUNDLE_AVAILABLE_DATES = ['2026-04-20', '2026-04-21', '2026-04-22', '2026-04-23']
 
-// Spring 2026 NSW school holiday camps at Manly Library (day camps only)
-export const MANLY_LIBRARY_SPRING_2026_DATES = [
+// Manly Library only runs camps on these school holiday dates (day camps only).
+// Add each season's dates here; camp pages show the dates in the current season.
+export const MANLY_LIBRARY_CAMP_DATES = [
+  // Spring 2026
   '2026-09-29',
   '2026-09-30',
   '2026-10-01',
   '2026-10-06',
   '2026-10-07',
-  '2026-10-08'
+  '2026-10-08',
+  // Summer 2026–27
+  '2027-01-12',
+  '2027-01-13',
+  '2027-01-14',
+  '2027-01-19',
+  '2027-01-20',
+  '2027-01-21'
 ]
 
 export const NEUTRAL_BAY_CAMP_UNAVAILABLE_DATES = ['2026-09-23', '2026-09-24', '2026-09-25']
@@ -51,7 +60,7 @@ export const LOCATION_AVAILABILITY: LocationAvailability[] = [
     image: '/images/manly-location.jpg',
     campPage: '/camps/manly',
     availableCampTypes: ['day'],
-    availableDates: MANLY_LIBRARY_SPRING_2026_DATES,
+    availableDates: MANLY_LIBRARY_CAMP_DATES,
     dailyCapacity: DEFAULT_CAMP_DAILY_CAPACITY
   }
 ]

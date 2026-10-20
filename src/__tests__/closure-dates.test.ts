@@ -32,12 +32,18 @@ describe('Closure Dates', () => {
       expect(isClosureDate(australiaDay)).toBe(true)
     })
 
-    it('should identify all Christmas closure dates (Dec 25-30)', () => {
-      const dates = [25, 26, 27, 28, 29, 30]
-      dates.forEach(day => {
-        const date = new Date(`2025-12-${day}`)
-        expect(isClosureDate(date), `Dec ${day} should be a closure date`).toBe(true)
+    it('should close Dec 24, 25, 26 and 31 but stay open Dec 27-30', () => {
+      ;[24, 25, 26, 31].forEach(day => {
+        expect(isClosureDate(new Date(`2025-12-${day}`)), `Dec ${day} should be a closure date`).toBe(true)
       })
+      ;[27, 28, 29, 30].forEach(day => {
+        expect(isClosureDate(new Date(`2026-12-${day}`)), `Dec ${day} should be open`).toBe(false)
+      })
+    })
+
+    it('should close Monday 25 January 2027 for the Australia Day long weekend only', () => {
+      expect(isClosureDate(new Date('2027-01-25'))).toBe(true)
+      expect(isClosureDate(new Date('2028-01-25'))).toBe(false)
     })
 
     it('should not identify regular weekdays as closure dates', () => {
@@ -86,8 +92,8 @@ describe('Closure Dates', () => {
     it('should return all closure dates for 2025', () => {
       const closureDates = getClosureDatesForYear(2025)
       
-      // Should have 8 recurring closure dates (Dec 25-30 + Jan 1 + Jan 26)
-      expect(closureDates.length).toBe(8)
+      // Jan 1, Jan 26, Dec 24, 25, 26 and 31
+      expect(closureDates.length).toBe(6)
     })
 
     it('should return dates in chronological order', () => {
@@ -107,11 +113,11 @@ describe('Closure Dates', () => {
       expect(jan26).toBeTruthy()
     })
 
-    it('should include Dec 25-30 at the end of the year', () => {
+    it('should include Dec 24, 25, 26 and 31 at the end of the year', () => {
       const closureDates = getClosureDatesForYear(2025)
       const decemberClosures = closureDates.filter(d => d.getMonth() === 11)
       
-      expect(decemberClosures.length).toBe(6) // Dec 25-30
+      expect(decemberClosures.map(d => d.getDate())).toEqual([24, 25, 26, 31])
     })
   })
 
@@ -121,8 +127,8 @@ describe('Closure Dates', () => {
       const endDate = new Date('2026-01-05')
       const closureDates = getClosureDatesInRange(startDate, endDate)
       
-      // Should include Dec 25-30 and Jan 1
-      expect(closureDates.length).toBe(7)
+      // Dec 24, 25, 26, 31 and Jan 1
+      expect(closureDates.length).toBe(5)
     })
 
     it('should return empty array when no closures in range', () => {
@@ -138,7 +144,7 @@ describe('Closure Dates', () => {
       const endDate = new Date('2025-12-27')
       const closureDates = getClosureDatesInRange(startDate, endDate)
       
-      expect(closureDates.length).toBe(3) // Dec 25, 26, 27
+      expect(closureDates.length).toBe(2) // Dec 25, 26
     })
   })
 
@@ -195,12 +201,12 @@ describe('Closure Dates', () => {
 
   describe('getNextAvailableDate', () => {
     it('should skip closure dates when finding next available date', () => {
-      // Start from Dec 24, 2025 (Wednesday)
-      const startDate = new Date('2025-12-24')
+      // Start from Tuesday Dec 24, 2030 (a future date, so it is not rejected as past)
+      const startDate = new Date('2030-12-24T00:00:00')
       const nextAvailable = getNextAvailableDate(startDate)
       
-      // Should skip Dec 25-30 (closure), Dec 27-28 (weekend), and land on Dec 31 or later
-      expect(nextAvailable.getDate()).toBeGreaterThan(30)
+      // Skips Dec 24-26 (closures) and lands on Friday Dec 27
+      expect(nextAvailable.toDateString()).toBe(new Date('2030-12-27T00:00:00').toDateString())
     })
 
     it('should skip weekends when finding next available date', () => {
@@ -228,19 +234,18 @@ describe('Closure Dates', () => {
     })
 
     it('should handle new year transition', () => {
-      // Start from Dec 31, 2024 (which might be available)
-      // But we want to test the transition
-      const endOfYear = new Date('2024-12-31')
+      // Tuesday Dec 31, 2030 (New Year's Eve) and Jan 1 are closed
+      const endOfYear = new Date('2030-12-31T00:00:00')
       const nextAvailable = getNextAvailableDate(endOfYear)
       
-      // Should skip Jan 1 (New Year's) and find next available weekday
+      expect(nextAvailable.toDateString()).toBe(new Date('2031-01-02T00:00:00').toDateString())
       expect(isDateAvailableForBooking(nextAvailable)).toBe(true)
     })
   })
 
   describe('RECURRING_CLOSURE_DATES configuration', () => {
     it('should contain all expected closure dates', () => {
-      expect(RECURRING_CLOSURE_DATES.length).toBeGreaterThanOrEqual(8)
+      expect(RECURRING_CLOSURE_DATES.length).toBe(6)
       
       const closureNames = RECURRING_CLOSURE_DATES.map(c => c.name)
       expect(closureNames).toContain('Christmas Day')
@@ -269,8 +274,8 @@ describe('Closure Dates', () => {
       const dec31 = new Date('2024-12-31')
       const jan1 = new Date('2025-01-01')
       
-      // Dec 31 is not in our closure list (only Dec 25-30)
-      expect(isClosureDate(dec31)).toBe(false)
+      // New Year's Eve
+      expect(isClosureDate(dec31)).toBe(true)
       // Jan 1 is New Year's Day
       expect(isClosureDate(jan1)).toBe(true)
     })
