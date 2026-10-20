@@ -32,13 +32,18 @@ describe('Closure Dates', () => {
       expect(isClosureDate(australiaDay)).toBe(true)
     })
 
-    it('should close Dec 24, 25, 26 and 31 but stay open Dec 27-30', () => {
+    it('should close Dec 24, 25, 26 and 31 but stay open Dec 27-30 when there is no observed holiday', () => {
       ;[24, 25, 26, 31].forEach(day => {
         expect(isClosureDate(new Date(`2025-12-${day}`)), `Dec ${day} should be a closure date`).toBe(true)
       })
       ;[27, 28, 29, 30].forEach(day => {
-        expect(isClosureDate(new Date(`2026-12-${day}`)), `Dec ${day} should be open`).toBe(false)
+        expect(isClosureDate(new Date(`2027-12-${day}`)), `Dec ${day} should be open`).toBe(false)
       })
+    })
+
+    it('should close Monday 28 December 2026 for the Boxing Day public holiday', () => {
+      expect(isClosureDate(new Date('2026-12-28'))).toBe(true)
+      expect(isClosureDate(new Date('2026-12-29'))).toBe(false)
     })
 
     it('should close Monday 25 January 2027 for the Australia Day long weekend only', () => {

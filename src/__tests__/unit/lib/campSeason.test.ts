@@ -23,11 +23,11 @@ describe('camp season', () => {
 
     expect(dates[0]).toBe('2026-12-18')
     expect(dates[dates.length - 1]).toBe('2027-02-02')
-    expect(dates).toEqual(expect.arrayContaining(['2026-12-23', '2026-12-28', '2026-12-30', '2027-01-27']))
-    for (const closed of ['2026-12-24', '2026-12-25', '2026-12-31', '2027-01-01', '2027-01-25', '2027-01-26']) {
+    expect(dates).toEqual(expect.arrayContaining(['2026-12-23', '2026-12-29', '2026-12-30', '2027-01-27']))
+    for (const closed of ['2026-12-24', '2026-12-25', '2026-12-28', '2026-12-31', '2027-01-01', '2027-01-25', '2027-01-26']) {
       expect(dates).not.toContain(closed)
     }
-    expect(formatDateList(getSeasonClosedDates(season))).toBe('24–25 Dec, 31 Dec–1 Jan and 25–26 Jan')
+    expect(formatDateList(getSeasonClosedDates(season))).toBe('24–25 Dec, 28 Dec, 31 Dec–1 Jan and 25–26 Jan')
   })
 
   it('offers only the scheduled Manly Library dates and drops days that have passed', () => {

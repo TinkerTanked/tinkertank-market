@@ -134,6 +134,13 @@ export const SPECIFIC_CLOSURE_DATES: ClosureDate[] = [
     year: 2026
   },
   {
+    name: 'Boxing Day (Observed)',
+    description: 'TinkerTank is closed for Boxing Day public holiday',
+    recurring: false,
+    specificDate: new Date('2026-12-28'),
+    year: 2026
+  },
+  {
     name: 'Australia Day Long Weekend',
     description: 'TinkerTank is closed for the Australia Day long weekend',
     recurring: false,
